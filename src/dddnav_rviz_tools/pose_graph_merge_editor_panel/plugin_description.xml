@@ -1,0 +1,5 @@
+<library path="libpose_graph_merge_editor_panel">
+  <class name="pose_graph_merge_editor_panel/PoseGraphMergeEditorPanel" type="pose_graph_merge_editor_panel::PoseGraphMergeEditorPanel" base_class_type="rviz_common::Panel">
+    <description> pose_graph_merge_editor_panel</description>
+  </class>
+</library>

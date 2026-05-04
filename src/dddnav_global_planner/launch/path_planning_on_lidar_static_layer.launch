@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node pkg="mcl_3dl" exec="pcl_publisher" output="screen" respawn="false">
+    <param from="$(find-pkg-share global_planner)/config/path_planning_on_lidar_static_layer.yaml" />
+    <param name="map_dir" value="$(find-pkg-share global_planner)/data/map.pcd" />
+    <param name="ground_dir" value="$(find-pkg-share global_planner)/data/ground.pcd" />
+  </node>
+
+  <!--name argument is not required, because it will overwrite all node name in the exec-->
+  <node pkg="global_planner" exec="global_planner_node" output="screen" respawn="false">
+    <param from="$(find-pkg-share global_planner)/config/path_planning_on_lidar_static_layer.yaml" />
+  </node>
+
+  <node pkg="global_planner" exec="dummy_pc_publisher" output="screen" respawn="false" />
+  <node pkg="global_planner" exec="dwa_global_planner_client.py" output="screen" respawn="false" />
+
+  <!--- TF -->
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="map2baselink" args="-3.73 3.18 -0.234 0.0 0.0 0.0 /map /base_link" />
+
+  <let name="rviz_config" value="$(find-pkg-share global_planner)/rviz/path_planning_on_lidar_static_layer.rviz"/>
+  <node name="rviz2" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config)"/>
+
+</launch>
+

@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Python launch sets sub_maps.pose_graph_dir to $(find-pkg-share dddnav_bringup)/map -->
+  <include file="$(find-pkg-share p2p_move_base)/launch/go2_localization.launch.py"/>
+</launch>

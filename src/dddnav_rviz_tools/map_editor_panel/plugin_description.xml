@@ -1,0 +1,5 @@
+<library path="libmap_editor_panel">
+  <class name="map_editor_panel/MapEditorPanel" type="map_editor_panel::MapEditorPanel" base_class_type="rviz_common::Panel">
+    <description> map_editor_panel</description>
+  </class>
+</library>

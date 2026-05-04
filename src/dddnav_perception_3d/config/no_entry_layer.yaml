@@ -1,0 +1,5 @@
+no_entry_layer:
+  ros__parameters:
+    zone1: 
+      pcd: "map/no_entry1.pcd"
+      is_enabled: true

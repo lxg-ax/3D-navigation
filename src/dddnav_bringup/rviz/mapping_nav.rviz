@@ -1,0 +1,211 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 160
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    # ── 基础 ──
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Line Style:
+        Value: Lines
+      Color: 100; 100; 100
+      Plane Cell Count: 30
+      Cell Size: 1
+      Reference Frame: <Fixed Frame>
+      Plane: XY
+
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: true
+      Marker Scale: 0.15
+      Update Interval: 0
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+
+    # ── FAST-LIO 实时扫描 (按高度着色，带拖尾) ──
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: FAST-LIO Scan
+      Topic:
+        Value: /cloud_registered
+        Depth: 2
+        Reliability Policy: Reliable
+      Size (Pixels): 2
+      Style: Points
+      Color Transformer: AxisColor
+      Axis: Z
+      Use Fixed Frame: true
+      Decay Time: 1.5
+
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: FAST-LIO Path
+      Topic:
+        Value: /path
+        Depth: 2
+        Reliability Policy: Reliable
+      Color: 0; 200; 255
+      Line Style: Lines
+      Width: 0.03
+
+    # ── LIO-SAM 后端 ──
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: false
+      Name: LIO-SAM Map Global
+      Topic:
+        Value: /lio_sam/mapping/map_global
+        Depth: 2
+        Reliability Policy: Reliable
+      Size (Pixels): 1
+      Style: Points
+      Color Transformer: AxisColor
+      Axis: Z
+      Use Fixed Frame: true
+      Decay Time: 0
+
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: LIO-SAM Path
+      Topic:
+        Value: /lio_sam/mapping/path
+        Depth: 2
+        Reliability Policy: Reliable
+      Color: 0; 255; 0
+      Line Style: Lines
+      Width: 0.03
+
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: false
+      Name: Loop Closure
+      Topic:
+        Value: /lio_sam/mapping/loop_closure_constraints
+        Depth: 2
+        Reliability Policy: Reliable
+
+    # ── 位姿图关键帧 ──
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: Keyframe Poses
+      Topic:
+        Value: /liosam_to_posegraph/keyframe_poses
+        Depth: 2
+        Reliability Policy: Reliable
+      Size (Pixels): 6
+      Style: Spheres
+      Size (m): 0.15
+      Color Transformer: FlatColor
+      Color: 255; 100; 0
+      Use Fixed Frame: true
+      Decay Time: 0
+
+    # ── 导航: 感知层 ──
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: Obstacle Marking
+      Topic:
+        Value: /aggregated_pc
+        Depth: 2
+        Reliability Policy: Reliable
+      Size (Pixels): 4
+      Style: Points
+      Color Transformer: FlatColor
+      Color: 255; 50; 50
+      Use Fixed Frame: true
+      Decay Time: 0.5
+
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: Weighted Ground
+      Topic:
+        Value: /weighted_pc
+        Depth: 2
+        Reliability Policy: Reliable
+      Size (Pixels): 2
+      Style: Points
+      Color Transformer: Intensity
+      Use Fixed Frame: true
+      Decay Time: 0
+
+    # ── 导航: 规划 ──
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Global Path
+      Topic:
+        Value: /global_path
+        Depth: 2
+        Reliability Policy: Reliable
+      Color: 50; 255; 50
+      Line Style: Lines
+      Width: 0.05
+
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Prune Plan
+      Topic:
+        Value: /prune_plan
+        Depth: 2
+        Reliability Policy: Reliable
+      Color: 255; 255; 0
+      Line Style: Lines
+      Width: 0.05
+
+    - Class: rviz_default_plugins/PoseArray
+      Enabled: true
+      Name: Best Trajectory
+      Topic:
+        Value: /best_trajectory
+        Depth: 2
+        Reliability Policy: Reliable
+      Color: 0; 100; 255
+      Arrow Length: 0.15
+
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Robot Cuboid
+      Topic:
+        Value: /robot_cuboid
+        Depth: 2
+        Reliability Policy: Reliable
+
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 30
+    Background Color: 48; 48; 48
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/PublishPoint
+    - Class: rviz_default_plugins/Measure
+      Line color: 128; 128; 0
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 20
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.01
+      Pitch: 0.7854
+      Target Frame: base_link
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 0.5

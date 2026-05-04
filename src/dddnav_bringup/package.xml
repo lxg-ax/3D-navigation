@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dddnav_bringup</name>
+  <version>1.0.0</version>
+  <description>DDDNAV 3D Navigation Bringup: one-click launch for mapping, localization, and mapping+navigation modes</description>
+  <maintainer email="dev@dddnav.org">dddnav</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Runtime dependencies (launch will find these packages) -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>fast_lio</exec_depend>
+  <exec_depend>lio_sam</exec_depend>
+  <exec_depend>lego_loam_bor</exec_depend>
+  <exec_depend>mcl_3dl</exec_depend>
+  <exec_depend>perception_3d</exec_depend>
+  <exec_depend>global_planner</exec_depend>
+  <exec_depend>p2p_move_base</exec_depend>
+  <exec_depend>livox_ros_driver2</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

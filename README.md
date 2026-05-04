@@ -1,0 +1,130 @@
+# dddnav_navigation
+
+3D mapping / localization / planning stack (multi-floor, 3D costmaps, etc.), beyond what [Nav2](https://github.com/ros-navigation/navigation2) ships by default. Based on [dddmr_navigation](https://github.com/dfl-rlab/dddmr_navigation) (BSD-3-Clause — keep attribution if you redistribute). 说明：在上游工程上改了 SLAM 路线、bringup、Docker 等；发布时请保留致谢与许可证要求。
+
+**Paths:** `colcon build` from the repo root (directory that contains `src/`). Docker scripts mount that tree at **`/root/dddnav_navigation`** inside the container; on the host use `src/...`, inside the container use `/root/dddnav_navigation/...`.
+
+No demo GIFs embedded here (optional: add under `docs/`). Upstream showcase media stays with [dddmr_navigation](https://github.com/dfl-rlab/dddmr_navigation).
+
+---
+
+## Default SLAM (Mid360)
+
+**FAST-LIO2** (`fast_lio`) + **LIO-SAM** (`lio_sam`, Scan Context + GICP; loop closure: `loopClosureEnableFlag` in `src/LIO-SAM/config/params_mid360.yaml`). Typical FAST-LIO topics: `/Odometry`, `/cloud_registered`.
+
+Optional **YOLOv8 + TensorRT**: [`dddnav_trt`](src/dddnav_trt/), build with `-DTRT_ENABLED=ON`。具体训练权重与雷达安装角以包内 CMake/代码为准。
+
+---
+
+## Go2 in Gazebo
+
+[`src/gz_quadbot/`](src/gz_quadbot/). `dddnav_gz:x64` may clone the same upstream into `/ws_gz` — pick **either** vendored `src/gz_quadbot` **or** that image workflow unless you know you need both. Details: [dddnav_docker/README.md](dddnav_docker/README.md).
+
+---
+
+## Packages (folder → role)
+
+| Path | Role |
+|------|------|
+| [dddnav_bringup](src/dddnav_bringup/) | Launches: mapping / mapping+nav / localization (+ optional camera stack) |
+| [dddnav_global_planner](src/dddnav_global_planner/) | 3D global planning |
+| [dddnav_local_planner](src/dddnav_local_planner/) | `local_planner`, `mpc_critics`, `trajectory_generators`, `recovery_behaviors`, `base_trajectory` |
+| [dddnav_p2p_move_base](src/dddnav_p2p_move_base/) | `p2p_move_base` node / configs |
+| [dddnav_sys_core](src/dddnav_sys_core/) | Shared types / services |
+| [FAST_LIO](src/FAST_LIO/) | `fast_lio` |
+| [LIO-SAM](src/LIO-SAM/) | `lio_sam` |
+| [dddnav_mcl_3dl](src/dddnav_mcl_3dl/) | `mcl_3dl` |
+| [dddnav_mcl_feature](src/dddnav_mcl_feature/) | MCL features |
+| [dddnav_odom_3d](src/dddnav_odom_3d/) | 3D odom example |
+| [dddnav_perception_3d](src/dddnav_perception_3d/) | ROS name **`perception_3d`** |
+| [dddnav_semantic_segmentation](src/dddnav_semantic_segmentation/) | DDRNet + TRT → semantic cloud |
+| [dddnav_trt](src/dddnav_trt/) | YOLO TRT (optional) |
+| [livox_ros_driver2](src/livox_ros_driver2/) | Livox driver |
+| [dddnav_utils](src/dddnav_utils/) | Scripts |
+| [dddnav_rviz_tools](src/dddnav_rviz_tools/) | RViz panels |
+| [gz_quadbot](src/gz_quadbot/) | Go2 Gazebo |
+| [cloud_msgs](src/cloud_msgs/) | Messages |
+
+`dddnav_bringup` lists `lego_loam_bor` for older / Go2 demos; **default Mid360 bringup** uses `fast_lio` + `lio_sam`, not Lego LOAM. Check names with `ros2 pkg list` after build.
+
+---
+
+## Docker
+
+| Image | Notes |
+|-------|--------|
+| `dddnav:x64` | Ubuntu 22.04, Humble, PCL 1.15, GTSAM 4.2a9 |
+| `dddnav:cuda` | On top of x64: CUDA 12.6, cuDNN 9.6, TensorRT 10.7, PyTorch 2.8 |
+| `dddnav:l4t_r36` | JetPack r36.4.0 base |
+| `dddnav_gz:x64` | Gazebo layer |
+
+```bash
+cd /path/to/REPO/dddnav_docker/docker_file
+./build.bash
+./run_x64_gpu.bash   # or ./run_x64.bash
+# in container:
+cd /root/dddnav_navigation && source /opt/ros/humble/setup.bash
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
+```
+
+Host `~/dddnav_bags` → container `/root/dddnav_bags` when using default run scripts. Full detail: [dddnav_docker/README.md](dddnav_docker/README.md).
+
+---
+
+## Semantic (DDRNet + TRT)
+
+Live RealSense defaults **848×480** (`rs_semantic_segmentaton_trt_launch.py`); engine input **424×848**. Example bag launches read **`~/dddnav_bags/...`** (names like `rs435_rgbd_848x380` reflect how that bag was recorded).
+
+```bash
+# 仓库根：先转引擎，再 source 再 launch
+cd src/dddnav_semantic_segmentation/model
+# trtexec 路径随安装而变；NVIDIA 容器里常见 /usr/src/tensorrt/bin/trtexec
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=ddrnet_23_slim_dualresnet_citys_best_model_424x848.onnx \
+  --saveEngine=ddrnet_23_slim_dualresnet_citys_best_model_424x848.trt
+cd ../../..
+source install/setup.bash
+ros2 launch dddnav_semantic_segmentation rs_semantic_segmentaton_trt_launch.py
+# ros2 launch dddnav_semantic_segmentation bag_exclude_ss_trt_launch.py
+```
+
+Class IDs: `src/dddnav_semantic_segmentation/data/colors_mapillary.csv`.
+
+---
+
+## Bringup (main entry)
+
+```bash
+ros2 launch dddnav_bringup mapping.launch.py
+ros2 launch dddnav_bringup mapping_with_camera.launch.py
+
+ros2 launch dddnav_bringup mapping_nav.launch.py
+ros2 launch dddnav_bringup mapping_nav_with_camera.launch.py
+
+ros2 launch dddnav_bringup localization.launch.py
+ros2 launch dddnav_bringup localization_with_camera.launch.py
+```
+
+Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` after install). `localization*.launch.py` sets `sub_maps.pose_graph_dir` there; `mapping*.launch.py` sets LIO-SAM `savePCDDirectory` there. **`*.pcd` under `map/` is not tracked in git**—run mapping locally, then save maps as in [dddnav_bringup/README.md](src/dddnav_bringup/README.md) (`/lio_sam/save_map`, `/save_liosam_posegraph`).
+
+Camera stack: build TRT engine as above; optional TF edits in `dddnav_bringup/launch/common_camera_nodes.py`.
+
+---
+
+## Other READMEs
+
+| Topic | Link |
+|-------|------|
+| Bringup / map / camera | [src/dddnav_bringup/README.md](src/dddnav_bringup/README.md) |
+| Docker | [dddnav_docker/README.md](dddnav_docker/README.md) |
+| MCL | [src/dddnav_mcl_3dl/README.md](src/dddnav_mcl_3dl/README.md) |
+| Perception | [src/dddnav_perception_3d/README.md](src/dddnav_perception_3d/README.md) |
+| Global planner | [src/dddnav_global_planner/README.md](src/dddnav_global_planner/README.md) |
+| Local planner | [src/dddnav_local_planner/README.md](src/dddnav_local_planner/README.md) |
+| P2P / Go2 launch | [src/dddnav_p2p_move_base/README.md](src/dddnav_p2p_move_base/README.md) |
+| Semantic | [src/dddnav_semantic_segmentation/README.md](src/dddnav_semantic_segmentation/README.md) |
+| TRT YOLO | [src/dddnav_trt/README.md](src/dddnav_trt/README.md) |
+| Odom 3D | [src/dddnav_odom_3d/README.md](src/dddnav_odom_3d/README.md) |
+| sys_core / rviz_tools | [src/dddnav_sys_core/README.md](src/dddnav_sys_core/README.md) · [src/dddnav_rviz_tools/README.md](src/dddnav_rviz_tools/README.md) |
+| Gazebo Go2 | [src/gz_quadbot/README.md](src/gz_quadbot/README.md) |

@@ -1,0 +1,51 @@
+/**:
+    ros__parameters:
+        feature_extract_enable: false
+        point_filter_num: 1          # 保留所有点
+        max_iteration: 3
+        filter_size_surf: 0.15
+        filter_size_map: 0.15
+        cube_side_length: 1000.0
+        runtime_pos_log_enable: false
+        map_file_path: "./test.pcd"
+
+        common:
+            lid_topic:  "/livox/lidar"           # 直接订阅 Livox 驱动原始 PointCloud2
+            imu_topic:  "/livox/imu"
+            time_sync_en: false
+            time_offset_lidar_to_imu: 0.0
+
+        preprocess:
+            lidar_type: 4                # 4 = MID360，接受 PointCloud2（livox xfer_format=0）
+            scan_line:  4
+            blind: 0.1
+            timestamp_unit: 3            # 3 = ms
+            scan_rate: 10
+
+        mapping:
+            acc_cov: 0.1
+            gyr_cov: 0.3             # 适当降低陀螺仪噪声，平衡 IMU 信任度和旋转跟踪
+            b_acc_cov: 0.0001
+            b_gyr_cov: 0.0001
+            fov_degree:    360.0
+            det_range:     30.0
+            extrinsic_est_en:  false
+            extrinsic_T: [ 0.0, 0.0, 0.0 ]
+            extrinsic_R: [ 1., 0., 0.,
+                            0., 1., 0.,
+                            0., 0., 1.]
+
+        publish:
+            path_en: true
+            effect_map_en: false
+            map_en: true
+            scan_publish_en:  true
+            dense_publish_en: true
+            scan_bodyframe_pub_en: true
+            tf_en: true              # FastLIO 负责发布 odom→base_link TF
+            world_frame: "odom"      # 与 mcl_3dl 的 odom_frame 一致
+            body_frame: "base_link"  # 与 mcl_3dl 的 robot_frame 一致
+
+        pcd_save:
+            pcd_save_en: true
+            interval: -1

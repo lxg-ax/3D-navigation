@@ -1,0 +1,5 @@
+<library path="libmapping_panel">
+  <class name="mapping_panel/MappingPanel" type="mapping_panel::MappingPanel" base_class_type="rviz_common::Panel">
+    <description>mapping_panel</description>
+  </class>
+</library>

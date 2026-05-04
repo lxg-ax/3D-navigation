@@ -1,0 +1,94 @@
+/**:
+  ros__parameters:
+
+    # Topics
+    pointCloudTopic: "/livox/lidar_liosam"       # 经 livox_pc2_to_liosam 适配后的点云
+    imuTopic: "/livox/imu"
+    odomTopic: "odometry/imu"                    # LIO-SAM imuPreintegration 内部 topic
+    gpsTopic: "odometry/gpsz"
+
+    # Frames
+    lidarFrame: "livox_frame"
+    baselinkFrame: "base_link"
+    odometryFrame: "odom"
+    mapFrame: "map"
+
+    # GPS
+    useImuHeadingInitialization: false
+    useGpsElevation: false
+    gpsCovThreshold: 2.0
+    poseCovThreshold: 25.0
+
+    # Export
+    savePCD: false
+    # Overridden by dddnav_bringup mapping*.launch.py; safe fallback if launched without bringup:
+    savePCDDirectory: "/tmp/lio_sam_save_pcd/"
+
+    # Sensor: MID360 固态雷达，用 livox 模式
+    sensor: livox
+    N_SCAN: 4                                    # MID360 有 4 条扫描线（line 字段 0-3）
+    Horizon_SCAN: 6000                           # 每条线最多点数，MID360 每帧约 20000 点/4线=5000
+    downsampleRate: 1
+    lidarMinRange: 0.3
+    lidarMaxRange: 100.0
+
+    # IMU（MID360 内置 IMU，驱动输出单位为 g，imuConverter 已转换为 m/s²）
+    # MID360 加速度计噪声密度 ~0.24 mg/√Hz → 0.00235 m/s²/√Hz（转换后）
+    # 实际使用中适当放大 10~50 倍以增强鲁棒性
+    imuAccNoise: 0.1
+    imuGyrNoise: 0.01
+    imuAccBiasN: 0.001
+    imuGyrBiasN: 0.0001
+    imuGravity: 9.80511
+    imuRPYWeight: 0.01
+
+    # TF 控制：FastLIO 负责发布 odom→base_link，LIO-SAM 只发布 map→odom
+    publishTF: false
+
+    # 外参：MID360 IMU 与 lidar 同体，外参为单位矩阵
+    extrinsicTrans: [ 0.0, 0.0, 0.0 ]
+    extrinsicRot:   [ 1.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0,
+                      0.0, 0.0, 1.0 ]
+    extrinsicRPY:   [ 1.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0,
+                      0.0, 0.0, 1.0 ]
+
+    # LOAM 特征阈值
+    edgeThreshold: 1.0
+    surfThreshold: 0.1
+    edgeFeatureMinValidNum: 10
+    surfFeatureMinValidNum: 100
+
+    # Voxel filter
+    odometrySurfLeafSize: 0.4
+    mappingCornerLeafSize: 0.2
+    mappingSurfLeafSize: 0.4
+
+    # 运动约束
+    z_tollerance: 1000.0
+    rotation_tollerance: 1000.0
+
+    # CPU：利用更多核心加速建图
+    numberOfCores: 6
+    mappingProcessInterval: 0.1
+
+    # 关键帧：加密关键帧间距，提高地图密度和回环检测机会
+    surroundingkeyframeAddingDistThreshold: 0.5
+    surroundingkeyframeAddingAngleThreshold: 0.15
+    surroundingKeyframeDensity: 1.0
+    surroundingKeyframeSearchRadius: 50.0
+
+    # 回环检测：GICP + Scan Context，提高频率和搜索范围
+    loopClosureEnableFlag: true
+    loopClosureFrequency: 2.0
+    surroundingKeyframeSize: 50
+    historyKeyframeSearchRadius: 20.0
+    historyKeyframeSearchTimeDiff: 30.0
+    historyKeyframeSearchNum: 25
+    historyKeyframeFitnessScore: 0.5              # 放宽 GICP 阈值（GICP fitness score 通常比 ICP 大）
+
+    # 可视化
+    globalMapVisualizationSearchRadius: 1000.0
+    globalMapVisualizationPoseDensity: 10.0
+    globalMapVisualizationLeafSize: 0.1
