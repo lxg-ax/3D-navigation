@@ -34,6 +34,10 @@
 
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 /*Fast triangulation of unordered point clouds*/
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
@@ -108,6 +112,10 @@ class GlobalPlanner : public rclcpp::Node {
       void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<dddnav_sys_core::action::GetPlan>> goal_handle);
       
       std::shared_ptr<rclcpp_action::ServerGoalHandle<dddnav_sys_core::action::GetPlan>> current_handle_;
+      // Synchronisation for handle_accepted -> makePlan handoff. Replaces a
+      // 20 Hz busy-poll on is_active(current_handle_).
+      std::mutex handle_mutex_;
+      std::condition_variable handle_cv_;
 
       rclcpp_action::Server<dddnav_sys_core::action::GetPlan>::SharedPtr action_server_global_planner_;
 
@@ -162,6 +170,12 @@ class GlobalPlanner : public rclcpp::Node {
       void makePlan(const std::shared_ptr<rclcpp_action::ServerGoalHandle<dddnav_sys_core::action::GetPlan>> goal_handle);
 
       void postSmoothPath(std::vector<unsigned int>& path_id, std::vector<unsigned int>& smoothed_path_id);
+      // Helpers extracted from postSmoothPath / getROSPath to keep each function
+      // doing one job (orientation computation / per-step segment validation).
+      void computePoseOrientation(double vx, double vy, double vz,
+                                  geometry_msgs::msg::PoseStamped& pose);
+      bool isInterpolatedSegmentValid(const geometry_msgs::msg::PoseStamped& current_pst,
+                                      double vx, double vy, double vz);
       void getStaticGraphFromPerception3D();
 
       bool getStartGoalID(const geometry_msgs::msg::PoseStamped& start, const geometry_msgs::msg::PoseStamped& goal, 

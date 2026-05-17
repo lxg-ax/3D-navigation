@@ -59,15 +59,31 @@ rclcpp_action::CancelResponse GlobalPlanner::handle_cancel(
 
 void GlobalPlanner::handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<dddnav_sys_core::action::GetPlan>> goal_handle)
 {
-  rclcpp::Rate r(20);
-  while (is_active(current_handle_)) {
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *clock_, 1000, "Wait for current handle to join");
-    r.sleep();
-  }
+  // Wait until any in-flight goal handle has finished. We use a condition
+  // variable instead of a 20Hz busy-poll so the executor thread is not woken
+  // up just to spin. The worker thread launched below notifies handle_cv_
+  // once the previous makePlan() completes.
+  std::unique_lock<std::mutex> lock(handle_mutex_);
+  handle_cv_.wait(lock, [this]() {
+    if (!is_active(current_handle_)) {
+      return true;
+    }
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *clock_, 1000,
+                         "Wait for current handle to join");
+    return false;
+  });
   current_handle_.reset();
   current_handle_ = goal_handle;
-  // this needs to return quickly to avoid blocking the executor, so spin up a new thread
-  std::thread{std::bind(&GlobalPlanner::makePlan, this, std::placeholders::_1), goal_handle}.detach();
+  lock.unlock();
+
+  // Detach so we return quickly and don't block the executor.
+  std::thread([this, goal_handle]() {
+    this->makePlan(goal_handle);
+    {
+      std::lock_guard<std::mutex> notify_lock(handle_mutex_);
+    }
+    handle_cv_.notify_all();
+  }).detach();
 }
   
 void GlobalPlanner::initial(const std::shared_ptr<perception_3d::Perception3D_ROS>& perception_3d){
@@ -230,84 +246,115 @@ void GlobalPlanner::cbClickedPoint(const geometry_msgs::msg::PointStamped::Share
 
 }
 
-void GlobalPlanner::postSmoothPath(std::vector<unsigned int>& path_id, std::vector<unsigned int>& smoothed_path_id){
-  
-  smoothed_path_id.clear();
-  geometry_msgs::msg::PoseStamped current_pst;
-  current_pst.pose.position.x = pcl_ground_->points[path_id[0]].x;
-  current_pst.pose.position.y = pcl_ground_->points[path_id[0]].y;
-  current_pst.pose.position.z = pcl_ground_->points[path_id[0]].z;
-  
-  smoothed_path_id.push_back(path_id[0]);
-
-  for(auto it=1;it<path_id.size()-1;it++){
-
-    geometry_msgs::msg::PoseStamped next_pst;
-    next_pst.pose.position.x = pcl_ground_->points[path_id[it]].x;
-    next_pst.pose.position.y = pcl_ground_->points[path_id[it]].y;
-    next_pst.pose.position.z = pcl_ground_->points[path_id[it]].z;
-
-    double vx,vy,vz;
-    vx = next_pst.pose.position.x - current_pst.pose.position.x;
-    vy = next_pst.pose.position.y - current_pst.pose.position.y;
-    vz = next_pst.pose.position.z - current_pst.pose.position.z;
+void GlobalPlanner::computePoseOrientation(double vx, double vy, double vz,
+                                           geometry_msgs::msg::PoseStamped& pose){
+  // Build an orientation from the (vx, vy, vz) tangent vector. For 3D motion
+  // we align with the world-x basis; for purely 2D motion we just use yaw.
+  if(vz != 0){
     double unit = sqrt(vx*vx + vy*vy + vz*vz);
-    
     tf2::Vector3 axis_vector(vx/unit, vy/unit, vz/unit);
-
     tf2::Vector3 up_vector(1.0, 0.0, 0.0);
     tf2::Vector3 right_vector = axis_vector.cross(up_vector);
     right_vector.normalized();
     tf2::Quaternion q(right_vector, -1.0*acos(axis_vector.dot(up_vector)));
     q.normalize();
+    pose.pose.orientation.x = q.getX();
+    pose.pose.orientation.y = q.getY();
+    pose.pose.orientation.z = q.getZ();
+    pose.pose.orientation.w = q.getW();
+  }
+  else{
+    double yaw = atan2(vy, vx);
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, yaw);
+    pose.pose.orientation.x = q.getX();
+    pose.pose.orientation.y = q.getY();
+    pose.pose.orientation.z = q.getZ();
+    pose.pose.orientation.w = q.getW();
+  }
+}
 
-    current_pst.pose.orientation.x = q.getX();
-    current_pst.pose.orientation.y = q.getY();
-    current_pst.pose.orientation.z = q.getZ();
-    current_pst.pose.orientation.w = q.getW();     
+bool GlobalPlanner::isInterpolatedSegmentValid(const geometry_msgs::msg::PoseStamped& current_pst,
+                                               double vx, double vy, double vz){
+  // Walk the segment from current_pst toward (current + v) in 5% steps and
+  // reject the segment if any of the following holds:
+  //   1. an obstacle (kdtree_map_) is within the inscribed radius
+  //   2. there is no ground support beneath the sample point
+  //   3. the local slope exceeds ~20deg over a >0.5m horizontal jump
+  //   4. the segment is unreasonably long (>20m)
+  const double inscribed_radius = perception_3d_ros_->getGlobalUtils()->getInscribedRadius();
 
-    //@Interpolation to make global plan smoother and better resolution for local planner
-    for(double step=0.05;step<0.99;step+=0.05){
-      pcl::PointXYZI pst_inter_polate_pc;
-      pst_inter_polate_pc.x = current_pst.pose.position.x + vx*step;
-      pst_inter_polate_pc.y = current_pst.pose.position.y + vy*step;
-      pst_inter_polate_pc.z = current_pst.pose.position.z + vz*step;
-      std::vector<int> pointIdxRadiusSearch;
-      std::vector<float> pointRadiusSquaredDistance;
-      if(kdtree_map_->radiusSearch(pst_inter_polate_pc, perception_3d_ros_->getGlobalUtils()->getInscribedRadius(), pointIdxRadiusSearch, pointRadiusSquaredDistance)>1){
-        //@ no line of sight, keep this pose
-        smoothed_path_id.push_back(path_id[it]);
-        current_pst = next_pst;
-        break;
-      }
-      pointIdxRadiusSearch.clear();
-      pointRadiusSquaredDistance.clear();
-      if(kdtree_ground_->radiusSearch(pst_inter_polate_pc, 1.0, pointIdxRadiusSearch, pointRadiusSquaredDistance)<2){
-        //@ not on the ground
-        smoothed_path_id.push_back(path_id[it]);
-        current_pst = next_pst;
-        break;
-      }
-      double dx = vx*step;
-      double dy = vy*step;
-      double dr = sqrt(dx*dx+dy*dy);
-      double dz = fabs(vz*step);
-      float vertical_angle = std::asin(dz / dr);
-      if(dr>0.5 && vertical_angle>0.349){
-        //@ z jump
-        smoothed_path_id.push_back(path_id[it]);
-        current_pst = next_pst;
-        break;        
-      }
-      if(dr>20.0){
-        //@ longer than 10 meter
-        smoothed_path_id.push_back(path_id[it]);
-        current_pst = next_pst;
-        break;        
+  for(double step = 0.05; step < 0.99; step += 0.05){
+    pcl::PointXYZI sample;
+    sample.x = current_pst.pose.position.x + vx*step;
+    sample.y = current_pst.pose.position.y + vy*step;
+    sample.z = current_pst.pose.position.z + vz*step;
+
+    std::vector<int> idx;
+    std::vector<float> dist_sq;
+
+    // 1. obstacle check on the full map kd-tree
+    if(kdtree_map_->radiusSearch(sample, inscribed_radius, idx, dist_sq) > 1){
+      return false;
+    }
+    idx.clear();
+    dist_sq.clear();
+
+    // 2. ground support check
+    if(kdtree_ground_->radiusSearch(sample, 1.0, idx, dist_sq) < 2){
+      return false;
+    }
+
+    // 3. slope check
+    const double dx = vx*step;
+    const double dy = vy*step;
+    const double dr = sqrt(dx*dx + dy*dy);
+    const double dz = fabs(vz*step);
+    if(dr > 0.5){
+      const float vertical_angle = std::asin(dz / dr);
+      if(vertical_angle > 0.349){
+        return false;
       }
     }
+
+    // 4. segment too long
+    if(dr > 20.0){
+      return false;
+    }
   }
-  smoothed_path_id.push_back(path_id[path_id.size()-1]);
+  return true;
+}
+
+void GlobalPlanner::postSmoothPath(std::vector<unsigned int>& path_id, std::vector<unsigned int>& smoothed_path_id){
+  smoothed_path_id.clear();
+  if(path_id.empty()){
+    return;
+  }
+
+  geometry_msgs::msg::PoseStamped current_pst;
+  current_pst.pose.position.x = pcl_ground_->points[path_id[0]].x;
+  current_pst.pose.position.y = pcl_ground_->points[path_id[0]].y;
+  current_pst.pose.position.z = pcl_ground_->points[path_id[0]].z;
+  smoothed_path_id.push_back(path_id[0]);
+
+  for(size_t it = 1; it + 1 < path_id.size(); ++it){
+    geometry_msgs::msg::PoseStamped next_pst;
+    next_pst.pose.position.x = pcl_ground_->points[path_id[it]].x;
+    next_pst.pose.position.y = pcl_ground_->points[path_id[it]].y;
+    next_pst.pose.position.z = pcl_ground_->points[path_id[it]].z;
+
+    const double vx = next_pst.pose.position.x - current_pst.pose.position.x;
+    const double vy = next_pst.pose.position.y - current_pst.pose.position.y;
+    const double vz = next_pst.pose.position.z - current_pst.pose.position.z;
+
+    computePoseOrientation(vx, vy, vz, current_pst);
+
+    if(!isInterpolatedSegmentValid(current_pst, vx, vy, vz)){
+      smoothed_path_id.push_back(path_id[it]);
+      current_pst = next_pst;
+    }
+  }
+  smoothed_path_id.push_back(path_id.back());
 }
 
 void GlobalPlanner::getROSPath(std::vector<unsigned int>& path_id, nav_msgs::msg::Path& ros_path){
@@ -407,25 +454,26 @@ bool GlobalPlanner::getStartGoalID(const geometry_msgs::msg::PoseStamped& start,
   if(kdtree_ground_->radiusSearch (pcl_goal, 0.5, pointIdxRadiusSearch_goal, pointRadiusSquaredDistance_goal)<1){
     RCLCPP_WARN(this->get_logger(), "Goal is not found.");
     RCLCPP_WARN(this->get_logger(), "Using vertical search to find a goal on the ground.");
-    bool second_search = false;
-    if(graph_ready_){
-      for(double z=goal.pose.position.z; z>-10;z-=0.1){
-        pointIdxRadiusSearch_goal.clear();
-        pointRadiusSquaredDistance_goal.clear();
-        pcl_goal.z = z;
-        if(kdtree_ground_->radiusSearch(pcl_goal, 0.3, pointIdxRadiusSearch_goal, pointRadiusSquaredDistance_goal,0)>0)
-        {
-          second_search = true;
-          break;
-        }
-      }
-      if(!second_search)
-        return false;
-    }
-    else{
+    if(!graph_ready_){
       return false;
     }
-    return false;
+    bool second_search = false;
+    for(double z=goal.pose.position.z; z>-10;z-=0.1){
+      pointIdxRadiusSearch_goal.clear();
+      pointRadiusSquaredDistance_goal.clear();
+      pcl_goal.z = z;
+      if(kdtree_ground_->radiusSearch(pcl_goal, 0.3, pointIdxRadiusSearch_goal, pointRadiusSquaredDistance_goal,0)>0)
+      {
+        second_search = true;
+        break;
+      }
+    }
+    if(!second_search){
+      // No ground point found along the vertical search column.
+      return false;
+    }
+    // second_search succeeded: pointIdxRadiusSearch_goal now contains a hit
+    // and we fall through to use it as the goal id.
   }
   
   if(enable_detail_log_){
@@ -544,17 +592,11 @@ nav_msgs::msg::Path GlobalPlanner::makeROSPlan(const geometry_msgs::msg::PoseSta
 }
 
 void GlobalPlanner::getStaticGraphFromPerception3D(){
-  
-  //@Calculate node weight
-  
-  /*
-  //static graph has been remove 9 Mar 2025
-  graph_t* static_graph; //std::unordered_map<unsigned int, std::set<edge_t>> typedef in static_graph.h
-  static_graph = static_graph_.getGraphPtr();
-  pubStaticGraph();
-  
-  RCLCPP_INFO(this->get_logger(), "Static graph is generated with size: %lu", static_graph_.getSize());
-  */
+
+  // Note: the static graph (typedef graph_t in static_graph.h) is no longer
+  // built here. Node weights now live on the perception_3d shared data and
+  // are read directly when expanding A* nodes. pubStaticGraph() is still
+  // available as a debug helper if a graph is provided externally.
 
   if(!has_initialized_){
     has_initialized_ = true;

@@ -32,7 +32,8 @@
 /*For graph*/
 #include <unordered_map>
 #include <set>
-#include <queue> 
+#include <queue>
+#include <memory>
 
 /*For pcl::PointXYZ*/
 #include <pcl/common/geometry.h>
@@ -120,8 +121,8 @@ class A_Star_on_PreGraph{
       /*Provide dynamic graph for obstacle avoidance*/
       std::shared_ptr<perception_3d::Perception3D_ROS> perception_ros_;
       
-      /*Create the list*/
-      AstarListPreGraph* ASLS_;
+      // RAII ownership of the pre-graph A* working list.
+      std::unique_ptr<AstarListPreGraph> ASLS_;
 
       //@ turning weight of the node
       double turning_weight_;

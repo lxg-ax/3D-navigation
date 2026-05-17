@@ -108,13 +108,10 @@ A_Star_on_Graph::A_Star_on_Graph(pcl::PointCloud<pcl::PointXYZI>::Ptr pc_origina
   perception_ros_ = perception_ros;
   pc_original_z_up_ = pc_original_z_up;
   a_star_expanding_radius_ = a_star_expanding_radius;
-  ASLS_ = new AstarList(pc_original_z_up_);
+  ASLS_ = std::make_unique<AstarList>(pc_original_z_up_);
 }
 
-A_Star_on_Graph::~A_Star_on_Graph(){
-  if(ASLS_)
-    delete ASLS_;
-}
+A_Star_on_Graph::~A_Star_on_Graph() = default;
 
 void A_Star_on_Graph::updateGraph(pcl::PointCloud<pcl::PointXYZI>::Ptr pc_original_z_up){
   ASLS_->pc_original_z_up_ = pc_original_z_up;
@@ -289,7 +286,7 @@ void A_Star_on_Graph::getPath(
       float new_h = sqrt(pcl::geometry::squaredDistance(pcl_expanding, pcl_goal));
       float new_f = new_g + new_h;
 
-      Node_t new_node = {.self_index=(current_expanding_index), .g=new_g, .h=new_h, .f=new_f, .parent_index=current_node.self_index, .is_closed=false, .is_opened=true};
+      Node_t new_node = {.self_index=static_cast<unsigned int>(current_expanding_index), .g=new_g, .h=new_h, .f=new_f, .parent_index=current_node.self_index, .is_closed=false, .is_opened=true};
 
       /*Check is in closed list*/
       if(ASLS_->isClosed(current_expanding_index))

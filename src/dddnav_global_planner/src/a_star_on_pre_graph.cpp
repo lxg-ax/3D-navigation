@@ -113,13 +113,10 @@ A_Star_on_PreGraph::A_Star_on_PreGraph(pcl::PointCloud<pcl::PointXYZI>::Ptr pc_o
   perception_ros_ = perception_ros;
   a_star_expanding_radius_ = a_star_expanding_radius;
   pc_original_z_up_ = pc_original_z_up;
-  ASLS_ = new AstarListPreGraph(static_graph_);
+  ASLS_ = std::make_unique<AstarListPreGraph>(static_graph_);
 }
 
-A_Star_on_PreGraph::~A_Star_on_PreGraph(){
-  if(ASLS_)
-    delete ASLS_;
-}
+A_Star_on_PreGraph::~A_Star_on_PreGraph() = default;
 
 void A_Star_on_PreGraph::updateGraph(pcl::PointCloud<pcl::PointXYZI>::Ptr pc_original_z_up, 
                                   perception_3d::StaticGraph& static_graph){

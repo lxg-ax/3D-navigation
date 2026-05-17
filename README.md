@@ -110,6 +110,8 @@ Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` a
 
 Camera stack: build TRT engine as above; optional TF edits in `dddnav_bringup/launch/common_camera_nodes.py`.
 
+> 现状：相机分支（`*_with_camera.launch.py`，含 RealSense + DDRNet 语义点云接入 perception_3d 与导航）目前**未在真机实测**，仅做了编译/语法验证。已知点：FAST-LIO + MCL 3DL 的 LiDAR 主线工作正常；接入深度相机后的语义层叠加、动态层避障、坐标系/时间戳对齐请按需自行验证后再上线。
+
 ---
 
 ## Other READMEs
