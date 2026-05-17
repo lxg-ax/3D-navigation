@@ -41,7 +41,7 @@ def generate_launch_description():
 
         # 点云适配: /livox/lidar → liosam/xyzi 格式
         TimerAction(period=1.0, actions=[
-            Node(package='dddnav_utils', executable='livox_pc2_to_liosam.py',
+            Node(package='dddnav_utils', executable='livox_pc2_to_liosam',
                  name='livox_pc2_to_liosam', output='screen',
                  parameters=[{'input_topic': '/livox/lidar',
                               'liosam_output_topic': '/livox/lidar_liosam',

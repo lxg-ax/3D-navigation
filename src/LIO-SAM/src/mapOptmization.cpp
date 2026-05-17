@@ -901,7 +901,7 @@ public:
     // Scan Context based loop closure detection
     bool detectLoopClosureScanContext(int *latestID, int *closestID)
     {
-        if (scManager.size() < 51)  // need enough history
+        if (scManager.size() < scMinDatabase)  // need enough history
             return false;
 
         int loopKeyCur = copy_cloudKeyPoses3D->size() - 1;
@@ -917,7 +917,8 @@ public:
         *curCloud += *transformPointCloud(surfCloudKeyFrames[loopKeyCur],   &copy_cloudKeyPoses6D->points[loopKeyCur]);
 
         auto scDesc = scManager.makeDescriptor(curCloud);
-        auto scResult = scManager.detectLoopClosure(scDesc, loopKeyCur, 50, 0.25);
+        auto scResult = scManager.detectLoopClosure(scDesc, loopKeyCur,
+                                                    scExcludeRecent, scDistThreshold);
         int candidateIdx = scResult.first;
         // scResult.second contains the SC distance score (for debug/logging)
 

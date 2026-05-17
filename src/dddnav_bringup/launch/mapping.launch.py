@@ -40,12 +40,14 @@ def generate_launch_description():
         # Static TF
         Node(package='tf2_ros', executable='static_transform_publisher', name='sensor2baselink',
              arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'base_link', 'livox_frame']),
-        Node(package='tf2_ros', executable='static_transform_publisher', name='map2odom',
-             arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'map', 'odom']),
+        # Note: map→odom is published dynamically by LIO-SAM mapOptimization (see
+        # publishTF=false in params_mid360.yaml — that flag silences the lidar-frame
+        # broadcast but mapOptimization still sends map→odom). Do NOT add a static
+        # identity here, it would race with LIO-SAM's broadcaster.
 
         # 点云适配: /livox/lidar → liosam/fastlio 格式
         TimerAction(period=1.0, actions=[
-            Node(package='dddnav_utils', executable='livox_pc2_to_liosam.py',
+            Node(package='dddnav_utils', executable='livox_pc2_to_liosam',
                  name='livox_pc2_to_liosam', output='screen',
                  parameters=[{'input_topic': '/livox/lidar',
                               'liosam_output_topic': '/livox/lidar_liosam',
@@ -59,29 +61,35 @@ def generate_launch_description():
         ]),
 
         # LIO-SAM 后端: IMU预积分 + 去畸变 + 特征提取 + 因子图+回环, TF map→odom
-        TimerAction(period=3.0, actions=[
+        TimerAction(period=5.0, actions=[
             Node(package='lio_sam', executable='lio_sam_imuPreintegration', output='screen',
                  parameters=[LaunchConfiguration('lio_sam_config'), bringup_paths.lio_sam_save_pcd_overlay()]),
         ]),
-        TimerAction(period=3.0, actions=[
+        TimerAction(period=5.0, actions=[
             Node(package='lio_sam', executable='lio_sam_imageProjection', output='screen',
                  parameters=[LaunchConfiguration('lio_sam_config'), bringup_paths.lio_sam_save_pcd_overlay()]),
         ]),
-        TimerAction(period=3.0, actions=[
+        TimerAction(period=5.0, actions=[
             Node(package='lio_sam', executable='lio_sam_featureExtraction', output='screen',
                  parameters=[LaunchConfiguration('lio_sam_config'), bringup_paths.lio_sam_save_pcd_overlay()]),
         ]),
-        TimerAction(period=3.0, actions=[
+        TimerAction(period=5.0, actions=[
             Node(package='lio_sam', executable='lio_sam_mapOptimization', output='screen',
                  parameters=[LaunchConfiguration('lio_sam_config'), bringup_paths.lio_sam_save_pcd_overlay()]),
         ]),
 
-        # 位姿图转换 (LIO-SAM关键帧 → DDDNAV定位格式)
-        TimerAction(period=5.0, actions=[
+        # 位姿图转换 (LIO-SAM关键帧 → DDDNAV定位格式)，参数读自 keyframes_mid360.yaml
+        TimerAction(period=8.0, actions=[
             Node(package='dddnav_utils', executable='liosam_to_posegraph.py',
                  name='liosam_to_posegraph', output='screen',
-                 parameters=[{'save_dir': map_dir, 'keyframe_dist': 0.5,
-                              'keyframe_angle': 0.15, 'ground_angle_thresh': 15.0}]),
+                 parameters=[bringup_paths.keyframes_yaml(),
+                             bringup_paths.keyframes_save_dir_overlay()]),
+        ]),
+
+        # SLAM 健康监视器：FAST-LIO / LIO-SAM 任一停发 > 2s 自动 ERROR
+        TimerAction(period=10.0, actions=[
+            Node(package='dddnav_utils', executable='slam_health_monitor.py',
+                 name='slam_health_monitor', output='screen'),
         ]),
 
         # RViz

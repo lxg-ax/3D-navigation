@@ -40,7 +40,10 @@
     imuAccBiasN: 0.001
     imuGyrBiasN: 0.0001
     imuGravity: 9.80511
-    imuRPYWeight: 0.01
+    # imuRPYWeight: 重力对齐项在 mapOptimization 里给当前 roll/pitch 估计的权重。
+    # 0.01 几乎放弃重力约束，纯靠 IMU 预积分撑姿态，长时间会累积俯仰漂移。
+    # 0.1~0.3 是 LIO-SAM 论文级配置，重力锚定 + 预积分各占一半。
+    imuRPYWeight: 0.1
 
     # TF 控制：FastLIO 负责发布 odom→base_link，LIO-SAM 只发布 map→odom
     publishTF: false
@@ -65,9 +68,11 @@
     mappingCornerLeafSize: 0.2
     mappingSurfLeafSize: 0.4
 
-    # 运动约束
-    z_tollerance: 1000.0
-    rotation_tollerance: 1000.0
+    # 运动约束（地面机器人推荐打开，长距离防 z/姿态漂）
+    # 1000.0 = 等效禁用约束；改成有限值后单帧位姿超过 |z| 或 RPY 阈值会被忽略。
+    # 室内/室外可调；楼梯/电梯场景需要把 z_tollerance 调大或关。
+    z_tollerance: 5.0
+    rotation_tollerance: 0.5
 
     # CPU：利用更多核心加速建图
     numberOfCores: 6
@@ -86,7 +91,14 @@
     historyKeyframeSearchRadius: 20.0
     historyKeyframeSearchTimeDiff: 30.0
     historyKeyframeSearchNum: 25
-    historyKeyframeFitnessScore: 0.5              # 放宽 GICP 阈值（GICP fitness score 通常比 ICP 大）
+    historyKeyframeFitnessScore: 0.3              # GICP 适合度阈值，0.3 严，0.5 宽。先严防误回环，遇到漏回环再放宽。
+
+    # Scan Context 描述子检索（mapOptimization::detectLoopClosureScanContext）
+    # scExcludeRecent: 跳过最近 N 个关键帧避免自匹配（建议 30~80）
+    # scDistThreshold: 列移位余弦距离上限，越小越严格（0.1 严, 0.4 宽）
+    scExcludeRecent: 50
+    scDistThreshold: 0.25
+    scMinDatabase: 51                             # 描述子数据库需 ≥ 此值才启用 SC 检索
 
     # 可视化
     globalMapVisualizationSearchRadius: 1000.0

@@ -148,6 +148,11 @@ public:
     int   historyKeyframeSearchNum;
     float historyKeyframeFitnessScore;
 
+    // Scan Context loop-closure tuning (read by mapOptimization)
+    int   scExcludeRecent;
+    float scDistThreshold;
+    int   scMinDatabase;
+
     // global map visualization radius
     float globalMapVisualizationSearchRadius;
     float globalMapVisualizationPoseDensity;
@@ -301,6 +306,13 @@ public:
         get_parameter("historyKeyframeSearchNum", historyKeyframeSearchNum);
         declare_parameter("historyKeyframeFitnessScore", 0.3);
         get_parameter("historyKeyframeFitnessScore", historyKeyframeFitnessScore);
+
+        declare_parameter("scExcludeRecent", 50);
+        get_parameter("scExcludeRecent", scExcludeRecent);
+        declare_parameter("scDistThreshold", 0.25);
+        get_parameter("scDistThreshold", scDistThreshold);
+        declare_parameter("scMinDatabase", 51);
+        get_parameter("scMinDatabase", scMinDatabase);
 
         declare_parameter("globalMapVisualizationSearchRadius", 1000.0);
         get_parameter("globalMapVisualizationSearchRadius", globalMapVisualizationSearchRadius);

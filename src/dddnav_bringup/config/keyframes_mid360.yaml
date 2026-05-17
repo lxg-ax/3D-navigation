@@ -1,0 +1,10 @@
+/**:
+  ros__parameters:
+
+    # liosam_to_posegraph 关键帧抽取参数（落盘到 dddnav_bringup/map/）。
+    # 室内/窄走廊：dist 0.3, angle 0.10
+    # 室外/大场景：dist 1.0, angle 0.30
+    save_dir: "/tmp/dddnav_map"   # 由 launch 通过 ParameterFile overlay 覆盖到 share/dddnav_bringup/map
+    keyframe_dist:        0.5     # m, 关键帧最小平移阈值
+    keyframe_angle:       0.15    # rad, 关键帧最小旋转阈值
+    ground_angle_thresh: 15.0     # deg, 地面点法线最大与垂直方向夹角

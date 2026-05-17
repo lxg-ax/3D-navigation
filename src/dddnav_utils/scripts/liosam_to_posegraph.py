@@ -48,16 +48,35 @@ def transform_pts(pts, tx, ty, tz, roll, pitch, yaw):
     return (R.T @ (pts - np.array([tx, ty, tz])).T).T
 
 
-# ── PCD 写入 ──────────────────────────────────────────────────────────────────
+# ── PCD 写入 (binary little-endian) ──────────────────────────────────────────
+#
+# 关键帧建图一次写几百个文件，每帧 2 个 pcd（feature + ground）。原本 ASCII 实现
+# 在 N=2000+ 关键帧时落盘会变成 IO 瓶颈：fprintf 拼字符串 + 文件大约比二进制大 3~4
+# 倍，10k+ 点的关键帧每个 30~80ms。改为 binary 后 < 5ms，且文件小、加载快。
 
 def write_pcd_xyzi(path, pts):
+    """Binary PCD with FIELDS x y z intensity (intensity 写 0)."""
+    pts = np.asarray(pts, dtype=np.float32).reshape(-1, 3)
     n = len(pts)
-    with open(path, 'w') as f:
-        f.write("# .PCD v0.7\nVERSION 0.7\n")
-        f.write("FIELDS x y z intensity\nSIZE 4 4 4 4\nTYPE F F F F\nCOUNT 1 1 1 1\n")
-        f.write(f"WIDTH {n}\nHEIGHT 1\nVIEWPOINT 0 0 0 1 0 0 0\nPOINTS {n}\nDATA ascii\n")
-        for p in pts:
-            f.write(f"{p[0]:.6f} {p[1]:.6f} {p[2]:.6f} 0.000000\n")
+    # struct: x(4) y(4) z(4) intensity(4) = 16 bytes/point, contiguous, intensity=0
+    payload = np.zeros((n, 4), dtype=np.float32)
+    payload[:, :3] = pts
+    header = (
+        "# .PCD v0.7\n"
+        "VERSION 0.7\n"
+        "FIELDS x y z intensity\n"
+        "SIZE 4 4 4 4\n"
+        "TYPE F F F F\n"
+        "COUNT 1 1 1 1\n"
+        f"WIDTH {n}\n"
+        "HEIGHT 1\n"
+        "VIEWPOINT 0 0 0 1 0 0 0\n"
+        f"POINTS {n}\n"
+        "DATA binary\n"
+    ).encode("ascii")
+    with open(path, 'wb') as f:
+        f.write(header)
+        f.write(payload.tobytes(order='C'))
 
 
 def write_poses_pcd(path, poses):

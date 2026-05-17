@@ -108,6 +108,12 @@ ros2 launch dddnav_bringup localization_with_camera.launch.py
 
 Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` after install). `localization*.launch.py` sets `sub_maps.pose_graph_dir` there; `mapping*.launch.py` sets LIO-SAM `savePCDDirectory` there. **`*.pcd` under `map/` is not tracked in git**—run mapping locally, then save maps as in [dddnav_bringup/README.md](src/dddnav_bringup/README.md) (`/lio_sam/save_map`, `/save_liosam_posegraph`).
 
+关键帧抽取阈值统一在 [`dddnav_bringup/config/keyframes_mid360.yaml`](src/dddnav_bringup/config/keyframes_mid360.yaml)（`keyframe_dist` / `keyframe_angle` / `ground_angle_thresh`），`mapping*.launch.py` 通过 `bringup_paths.keyframes_yaml()` + `keyframes_save_dir_overlay()` 加载并把 `save_dir` 强制定向到 `dddnav_bringup/map/`。换室内/户外场景调这个 yaml 即可，不用改 launch。
+
+回环检测：LIO-SAM 后端按优先级 External → Scan Context → 距离搜索三段式，最终 GICP 精对齐。Scan Context 的关键帧排除窗口、余弦距离阈值、启用所需的最小数据库规模都开放给 [`params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml)（`scExcludeRecent` / `scDistThreshold` / `scMinDatabase`）。GPM (`p2p_global_plan_manager`) 按 `global_plan_query_frequency` 默认 5 Hz 持续重规划，回环修正 `map→odom` 后路径会自然刷新，无需额外触发。
+
+`mapping*.launch.py` 不再发布静态 `map→odom` 占位 TF（之前会和 LIO-SAM `mapOptimization` 的动态广播抢同一条边）。LIO-SAM 起来前 RViz 看不到 `map` 帧属正常，等 5–10s 后端起来即可。
+
 Camera stack: build TRT engine as above; optional TF edits in `dddnav_bringup/launch/common_camera_nodes.py`.
 
 > 现状：相机分支（`*_with_camera.launch.py`，含 RealSense + DDRNet 语义点云接入 perception_3d 与导航）目前**未在真机实测**，仅做了编译/语法验证。已知点：FAST-LIO + MCL 3DL 的 LiDAR 主线工作正常；接入深度相机后的语义层叠加、动态层避障、坐标系/时间戳对齐请按需自行验证后再上线。
