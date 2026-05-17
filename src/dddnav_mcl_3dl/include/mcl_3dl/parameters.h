@@ -101,6 +101,7 @@ public:
   double lpf_step_;
   double acc_lpf_step_;
   bool publish_tf_;
+  bool publish_odom_tf_;
   std::map<std::string, std::string> frame_ids_;
   State6DOF initial_pose_;
   State6DOF initial_pose_std_;

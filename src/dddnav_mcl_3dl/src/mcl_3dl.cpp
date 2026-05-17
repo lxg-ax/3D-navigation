@@ -153,7 +153,9 @@ void MCL3dlNode::cbOdom(const nav_msgs::msg::Odometry::SharedPtr msg){
                 msg->pose.pose.orientation.w));
   
   odom_trans_.header = msg->header;
-  odom_trans_.header.stamp = clock_->now(); //@force to do it,because odom is fast, should be fine
+  // Use the message stamp directly. Forcing wall_clock here means the broadcast
+  // can drift a few ms ahead of the data it represents, which makes downstream
+  // tf2 lookups (interpolation) jittery. msg->header.stamp is the right thing.
   odom_trans_.child_frame_id = msg->child_frame_id;
   odom_trans_.transform.translation.x = msg->pose.pose.position.x;
   odom_trans_.transform.translation.y = msg->pose.pose.position.y;
@@ -162,7 +164,11 @@ void MCL3dlNode::cbOdom(const nav_msgs::msg::Odometry::SharedPtr msg){
   odom_trans_.transform.rotation.y = msg->pose.pose.orientation.y;
   odom_trans_.transform.rotation.z = msg->pose.pose.orientation.z;
   odom_trans_.transform.rotation.w = msg->pose.pose.orientation.w;
-  tfb_->sendTransform(odom_trans_);
+  // Only forward odom->base TF if explicitly enabled. By default FAST-LIO
+  // owns this edge and a second broadcaster confuses tf2.
+  if (params_->publish_odom_tf_) {
+    tfb_->sendTransform(odom_trans_);
+  }
 
   if (!has_odom_)
   {

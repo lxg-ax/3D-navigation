@@ -1,0 +1,28 @@
+/**:
+  ros__parameters:
+    # Inputs
+    odom_topic:         "/Odometry"        # FAST-LIO 100Hz
+    pose_topic:         "mcl_pose"         # MCL 3DL ~5Hz
+    initial_pose_topic: "/initial_3d_pose" # rviz nudge or scripted bootstrap
+
+    # Output
+    output_odom_topic:  "/odom_filtered"
+    map_frame:          "map"
+    odom_frame:         "odom"
+    base_frame:         "base_link"
+    publish_tf:         true               # set false if MCL still owns map→odom
+
+    # Process noise (per sqrt(s)). Bigger = filter trusts MCL more vs FAST-LIO.
+    proc_noise_pos:     0.05               # m   per sqrt(s)
+    proc_noise_rot:     0.02               # rad per sqrt(s)
+
+    # Measurement noise floor. If MCL publishes covariance we use max(floor, mcl).
+    meas_noise_pos:     0.10               # m
+    meas_noise_rot:     0.05               # rad
+
+    # Initial covariance when bootstrapping.
+    init_cov_pos:       0.5
+    init_cov_rot:       0.3
+
+    # Mahalanobis chi^2_6 gate for outlier rejection. 99% ≈ 16.81. Set <=0 to disable.
+    mahalanobis_gate:   16.81

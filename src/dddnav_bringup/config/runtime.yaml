@@ -1,0 +1,40 @@
+# Bringup runtime knobs. All parameters here are intended to be edited
+# without touching launch.py files. Values consumed by load_runtime() in
+# bringup_paths.py.
+
+# --- Sensor mounting (base_link <- livox_frame) ------------------------------
+# Edit when LiDAR is moved on the robot. xyz in meters, rpy in radians.
+lidar_mount:
+  x:     0.0
+  y:     0.0
+  z:     0.0
+  roll:  0.0
+  pitch: 0.0
+  yaw:   0.0
+
+# --- Driver --------------------------------------------------------------------
+livox_publish_freq: 10.0      # Hz, must match physical Mid360 setting
+
+# --- Launch timing (start delays in seconds) ----------------------------------
+# Increase these on slow hardware (Jetson, cold-start container) if you see
+# "global_planner started before TF available".
+delays:
+  bridges:        1.0          # livox_pc2_to_liosam, fast_lio
+  rviz:           2.0
+  mcl_3dl:        3.0
+  pose_fusion:    4.0
+  mcl_feature:    5.0
+  initial_pose:   8.0
+  global_planner: 15.0
+  move_base:      18.0
+  clicked_goal:   20.0
+  liosam_back:    5.0          # mapping mode only
+  liosam_to_pg:   8.0          # mapping mode only
+  health:        10.0          # mapping mode only
+
+# --- Initial pose dropped after MCL loads (localization mode only) -----------
+# Robot's known starting pose at boot. Override at runtime via /initial_3d_pose.
+initial_pose:
+  x: 0.0
+  y: 0.0
+  z: 0.0

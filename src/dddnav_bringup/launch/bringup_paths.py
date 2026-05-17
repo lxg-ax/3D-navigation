@@ -29,3 +29,16 @@ def keyframes_save_dir_overlay():
     """Override save_dir in the keyframes yaml so output lands in
     dddnav_bringup/map/ regardless of how the yaml is shipped."""
     return {'liosam_to_posegraph': {'ros__parameters': {'save_dir': bringup_map_dir()}}}
+
+
+def runtime_yaml_path():
+    """Path to runtime.yaml (timing / lidar mount / initial pose knobs)."""
+    return os.path.join(get_package_share_directory('dddnav_bringup'),
+                        'config', 'runtime.yaml')
+
+
+def load_runtime():
+    """Parse runtime.yaml. Cached so launch files can call freely."""
+    import yaml
+    with open(runtime_yaml_path(), 'r') as f:
+        return yaml.safe_load(f) or {}

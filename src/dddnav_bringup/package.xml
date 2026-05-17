@@ -9,6 +9,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- Python dependency for runtime.yaml loader (bringup_paths.load_runtime). -->
+  <exec_depend>python3-yaml</exec_depend>
+
   <!-- Runtime dependencies (launch will find these packages) -->
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
@@ -22,6 +25,7 @@
   <exec_depend>livox_ros_driver2</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>rviz2</exec_depend>
+  <exec_depend>dddnav_pose_fusion</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -37,13 +37,14 @@ Optional **YOLOv8 + TensorRT**: [`dddnav_trt`](src/dddnav_trt/), build with `-DT
 | [dddnav_mcl_feature](src/dddnav_mcl_feature/) | MCL features |
 | [dddnav_odom_3d](src/dddnav_odom_3d/) | 3D odom example |
 | [dddnav_perception_3d](src/dddnav_perception_3d/) | ROS name **`perception_3d`** |
+| [dddnav_pose_fusion](src/dddnav_pose_fusion/) | SE(3) ESKF: FAST-LIO 100Hz 预测 + MCL 3DL ~5Hz 量测 → `/odom_filtered` + `map→odom` |
 | [dddnav_semantic_segmentation](src/dddnav_semantic_segmentation/) | DDRNet + TRT → semantic cloud |
 | [dddnav_trt](src/dddnav_trt/) | YOLO TRT (optional) |
 | [livox_ros_driver2](src/livox_ros_driver2/) | Livox driver |
-| [dddnav_utils](src/dddnav_utils/) | Scripts |
+| [dddnav_utils](src/dddnav_utils/) | Glue: Livox bridge (C++), pose-graph extractor, SLAM health monitor |
 | [dddnav_rviz_tools](src/dddnav_rviz_tools/) | RViz panels |
 | [gz_quadbot](src/gz_quadbot/) | Go2 Gazebo |
-| [cloud_msgs](src/cloud_msgs/) | Messages |
+| [cloud_msgs](src/cloud_msgs/) | Custom point-cloud message definitions for `dddnav_mcl_feature` |
 
 `dddnav_bringup` lists `lego_loam_bor` for older / Go2 demos; **default Mid360 bringup** uses `fast_lio` + `lio_sam`, not Lego LOAM. Check names with `ros2 pkg list` after build.
 
@@ -114,6 +115,27 @@ Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` a
 
 `mapping*.launch.py` 不再发布静态 `map→odom` 占位 TF（之前会和 LIO-SAM `mapOptimization` 的动态广播抢同一条边）。LIO-SAM 起来前 RViz 看不到 `map` 帧属正常，等 5–10s 后端起来即可。
 
+### TF 链路所有权
+
+| 边 | 所有者 | 频率 | 备注 |
+|----|--------|------|------|
+| `base_link` → `livox_frame` | `static_transform_publisher` | 1Hz static | 安装外参，编辑 `runtime.yaml` 的 `lidar_mount` |
+| `odom` → `base_link` | FAST-LIO (`fastlio_mapping`) | 100Hz | LIO-SAM 设 `publish_tf: false`，MCL 设 `publish_odom_tf: false` |
+| `map` → `odom` | 见模式 | — | mapping: LIO-SAM `mapOptimization`；localization: `pose_fusion`；MCL `publish_tf: false` |
+
+任意一条边出现两个发布者会让 tf2 lookups 抖动 —— 修改前先确认 owner。
+
+### 配置中心化
+
+| 文件 | 作用 |
+|------|------|
+| [`dddnav_bringup/config/runtime.yaml`](src/dddnav_bringup/config/runtime.yaml) | LiDAR 安装外参 / 启动延时 / 初始位姿 / 驱动频率 |
+| [`dddnav_bringup/config/keyframes_mid360.yaml`](src/dddnav_bringup/config/keyframes_mid360.yaml) | 关键帧抽取阈值 |
+| [`LIO-SAM/config/params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml) | LIO-SAM 全部调参（IMU、回环、Scan Context） |
+| [`dddnav_pose_fusion/config/pose_fusion.yaml`](src/dddnav_pose_fusion/config/pose_fusion.yaml) | ESKF Q/R 协方差、Mahalanobis 门 |
+
+调参原则：**不改 launch.py，只改 yaml**。launch 文件只负责拓扑和启动顺序。
+
 Camera stack: build TRT engine as above; optional TF edits in `dddnav_bringup/launch/common_camera_nodes.py`.
 
 > 现状：相机分支（`*_with_camera.launch.py`，含 RealSense + DDRNet 语义点云接入 perception_3d 与导航）目前**未在真机实测**，仅做了编译/语法验证。已知点：FAST-LIO + MCL 3DL 的 LiDAR 主线工作正常；接入深度相机后的语义层叠加、动态层避障、坐标系/时间戳对齐请按需自行验证后再上线。
@@ -127,6 +149,10 @@ Camera stack: build TRT engine as above; optional TF edits in `dddnav_bringup/la
 | Bringup / map / camera | [src/dddnav_bringup/README.md](src/dddnav_bringup/README.md) |
 | Docker | [dddnav_docker/README.md](dddnav_docker/README.md) |
 | MCL | [src/dddnav_mcl_3dl/README.md](src/dddnav_mcl_3dl/README.md) |
+| MCL features | [src/dddnav_mcl_feature/README.md](src/dddnav_mcl_feature/README.md) |
+| Pose fusion (ESKF) | [src/dddnav_pose_fusion/README.md](src/dddnav_pose_fusion/README.md) |
+| Utils / SLAM health | [src/dddnav_utils/README.md](src/dddnav_utils/README.md) |
+| Cloud msgs | [src/cloud_msgs/README.md](src/cloud_msgs/README.md) |
 | Perception | [src/dddnav_perception_3d/README.md](src/dddnav_perception_3d/README.md) |
 | Global planner | [src/dddnav_global_planner/README.md](src/dddnav_global_planner/README.md) |
 | Local planner | [src/dddnav_local_planner/README.md](src/dddnav_local_planner/README.md) |

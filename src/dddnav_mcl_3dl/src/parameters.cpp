@@ -257,6 +257,15 @@ Parameters::Parameters(const rclcpp::node_interfaces::NodeLoggingInterface::Shar
   rclcpp::Parameter publish_tf = parameter_->get_parameter("publish_tf");
   publish_tf_ = publish_tf.as_bool();
   RCLCPP_INFO(logger_->get_logger(), "publish_tf: %d", publish_tf_);
+
+  // publish_odom_tf: forward the incoming /odom edge as TF (odom -> base).
+  // Disabled by default because in this stack FAST-LIO already broadcasts
+  // odom -> base_link; re-broadcasting it from MCL caused two publishers on
+  // the same edge.
+  parameter_->declare_parameter("publish_odom_tf", rclcpp::ParameterValue(false));
+  rclcpp::Parameter publish_odom_tf = parameter_->get_parameter("publish_odom_tf");
+  publish_odom_tf_ = publish_odom_tf.as_bool();
+  RCLCPP_INFO(logger_->get_logger(), "publish_odom_tf: %d", publish_odom_tf_);
   
 
   double x, y, z;
