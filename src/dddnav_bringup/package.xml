@@ -17,7 +17,6 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>fast_lio</exec_depend>
   <exec_depend>lio_sam</exec_depend>
-  <exec_depend>lego_loam_bor</exec_depend>
   <exec_depend>mcl_3dl</exec_depend>
   <exec_depend>perception_3d</exec_depend>
   <exec_depend>global_planner</exec_depend>
@@ -26,6 +25,8 @@
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>dddnav_pose_fusion</exec_depend>
+  <exec_depend>dddnav_utils</exec_depend>
+  <exec_depend>dddnav_mcl_feature</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

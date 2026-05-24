@@ -1,7 +1,7 @@
 """Localization + vision: same as localization.launch.py plus RealSense + DDRNet.
 
 Camera path is unverified on real hardware — see README. Tunables in
-src/dddnav_bringup/config/runtime.yaml.
+``src/dddnav_bringup/config/runtime.yaml``.
 """
 
 import os
@@ -9,63 +9,33 @@ import sys
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, ExecuteProcess,
-                            OpaqueFunction, TimerAction)
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
 sys.path.insert(0, os.path.join(
     get_package_share_directory('dddnav_bringup'), 'launch'))
 import bringup_paths
+import common_nodes
 from common_camera_nodes import vision_nodes
 
 
-def _resolve_nav_config(context, *args, **kwargs):
-    profile = LaunchConfiguration('nav_profile').perform(context)
-    return [DeclareLaunchArgument(
-        'nav_config',
-        default_value=bringup_paths.nav_config_path(profile),
-        description='Resolved absolute path to nav yaml (auto from nav_profile).',
-    )]
-
-
 def generate_launch_description():
-    # Get the launch directories
-    bringup_dir      = get_package_share_directory('dddnav_bringup')
-    livox_dir        = get_package_share_directory('livox_ros_driver2')
-    fast_lio_dir     = get_package_share_directory('fast_lio')
-    pose_fusion_yaml = os.path.join(
+    bringup_dir       = get_package_share_directory('dddnav_bringup')
+    fast_lio_dir      = get_package_share_directory('fast_lio')
+    pose_fusion_yaml  = os.path.join(
         get_package_share_directory('dddnav_pose_fusion'),
         'config', 'pose_fusion.yaml')
 
-    # Load runtime knobs
     rt = bringup_paths.load_runtime()
-    d  = rt['delays']
-    m  = rt['lidar_mount']
-    ip = rt['initial_pose']
-    livox_user = os.path.join(livox_dir, 'config', 'MID360_config.json')
+    cam_mount = bringup_paths.camera_mount(rt)
 
-    initial_pose_msg = (
-        f"{{header: {{frame_id: 'map'}}, "
-        f"pose: {{pose: {{position: {{x: {ip['x']}, y: {ip['y']}, z: {ip['z']}}}, "
-        f"orientation: {{w: 1.0}}}}}}}}"
-    )
-
-    # Create the launch configuration variables
     fastlio_config = LaunchConfiguration('fastlio_config')
-    nav_config     = LaunchConfiguration('nav_config')
     rviz_config    = LaunchConfiguration('rviz_config')
 
-    # Declare the launch arguments
     declare_fastlio_config_cmd = DeclareLaunchArgument(
         'fastlio_config',
         default_value=os.path.join(fast_lio_dir, 'config', 'mid360_pc2.yaml'),
         description='Full path to the FAST-LIO yaml',
-    )
-    declare_nav_profile_cmd = DeclareLaunchArgument(
-        'nav_profile',
-        default_value='mid360_localization_with_camera',
-        description='Nav tuning profile under dddnav_bringup/config/nav/',
     )
     declare_rviz_config_cmd = DeclareLaunchArgument(
         'rviz_config',
@@ -73,118 +43,33 @@ def generate_launch_description():
         description='Full path to the RVIZ config file',
     )
 
-    # Sensor + TF
-    start_livox_driver_cmd = Node(
-        package='livox_ros_driver2', executable='livox_ros_driver2_node',
-        name='livox_lidar_publisher', output='screen',
-        parameters=[{
-            'xfer_format': 0, 'multi_topic': 0, 'data_src': 0,
-            'publish_freq': float(rt['livox_publish_freq']),
-            'output_data_type': 0,
-            'frame_id': 'livox_frame',
-            'user_config_path': livox_user,
-        }],
-    )
-    start_sensor_tf_cmd = Node(
-        package='tf2_ros', executable='static_transform_publisher',
-        name='sensor2baselink',
-        arguments=[str(m['x']), str(m['y']), str(m['z']),
-                   str(m['yaw']), str(m['pitch']), str(m['roll']),
-                   'base_link', 'livox_frame'],
-    )
+    nav_profile_decl, nav_profile_resolve = bringup_paths.nav_profile_argument(
+        default_profile='mid360_localization_with_camera')
+    nav_config_param_files = [
+        bringup_paths.nav_base_yaml(),
+        LaunchConfiguration('nav_config'),
+        bringup_paths.pose_graph_overlay(),
+    ]
 
-    # Front-end + bridge
-    start_livox_bridge_cmd = TimerAction(period=d['bridges'], actions=[
-        Node(package='dddnav_utils', executable='livox_pc2_to_liosam',
-             name='livox_pc2_to_liosam', output='screen',
-             parameters=[{'input_topic': '/livox/lidar',
-                          'liosam_output_topic': '/livox/lidar_liosam',
-                          'xyzi_output_topic': '/livox/lidar_liosam_xyzi'}]),
-    ])
-    start_fast_lio_cmd = TimerAction(period=d['bridges'], actions=[
-        Node(package='fast_lio', executable='fastlio_mapping',
-             name='fast_lio', output='screen',
-             parameters=[fastlio_config]),
+    ld = LaunchDescription([
+        declare_fastlio_config_cmd,
+        declare_rviz_config_cmd,
+        nav_profile_decl,
+        nav_profile_resolve,
     ])
 
-    # Localization
-    start_mcl_cmd = TimerAction(period=d['mcl_3dl'], actions=[
-        Node(package='mcl_3dl', executable='mcl_3dl', output='screen',
-             parameters=[nav_config,
-                         bringup_paths.pose_graph_overlay(),
-                         {'publish_tf': False, 'publish_odom_tf': False}],
-             remappings=[('odom', '/Odometry'),
-                         ('laser_cloud_sharp', '/laser_cloud_sharp'),
-                         ('laser_cloud_less_sharp', '/laser_cloud_less_sharp'),
-                         ('laser_cloud_flat', '/laser_cloud_flat'),
-                         ('laser_cloud_less_flat', '/laser_cloud_less_flat')]),
-    ])
-    start_pose_fusion_cmd = TimerAction(period=d['pose_fusion'], actions=[
-        Node(package='dddnav_pose_fusion', executable='pose_fusion_node',
-             name='pose_fusion', output='screen',
-             parameters=[pose_fusion_yaml]),
-    ])
-    start_mcl_feature_cmd = TimerAction(period=d['mcl_feature'], actions=[
-        Node(package='dddnav_mcl_feature', executable='mcl_feature',
-             output='screen', parameters=[nav_config],
-             remappings=[('/lslidar_point_cloud', '/livox/lidar_liosam_xyzi'),
-                         ('/odom', '/Odometry')]),
-    ])
-    start_initial_pose_cmd = TimerAction(period=d['initial_pose'], actions=[
-        ExecuteProcess(cmd=[
-            'ros2', 'topic', 'pub', '--once', '/initial_3d_pose',
-            'geometry_msgs/msg/PoseWithCovarianceStamped',
-            initial_pose_msg,
-        ], output='screen'),
-    ])
+    for action in common_nodes.lidar_driver_and_tf(rt):
+        ld.add_action(action)
+    for action in common_nodes.lidar_front_end(rt, fastlio_config):
+        ld.add_action(action)
+    for action in common_nodes.localization_stack(
+            rt, nav_config_param_files, pose_fusion_yaml):
+        ld.add_action(action)
+    for action in common_nodes.nav_stack(rt, nav_config_param_files):
+        ld.add_action(action)
 
-    # Navigation
-    start_global_planner_cmd = TimerAction(period=d['global_planner'], actions=[
-        Node(package='global_planner', executable='global_planner_node',
-             output='screen', parameters=[nav_config])])
-    start_move_base_cmd = TimerAction(period=d['move_base'], actions=[
-        Node(package='p2p_move_base', executable='p2p_move_base_node',
-             output='screen', parameters=[nav_config])])
-    start_clicked_goal_cmd = TimerAction(period=d['clicked_goal'], actions=[
-        Node(package='p2p_move_base', executable='clicked2goal.py',
-             name='clicked2goal', output='screen')])
+    ld.add_action(common_nodes.rviz_action(rt, rviz_config))
 
-    start_rviz_cmd = TimerAction(period=d['rviz'], actions=[
-        Node(package='rviz2', executable='rviz2', name='rviz2',
-             output='screen', arguments=['-d', rviz_config]),
-    ])
-
-    ld = LaunchDescription()
-
-    # Declare the launch options
-    ld.add_action(declare_fastlio_config_cmd)
-    ld.add_action(declare_nav_profile_cmd)
-    ld.add_action(OpaqueFunction(function=_resolve_nav_config))
-    ld.add_action(declare_rviz_config_cmd)
-
-    # Sensor + TF
-    ld.add_action(start_livox_driver_cmd)
-    ld.add_action(start_sensor_tf_cmd)
-
-    # Front-end
-    ld.add_action(start_livox_bridge_cmd)
-    ld.add_action(start_fast_lio_cmd)
-
-    # Localization
-    ld.add_action(start_mcl_cmd)
-    ld.add_action(start_pose_fusion_cmd)
-    ld.add_action(start_mcl_feature_cmd)
-    ld.add_action(start_initial_pose_cmd)
-
-    # Navigation
-    ld.add_action(start_global_planner_cmd)
-    ld.add_action(start_move_base_cmd)
-    ld.add_action(start_clicked_goal_cmd)
-
-    # Visualization
-    ld.add_action(start_rviz_cmd)
-
-    # Vision nodes — colored mask on for debugging in localization mode.
-    for node in vision_nodes(publish_colored_mask=True):
+    for node in vision_nodes(cam_mount, publish_colored_mask=True):
         ld.add_action(node)
     return ld

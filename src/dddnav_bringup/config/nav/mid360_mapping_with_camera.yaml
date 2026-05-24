@@ -1,145 +1,11 @@
-"""
-mid360_mapping.yaml 的扩展版本
-在 LiDAR 感知基础上增加 RealSense 深度相机 + DDRNet 语义分割点云
-建图模式下深度相机用于局部避障，弥补 LiDAR 盲区
-"""
-p2p_move_base:
-  ros__parameters:
-    controller_frequency: 10.0
-    planner_patience: 10.0
-    oscillation_distance: 5.0
-    oscillation_angle: 1.0
-    oscillation_patience: 15.0
-    controller_patience: 10.0
-    no_plan_retry_num: 10
-    waiting_patience: 10.0
+# Mid360 mapping + nav + RealSense/DDRNet semantic point cloud.
+# Layered on top of mid360_mapping (and base.yaml).
+
 global_plan_manager:
   ros__parameters:
     global_planner_action_name: "get_plan"
     global_plan_query_frequency: -1.0
 
-local_planner:
-  ros__parameters:
-    odom_topic: odom
-    forward_prune: 3.0
-    backward_prune: 1.0
-    heading_tracking_distance: 0.5
-    heading_align_angle: 0.5
-    prune_plane_timeout: 3.0
-    xy_goal_tolerance: 0.3
-    yaw_goal_tolerance: 0.3
-    controller_frequency: 10.0
-    cuboid:
-      flb: [0.42, 0.36, 0.0]
-      frb: [0.42, -0.36, 0.0]
-      flt: [0.42, 0.36, 0.6]
-      frt: [0.42, -0.36, 0.6]
-      blb: [-0.35, 0.36, 0.0]
-      brb: [-0.35, -0.36, 0.0]
-      blt: [-0.35, 0.36, 0.6]
-      brt: [-0.35, -0.36, 0.6]
-
-recovery_behaviors:
-  ros__parameters:
-    plugins: ["rotate_inplace"]
-    rotate_inplace:
-      plugin: "recovery_behaviors::RotateInPlaceBehavior"
-      frequency: 10.0
-      tolerance: 0.3
-      trajectory_generator_name: "differential_drive_rotate_inplace"
-
-trajectory_generators:
-  ros__parameters:
-    plugins: ["differential_drive_simple", "differential_drive_rotate_inplace", "differential_drive_rotate_shortest_angle"]
-    differential_drive_rotate_shortest_angle:
-      plugin: "trajectory_generators::DDRotateInplaceTheory"
-      controller_frequency: 10.0
-      rotation_speed: 0.5
-      cuboid:
-        flb: [0.42, 0.36, 0.0]
-        frb: [0.42, -0.36, 0.0]
-        flt: [0.42, 0.36, 0.6]
-        frt: [0.42, -0.36, 0.6]
-        blb: [-0.35, 0.36, 0.0]
-        brb: [-0.35, -0.36, 0.0]
-        blt: [-0.35, 0.36, 0.6]
-        brt: [-0.35, -0.36, 0.6]
-    differential_drive_rotate_inplace:
-      plugin: "trajectory_generators::DDRotateInplaceTheory"
-      controller_frequency: 10.0
-      rotation_speed: 0.5
-      cuboid:
-        flb: [0.42, 0.36, 0.0]
-        frb: [0.42, -0.36, 0.0]
-        flt: [0.42, 0.36, 0.6]
-        frt: [0.42, -0.36, 0.6]
-        blb: [-0.35, 0.36, 0.0]
-        brb: [-0.35, -0.36, 0.0]
-        blt: [-0.35, 0.36, 0.6]
-        brt: [-0.35, -0.36, 0.6]
-    differential_drive_simple:
-      plugin: "trajectory_generators::DDSimpleTrajectoryGeneratorTheory"
-      max_vel_x: 1.0
-      min_vel_x: 0.1
-      max_vel_theta: 0.6
-      min_vel_theta: 0.15
-      acc_lim_x: 1.0
-      acc_lim_theta: 3.0
-      deceleration_ratio: 2.0
-      max_motor_shaft_rpm: 3000.0
-      wheel_diameter: 0.16
-      gear_ratio: 1.0
-      robot_radius: 0.25
-      controller_frequency: 10.0
-      sim_time: 2.0
-      linear_x_sample: 5.0
-      angular_z_sample: 10.0
-      sim_granularity: 0.1
-      angular_sim_granularity: 0.05
-      cuboid:
-        flb: [0.42, 0.36, 0.0]
-        frb: [0.42, -0.36, 0.0]
-        flt: [0.42, 0.36, 0.6]
-        frt: [0.42, -0.36, 0.6]
-        blb: [-0.35, 0.36, 0.0]
-        brb: [-0.35, -0.36, 0.0]
-        blt: [-0.35, 0.36, 0.6]
-        brt: [-0.35, -0.36, 0.6]
-
-mpc_critics:
-  ros__parameters:
-    plugins: ["collision", "stick_path", "pure_pursuit", "toward_global_plan", "collision_rotate", "collision_rotate_shortest", "prefer_rotate_shortest"]
-    collision:
-      plugin: "mpc_critics::CollisionModel"
-      trajectory_generator: differential_drive_simple
-      weight: 1.0
-    stick_path:
-      plugin: "mpc_critics::StickPathModel"
-      trajectory_generator: differential_drive_simple
-      weight: 0.1
-    pure_pursuit:
-      plugin: "mpc_critics::PurePursuitModel"
-      trajectory_generator: differential_drive_simple
-      translation_weight: 1.0
-      orientation_weight: 0.01
-    toward_global_plan:
-      plugin: "mpc_critics::TowardGlobalPlanModel"
-      trajectory_generator: differential_drive_simple
-      weight: 1.0
-    collision_rotate:
-      plugin: "mpc_critics::CollisionModel"
-      trajectory_generator: differential_drive_rotate_inplace
-      weight: 1.0
-    collision_rotate_shortest:
-      plugin: "mpc_critics::CollisionModel"
-      trajectory_generator: differential_drive_rotate_shortest_angle
-      weight: 1.0
-    prefer_rotate_shortest:
-      plugin: "mpc_critics::ShortestAngleModel"
-      trajectory_generator: differential_drive_rotate_shortest_angle
-      weight: 1.0
-
-# ===== 感知层: LiDAR + 深度相机语义分割点云 =====
 perception_3d_local:
   ros__parameters:
     global_frame: "map"
@@ -176,7 +42,6 @@ perception_3d_local:
       perception_window_size: 3.0
       segmentation_ignore_ratio: 0.5
       expected_sensor_time: 0.2
-    # --- 新增: 深度相机语义分割点云 ---
     depth_camera:
       plugin: "perception_3d::DepthCameraLayer"
       pub_gbl_marking_for_visualization: false
@@ -246,7 +111,6 @@ perception_3d_global:
       perception_window_size: 5.0
       segmentation_ignore_ratio: 1.1
       expected_sensor_time: 0.1
-    # --- 新增: 深度相机语义分割点云 ---
     depth_camera:
       plugin: "perception_3d::DepthCameraLayer"
       pub_gbl_marking_for_visualization: true
@@ -270,9 +134,3 @@ perception_3d_global:
         obstacle_min_range: 0.3
         FOV_W: 1.5184
         FOV_V: 1.0123
-
-global_planner:
-  ros__parameters:
-    turning_weight: 0.1
-    enable_detail_log: false
-    a_star_expanding_radius: 0.5

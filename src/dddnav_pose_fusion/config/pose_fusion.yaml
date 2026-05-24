@@ -26,3 +26,39 @@
 
     # Mahalanobis chi^2_6 gate for outlier rejection. 99% ≈ 16.81. Set <=0 to disable.
     mahalanobis_gate:   16.81
+
+    # ZUPT: when both linear and angular speed estimates are below the
+    # thresholds, the predict step uses Q * zupt_proc_scale. Stops the
+    # covariance from drifting while parked.
+    zupt_lin_vel_thresh: 0.02              # m/s
+    zupt_ang_vel_thresh: 0.02              # rad/s
+    zupt_proc_scale:     0.1
+
+    # Adaptive Q from FAST-LIO residual. Subscribes /fast_lio/health
+    # (Float64MultiArray = [res_mean (m), effct_feat_num]) and inflates Q so
+    # the filter weighs MCL more whenever the front-end is struggling.
+    #   q_scale = 1 + gain * max(0, residual - baseline) / baseline   (capped)
+    # Also bumps to >=4x when feats fall below adaptive_q_min_feats.
+    # Set adaptive_q_gain<=0 to disable.
+    lio_health_topic:        "/fast_lio/health"
+    adaptive_q_baseline:     0.05          # m, healthy residual baseline
+    adaptive_q_gain:         5.0
+    adaptive_q_max:          16.0
+    adaptive_q_min_feats:    50
+
+    # If the Mahalanobis gate rejects this many MCL updates in a row, the
+    # filter is force-reinitialised at the latest MCL pose. Catches the case
+    # where a sudden large reloc fails the gate forever otherwise. 0 = off.
+    gate_reset_after:    8
+
+    # Hard upper bound on the per-axis covariance diagonal so a long MCL
+    # blackout cannot let the trace explode without bound. Set <=0 to disable.
+    max_cov_pos:         4.0               # m^2
+    max_cov_rot:         1.0               # rad^2
+
+    # Auto-bootstrap fallback: if no MCL pose arrives within this many
+    # seconds of node startup, initialise at (auto_init_x, _y, _z). 0 = off.
+    auto_init_timeout:   8.0
+    auto_init_x:         0.0
+    auto_init_y:         0.0
+    auto_init_z:         0.0

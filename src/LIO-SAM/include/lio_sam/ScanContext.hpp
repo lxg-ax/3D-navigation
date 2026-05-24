@@ -11,6 +11,8 @@
  */
 
 #include <cmath>
+#include <cstdio>
+#include <cstdint>
 #include <vector>
 #include <algorithm>
 #include <numeric>
@@ -132,6 +134,11 @@ public:
 
     int size() const { return (int)descriptors_.size(); }
 
+    const Descriptor& descriptorAt(int idx) const
+    {
+        return descriptors_.at(idx);
+    }
+
     void updateDescriptor(int idx, const Descriptor& desc)
     {
         if (idx >= 0 && idx < (int)descriptors_.size())
@@ -140,6 +147,101 @@ public:
             ringKeys_[idx] = makeRingKey(desc);
             ringKeyCloudDirty_ = true;
         }
+    }
+
+    // ---- Persistence ----------------------------------------------------
+    //
+    // Binary layout (little endian, host order):
+    //   uint32 magic = 0x53434144 ("SCAD")
+    //   uint32 version = 1
+    //   uint32 num_ring
+    //   uint32 num_sector
+    //   uint32 count
+    //   for each descriptor:
+    //     num_ring * num_sector * float64 (row-major)
+    // Ring keys are recomputed on load (cheap, avoids drift if formula changes).
+    bool saveDescriptors(const std::string& path) const
+    {
+        FILE* f = std::fopen(path.c_str(), "wb");
+        if (!f) return false;
+        const uint32_t magic = 0x53434144u;
+        const uint32_t version = 1u;
+        const uint32_t nr = NUM_RING;
+        const uint32_t ns = NUM_SECTOR;
+        const uint32_t cnt = static_cast<uint32_t>(descriptors_.size());
+        bool ok = std::fwrite(&magic, sizeof(magic), 1, f) == 1
+               && std::fwrite(&version, sizeof(version), 1, f) == 1
+               && std::fwrite(&nr, sizeof(nr), 1, f) == 1
+               && std::fwrite(&ns, sizeof(ns), 1, f) == 1
+               && std::fwrite(&cnt, sizeof(cnt), 1, f) == 1;
+        for (uint32_t i = 0; i < cnt && ok; ++i)
+        {
+            const Descriptor& d = descriptors_[i];
+            ok = (d.rows() == NUM_RING && d.cols() == NUM_SECTOR)
+              && std::fwrite(d.data(), sizeof(double),
+                             static_cast<size_t>(NUM_RING) * NUM_SECTOR, f)
+                  == static_cast<size_t>(NUM_RING) * NUM_SECTOR;
+        }
+        std::fclose(f);
+        return ok;
+    }
+
+    bool loadDescriptors(const std::string& path)
+    {
+        FILE* f = std::fopen(path.c_str(), "rb");
+        if (!f) return false;
+        uint32_t magic = 0, version = 0, nr = 0, ns = 0, cnt = 0;
+        bool ok = std::fread(&magic, sizeof(magic), 1, f) == 1
+               && std::fread(&version, sizeof(version), 1, f) == 1
+               && std::fread(&nr, sizeof(nr), 1, f) == 1
+               && std::fread(&ns, sizeof(ns), 1, f) == 1
+               && std::fread(&cnt, sizeof(cnt), 1, f) == 1;
+        if (!ok || magic != 0x53434144u || version != 1u
+            || nr != NUM_RING || ns != NUM_SECTOR)
+        {
+            std::fclose(f);
+            return false;
+        }
+        descriptors_.clear();
+        ringKeys_.clear();
+        descriptors_.reserve(cnt);
+        ringKeys_.reserve(cnt);
+        for (uint32_t i = 0; i < cnt && ok; ++i)
+        {
+            Descriptor d(NUM_RING, NUM_SECTOR);
+            ok = std::fread(d.data(), sizeof(double),
+                            static_cast<size_t>(NUM_RING) * NUM_SECTOR, f)
+                 == static_cast<size_t>(NUM_RING) * NUM_SECTOR;
+            if (!ok) break;
+            descriptors_.push_back(std::move(d));
+            ringKeys_.push_back(makeRingKey(descriptors_.back()));
+        }
+        std::fclose(f);
+        ringKeyCloudDirty_ = true;
+        return ok;
+    }
+
+    // Locate the best column shift between two descriptors. Returned shift is
+    // an integer sector count; convert to yaw via shift * (2π / NUM_SECTOR).
+    int bestShift(const Descriptor& query, const Descriptor& ref) const
+    {
+        int bestShift = 0;
+        double minDist = std::numeric_limits<double>::max();
+        for (int shift = 0; shift < NUM_SECTOR; ++shift)
+        {
+            const double dist = computeCosineDist(query, ref, shift);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                bestShift = shift;
+            }
+        }
+        return bestShift;
+    }
+
+    static constexpr double sectorToYaw(int shift)
+    {
+        return -static_cast<double>(shift) * (2.0 * M_PI / NUM_SECTOR);
     }
 
 private:

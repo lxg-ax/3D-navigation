@@ -1,11 +1,11 @@
 """Mapping + navigation in one shot.
 
-Build a map and run the planner concurrently. Loop closures shift map->odom;
-the global plan manager re-queries at global_plan_query_frequency (default
-5 Hz) so paths refresh automatically on the corrected map.
+Build a map and run the planner concurrently. Loop closures shift map→odom;
+the global plan manager re-queries at ``global_plan_query_frequency`` (5 Hz
+by default) so paths refresh automatically on the corrected map.
 
-Save map: ros2 service call /lio_sam/save_map lio_sam/srv/SaveMap "{resolution: 0.2}"
-Tunables: src/dddnav_bringup/config/runtime.yaml
+Save map: see mapping.launch.py.
+Tunables: ``src/dddnav_bringup/config/runtime.yaml``.
 """
 
 import os
@@ -13,50 +13,28 @@ import sys
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, ExecuteProcess,
-                            OpaqueFunction, RegisterEventHandler, TimerAction)
-from launch.conditions import IfCondition
-from launch.event_handlers import OnShutdown
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
 sys.path.insert(0, os.path.join(
     get_package_share_directory('dddnav_bringup'), 'launch'))
 import bringup_paths
-
-
-def _resolve_nav_config(context, *args, **kwargs):
-    """Turn nav_profile (name or absolute path) into a nav_config arg."""
-    profile = LaunchConfiguration('nav_profile').perform(context)
-    return [DeclareLaunchArgument(
-        'nav_config',
-        default_value=bringup_paths.nav_config_path(profile),
-        description='Resolved absolute path to nav yaml (auto from nav_profile).',
-    )]
+import common_nodes
 
 
 def generate_launch_description():
-    # Get the launch directories
     bringup_dir  = get_package_share_directory('dddnav_bringup')
-    livox_dir    = get_package_share_directory('livox_ros_driver2')
     fast_lio_dir = get_package_share_directory('fast_lio')
     lio_sam_dir  = get_package_share_directory('lio_sam')
 
-    # Load runtime knobs
     rt = bringup_paths.load_runtime()
-    d  = rt['delays']
-    m  = rt['lidar_mount']
-    map_dir    = bringup_paths.bringup_map_dir()
-    livox_user = os.path.join(livox_dir, 'config', 'MID360_config.json')
+    map_dir = bringup_paths.bringup_map_dir()
 
-    # Create the launch configuration variables
     fastlio_config    = LaunchConfiguration('fastlio_config')
     lio_sam_config    = LaunchConfiguration('lio_sam_config')
-    nav_config        = LaunchConfiguration('nav_config')
     rviz_config       = LaunchConfiguration('rviz_config')
     auto_save_on_exit = LaunchConfiguration('auto_save_on_exit')
 
-    # Declare the launch arguments
     declare_fastlio_config_cmd = DeclareLaunchArgument(
         'fastlio_config',
         default_value=os.path.join(fast_lio_dir, 'config', 'mid360_pc2.yaml'),
@@ -67,12 +45,6 @@ def generate_launch_description():
         default_value=os.path.join(lio_sam_dir, 'config', 'params_mid360.yaml'),
         description='Full path to the LIO-SAM yaml',
     )
-    declare_nav_profile_cmd = DeclareLaunchArgument(
-        'nav_profile',
-        default_value='mid360_mapping',
-        description='Nav tuning profile name under dddnav_bringup/config/nav/, '
-                    'or an absolute path to a custom yaml',
-    )
     declare_rviz_config_cmd = DeclareLaunchArgument(
         'rviz_config',
         default_value=os.path.join(bringup_dir, 'rviz', 'mapping_nav.rviz'),
@@ -81,145 +53,42 @@ def generate_launch_description():
     declare_auto_save_cmd = DeclareLaunchArgument(
         'auto_save_on_exit',
         default_value='false',
-        description='True: clear old map at startup and auto-save on ctrl-C',
+        description='True: clear map/ at startup and run save_map_on_exit on '
+                    'Ctrl-C.',
     )
 
-    # Auto-save (same logic as mapping.launch.py)
-    pre_clean_cmd = ExecuteProcess(
-        cmd=['bash', '-lc',
-             f'rm -rf "{map_dir}/pcd" '
-             f'"{map_dir}/poses.pcd" "{map_dir}/edges.pcd" '
-             f'"{map_dir}/map.pcd" "{map_dir}/ground.pcd" '
-             f'"{map_dir}/GlobalMap.pcd" "{map_dir}/CornerMap.pcd" '
-             f'"{map_dir}/SurfMap.pcd" "{map_dir}/trajectory.pcd" '
-             f'"{map_dir}/transformations.pcd" && '
-             f'mkdir -p "{map_dir}/pcd"'],
-        output='screen',
-        condition=IfCondition(auto_save_on_exit),
-    )
-    save_on_shutdown_cmd = RegisterEventHandler(OnShutdown(on_shutdown=[
-        ExecuteProcess(
-            cmd=['bash', '-lc',
-                 'echo "[mapping_nav.launch] auto_save_on_exit=true, saving map..." && '
-                 'ros2 service call /save_liosam_posegraph std_srvs/srv/Empty {} && '
-                 'ros2 service call /lio_sam/save_map lio_sam/srv/SaveMap '
-                 f'"{{resolution: 0.2, destination: \\"{map_dir}/lio_sam\\"}}" && '
-                 'echo "[mapping_nav.launch] map saved to ' + map_dir + '"'],
-            output='screen',
-            condition=IfCondition(auto_save_on_exit),
-        ),
-    ]))
+    nav_profile_decl, nav_profile_resolve = bringup_paths.nav_profile_argument(
+        default_profile='mid360_mapping')
+    nav_config_param_files = [
+        bringup_paths.nav_base_yaml(),
+        LaunchConfiguration('nav_config'),
+    ]
 
-    # Sensor + TF
-    start_livox_driver_cmd = Node(
-        package='livox_ros_driver2', executable='livox_ros_driver2_node',
-        name='livox_lidar_publisher', output='screen',
-        parameters=[{
-            'xfer_format': 0, 'multi_topic': 0, 'data_src': 0,
-            'publish_freq': float(rt['livox_publish_freq']),
-            'output_data_type': 0,
-            'frame_id': 'livox_frame',
-            'user_config_path': livox_user,
-        }],
-    )
-    start_sensor_tf_cmd = Node(
-        package='tf2_ros', executable='static_transform_publisher',
-        name='sensor2baselink',
-        arguments=[str(m['x']), str(m['y']), str(m['z']),
-                   str(m['yaw']), str(m['pitch']), str(m['roll']),
-                   'base_link', 'livox_frame'],
-    )
-
-    # Bridges
-    start_livox_bridge_cmd = TimerAction(period=d['bridges'], actions=[
-        Node(package='dddnav_utils', executable='livox_pc2_to_liosam',
-             name='livox_pc2_to_liosam', output='screen',
-             parameters=[{'input_topic': '/livox/lidar',
-                          'liosam_output_topic': '/livox/lidar_liosam',
-                          'xyzi_output_topic': '/livox/lidar_liosam_xyzi'}]),
-    ])
-    start_fast_lio_cmd = TimerAction(period=d['bridges'], actions=[
-        Node(package='fast_lio', executable='fastlio_mapping',
-             name='fast_lio', output='screen',
-             parameters=[fastlio_config]),
+    ld = LaunchDescription([
+        declare_fastlio_config_cmd,
+        declare_lio_sam_config_cmd,
+        declare_rviz_config_cmd,
+        declare_auto_save_cmd,
+        nav_profile_decl,
+        nav_profile_resolve,
     ])
 
-    # LIO-SAM back-end
-    lio_sam_params = [lio_sam_config, bringup_paths.lio_sam_save_pcd_overlay()]
-    start_lio_sam_imu_cmd  = TimerAction(period=d['liosam_back'], actions=[
-        Node(package='lio_sam', executable='lio_sam_imuPreintegration',
-             output='screen', parameters=lio_sam_params)])
-    start_lio_sam_proj_cmd = TimerAction(period=d['liosam_back'], actions=[
-        Node(package='lio_sam', executable='lio_sam_imageProjection',
-             output='screen', parameters=lio_sam_params)])
-    start_lio_sam_feat_cmd = TimerAction(period=d['liosam_back'], actions=[
-        Node(package='lio_sam', executable='lio_sam_featureExtraction',
-             output='screen', parameters=lio_sam_params)])
-    start_lio_sam_opt_cmd  = TimerAction(period=d['liosam_back'], actions=[
-        Node(package='lio_sam', executable='lio_sam_mapOptimization',
-             output='screen', parameters=lio_sam_params)])
+    for action in common_nodes.auto_save_actions(
+            map_dir, auto_save_on_exit, label='mapping_nav'):
+        ld.add_action(action)
 
-    # Pose graph + health monitor
-    start_posegraph_cmd = TimerAction(period=d['liosam_to_pg'], actions=[
-        Node(package='dddnav_utils', executable='liosam_to_posegraph.py',
-             name='liosam_to_posegraph', output='screen',
-             parameters=[bringup_paths.keyframes_yaml(),
-                         bringup_paths.keyframes_save_dir_overlay()]),
-    ])
-    start_health_cmd = TimerAction(period=d['health'], actions=[
-        Node(package='dddnav_utils', executable='slam_health_monitor.py',
-             name='slam_health_monitor', output='screen'),
-    ])
+    for action in common_nodes.lidar_driver_and_tf(rt):
+        ld.add_action(action)
+    for action in common_nodes.lidar_front_end(rt, fastlio_config):
+        ld.add_action(action)
+    for action in common_nodes.liosam_back_end(
+            rt, lio_sam_config,
+            bringup_paths.lio_sam_save_pcd_overlay(),
+            bringup_paths.keyframes_yaml(),
+            bringup_paths.keyframes_save_dir_overlay()):
+        ld.add_action(action)
+    for action in common_nodes.nav_stack(rt, nav_config_param_files):
+        ld.add_action(action)
 
-    # Navigation stack
-    start_global_planner_cmd = TimerAction(period=d['global_planner'], actions=[
-        Node(package='global_planner', executable='global_planner_node',
-             output='screen', parameters=[nav_config])])
-    start_move_base_cmd = TimerAction(period=d['move_base'], actions=[
-        Node(package='p2p_move_base', executable='p2p_move_base_node',
-             output='screen', parameters=[nav_config])])
-    start_clicked_goal_cmd = TimerAction(period=d['clicked_goal'], actions=[
-        Node(package='p2p_move_base', executable='clicked2goal.py',
-             name='clicked2goal', output='screen')])
-
-    start_rviz_cmd = TimerAction(period=d['rviz'], actions=[
-        Node(package='rviz2', executable='rviz2', name='rviz2',
-             output='screen', arguments=['-d', rviz_config]),
-    ])
-
-    ld = LaunchDescription()
-
-    # Declare the launch options
-    ld.add_action(declare_fastlio_config_cmd)
-    ld.add_action(declare_lio_sam_config_cmd)
-    ld.add_action(declare_nav_profile_cmd)
-    ld.add_action(OpaqueFunction(function=_resolve_nav_config))
-    ld.add_action(declare_rviz_config_cmd)
-    ld.add_action(declare_auto_save_cmd)
-
-    # Auto-save
-    ld.add_action(pre_clean_cmd)
-    ld.add_action(save_on_shutdown_cmd)
-
-    # Sensor + TF
-    ld.add_action(start_livox_driver_cmd)
-    ld.add_action(start_sensor_tf_cmd)
-
-    # SLAM stack
-    ld.add_action(start_livox_bridge_cmd)
-    ld.add_action(start_fast_lio_cmd)
-    ld.add_action(start_lio_sam_imu_cmd)
-    ld.add_action(start_lio_sam_proj_cmd)
-    ld.add_action(start_lio_sam_feat_cmd)
-    ld.add_action(start_lio_sam_opt_cmd)
-    ld.add_action(start_posegraph_cmd)
-    ld.add_action(start_health_cmd)
-
-    # Navigation
-    ld.add_action(start_global_planner_cmd)
-    ld.add_action(start_move_base_cmd)
-    ld.add_action(start_clicked_goal_cmd)
-
-    # Visualization
-    ld.add_action(start_rviz_cmd)
+    ld.add_action(common_nodes.rviz_action(rt, rviz_config))
     return ld

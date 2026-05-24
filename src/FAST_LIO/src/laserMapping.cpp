@@ -55,6 +55,7 @@
 #include <pcl/io/pcd_io.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
@@ -950,6 +951,12 @@ public:
         pubLaserCloudMap_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/Laser_map", 20);
         pubOdomAftMapped_ = this->create_publisher<nav_msgs::msg::Odometry>("/Odometry", 20);
         pubPath_ = this->create_publisher<nav_msgs::msg::Path>("/path", 20);
+        // FAST-LIO health metrics. Index 0: scan-to-map residual (m).
+        // Index 1: effective correspondence count this frame.
+        // Downstream (pose_fusion) inflates Q when residual rises above its
+        // baseline so MCL gets more weight in jolts / dynamic scenes.
+        pubLioHealth_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
+            "/fast_lio/health", 20);
 
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -1084,7 +1091,15 @@ private:
             if (++odom_pub_count % 50 == 1)
                 RCLCPP_INFO(this->get_logger(), "Publishing odom #%d pos=(%.2f,%.2f,%.2f)", 
                     odom_pub_count, state_point.pos(0), state_point.pos(1), state_point.pos(2));
-            publish_odometry(pubOdomAftMapped_, tf_broadcaster_, tf_buffer_, this->get_logger());   
+            publish_odometry(pubOdomAftMapped_, tf_broadcaster_, tf_buffer_, this->get_logger());
+
+            // FAST-LIO health: scan-to-map residual + effective correspondence count.
+            // 0 = res_mean_last (metres), 1 = effct_feat_num (count).
+            {
+                std_msgs::msg::Float64MultiArray health;
+                health.data = {res_mean_last, static_cast<double>(effct_feat_num)};
+                pubLioHealth_->publish(health);
+            }
             /*** add the feature points to map kdtree ***/
             t3 = omp_get_wtime();
             map_incremental();
@@ -1156,6 +1171,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudEffect_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudMap_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdomAftMapped_;
+    rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pubLioHealth_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubPath_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pcl_pc_;

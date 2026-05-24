@@ -12,6 +12,17 @@ lidar_mount:
   pitch: 0.0
   yaw:   0.0
 
+# --- Camera mounting (base_link <- camera_link) -------------------------------
+# Used by the *_with_camera launches. xyz in meters, rpy in radians.
+# Defaults match a forward-facing RealSense ~30cm above base.
+camera_mount:
+  x:     0.2
+  y:     0.0
+  z:     0.3
+  roll:  0.0
+  pitch: 0.0
+  yaw:   0.0
+
 # --- Driver --------------------------------------------------------------------
 livox_publish_freq: 10.0      # Hz, must match physical Mid360 setting
 

@@ -128,6 +128,31 @@ Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` a
 
 `mapping*.launch.py` 不再发布静态 `map→odom` 占位 TF（之前会和 LIO-SAM `mapOptimization` 的动态广播抢同一条边）。LIO-SAM 起来前 RViz 看不到 `map` 帧属正常，等 5–10s 后端起来即可。
 
+### 全局重定位（kidnapped robot）
+
+`localization*.launch.py` 默认会启动 `dddnav_utils/sc_global_init`：用建图阶段写入 `share/dddnav_bringup/map/lio_sam/sc_db.bin` 的 Scan Context 描述符 + `poses.pcd` 关键帧位姿，对第一帧 LiDAR 做 SC 查询；连续 N 帧匹配同一关键帧后发 `/initial_3d_pose`，MCL 直接收敛。无需操作员在 RViz 点初始位姿。
+
+如果地图里没有 `sc_db.bin`（旧地图，或建图时关掉了 SC），节点会安静退出，runtime.yaml 的 `initial_pose` 兜底仍然生效。手动 `/initial_3d_pose` 仍然能再次拉粒子。
+
+### 运行时 telemetry
+
+`nav_perf_monitor.py` 跟 `slam_health_monitor.py` 一起跑，两者都把状态发到 `/diagnostics`：
+
+| 监控对象 | 节点 |
+|---------|------|
+| `/Odometry`、`/odom_filtered` 速率 / age | `nav_perf_monitor` |
+| `cmd_vel` 频率（控制环卡顿） | `nav_perf_monitor` |
+| `/global_planner/path` 重规划间隔 | `nav_perf_monitor` |
+| FAST-LIO 残差 / 有效 correspondences | `nav_perf_monitor` |
+| TF 边 liveness、`map→odom` 跳变 | `slam_health_monitor` |
+| `/odom_filtered` 协方差 trace | `slam_health_monitor` |
+
+Foxglove / RViz Diagnostic 面板直接订 `/diagnostics` 就能可视化。
+
+### 自适应 ESKF（FAST-LIO 残差驱动）
+
+FAST-LIO 在 `/fast_lio/health` 上发 `[scan_to_map_residual_m, effective_feats]`。`pose_fusion` 订阅它，残差超过基线时把过程噪声 Q 放大（最高 16x），稀疏对应（feats 不够）时也强制提权，让 MCL 的全局观测在颠簸 / 动态 / 长走廊时拿到更大权重。关掉的话把 `pose_fusion.yaml` 里 `adaptive_q_gain` 设为 0。
+
 ### TF 链路所有权
 
 | 边 | 所有者 | 频率 | 备注 |

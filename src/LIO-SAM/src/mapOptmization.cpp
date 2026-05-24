@@ -264,6 +264,33 @@ public:
             *globalMapCloud += *globalCornerCloud;
             *globalMapCloud += *globalSurfCloud;
             int ret = pcl::io::savePCDFileBinary(saveMapDirectory + "/GlobalMap.pcd", *globalMapCloud);
+
+            // Persist the Scan Context database alongside the map. The
+            // standalone sc_global_init node (dddnav_utils) loads this on
+            // startup and publishes /initial_3d_pose so MCL can converge
+            // without an operator-supplied seed.
+            //
+            // Loop-closure SC uses world-frame clouds (so column-shift
+            // recovers absolute yaw between two keyframes); for global init
+            // we want body-frame descriptors so the runtime query (a fresh
+            // LiDAR scan) lines up. Build a body-frame DB on the fly here
+            // from the per-keyframe corner+surf clouds.
+            if (!cornerCloudKeyFrames.empty()) {
+                ScanContext bodySc;
+                for (size_t i = 0; i < cornerCloudKeyFrames.size(); ++i) {
+                    pcl::PointCloud<PointType>::Ptr bodyCloud(new pcl::PointCloud<PointType>());
+                    *bodyCloud += *cornerCloudKeyFrames[i];
+                    *bodyCloud += *surfCloudKeyFrames[i];
+                    bodySc.addDescriptor(bodySc.makeDescriptor(bodyCloud));
+                }
+                const std::string scPath = saveMapDirectory + "/sc_db.bin";
+                if (bodySc.saveDescriptors(scPath))
+                    cout << "Scan Context db (body frame) saved ("
+                         << bodySc.size() << " descriptors) -> "
+                         << scPath << endl;
+                else
+                    cout << "Scan Context db save FAILED -> " << scPath << endl;
+            }
             res->success = ret == 0;
             downSizeFilterCorner.setLeafSize(mappingCornerLeafSize, mappingCornerLeafSize, mappingCornerLeafSize);
             downSizeFilterSurf.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);

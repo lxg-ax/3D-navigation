@@ -36,6 +36,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 
@@ -81,6 +82,37 @@ public:
     // Mahalanobis gate (chi^2_6 quantile). 99% ≈ 16.81. Set <=0 to disable.
     declare_parameter<double>("mahalanobis_gate", 16.81);
 
+    // ZUPT: when both translational + angular speed estimates are below the
+    // configured thresholds we treat the body as stationary and shrink the
+    // process noise. Helps avoid covariance ballooning while parked.
+    declare_parameter<double>("zupt_lin_vel_thresh", 0.02);  // m/s
+    declare_parameter<double>("zupt_ang_vel_thresh", 0.02);  // rad/s
+    declare_parameter<double>("zupt_proc_scale",     0.1);   // multiplies Q
+
+    // Adaptive Q: inflate process noise when the FAST-LIO front-end is having
+    // trouble (residual rises). We subscribe to /fast_lio/health which packs
+    // [res_mean (m), effct_feat_num] and scale Q by:
+    //   q_scale_residual = 1 + adaptive_q_gain * max(0, residual - baseline) / baseline
+    // capped at adaptive_q_max. Set adaptive_q_gain<=0 to disable.
+    declare_parameter<std::string>("lio_health_topic",   "/fast_lio/health");
+    declare_parameter<double>("adaptive_q_baseline",     0.05);  // metres
+    declare_parameter<double>("adaptive_q_gain",         5.0);
+    declare_parameter<double>("adaptive_q_max",          16.0);
+    declare_parameter<int>("adaptive_q_min_feats",       50);    // <feats → boost
+    // Gate failure handling: after N consecutive rejections, force-accept the
+    // measurement (re-bootstrap if you prefer the term). Set to 0 to disable.
+    declare_parameter<int>("gate_reset_after",       8);
+    // Covariance bound: clamps each tangent diagonal so a long blackout does
+    // not let the trace explode. Set to <= 0 to disable.
+    declare_parameter<double>("max_cov_pos",         4.0);
+    declare_parameter<double>("max_cov_rot",         1.0);
+    // Auto-bootstrap: if no MCL pose arrives for this long after startup, use
+    // (init_x/y/z) from the parameters as a self-init fallback.
+    declare_parameter<double>("auto_init_timeout",   0.0);   // seconds, 0=off
+    declare_parameter<double>("auto_init_x",         0.0);
+    declare_parameter<double>("auto_init_y",         0.0);
+    declare_parameter<double>("auto_init_z",         0.0);
+
     odom_topic_  = get_parameter("odom_topic").as_string();
     pose_topic_  = get_parameter("pose_topic").as_string();
     init_topic_  = get_parameter("initial_pose_topic").as_string();
@@ -96,6 +128,20 @@ public:
     init_pos_    = get_parameter("init_cov_pos").as_double();
     init_rot_    = get_parameter("init_cov_rot").as_double();
     gate_chi2_   = get_parameter("mahalanobis_gate").as_double();
+    zupt_v_      = get_parameter("zupt_lin_vel_thresh").as_double();
+    zupt_w_      = get_parameter("zupt_ang_vel_thresh").as_double();
+    zupt_scale_  = get_parameter("zupt_proc_scale").as_double();
+    adaptive_q_baseline_ = get_parameter("adaptive_q_baseline").as_double();
+    adaptive_q_gain_     = get_parameter("adaptive_q_gain").as_double();
+    adaptive_q_max_      = get_parameter("adaptive_q_max").as_double();
+    adaptive_q_min_feats_ = get_parameter("adaptive_q_min_feats").as_int();
+    gate_reset_  = get_parameter("gate_reset_after").as_int();
+    max_cov_pos_ = get_parameter("max_cov_pos").as_double();
+    max_cov_rot_ = get_parameter("max_cov_rot").as_double();
+    auto_init_to_ = get_parameter("auto_init_timeout").as_double();
+    auto_init_x_  = get_parameter("auto_init_x").as_double();
+    auto_init_y_  = get_parameter("auto_init_y").as_double();
+    auto_init_z_  = get_parameter("auto_init_z").as_double();
 
     // ---- IO --------------------------------------------------------------
     rclcpp::QoS sensor_qos(rclcpp::KeepLast(50));
@@ -113,9 +159,24 @@ public:
       init_topic_, 2,
       std::bind(&PoseFusionNode::onInitialPose, this, _1));
 
+    // FAST-LIO health topic: drives adaptive Q.
+    const auto health_topic =
+      get_parameter("lio_health_topic").as_string();
+    if (!health_topic.empty() && adaptive_q_gain_ > 0.0) {
+      sub_health_ = create_subscription<std_msgs::msg::Float64MultiArray>(
+        health_topic, 10,
+        std::bind(&PoseFusionNode::onLioHealth, this, _1));
+    }
+
     pub_odom_ = create_publisher<nav_msgs::msg::Odometry>(out_topic_, 50);
     if (publish_tf_) {
       tfb_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+    }
+
+    if (auto_init_to_ > 0.0) {
+      auto_init_timer_ = create_wall_timer(
+        std::chrono::milliseconds(static_cast<int>(auto_init_to_ * 1000)),
+        std::bind(&PoseFusionNode::tryAutoInit, this));
     }
 
     RCLCPP_INFO(get_logger(),
@@ -157,15 +218,30 @@ private:
       if (dt < 0) dt = 0;
       if (dt > 1.0) dt = 1.0;  // clamp on long pauses
 
+      // ZUPT: when both translational and angular speeds are below the
+      // configured thresholds we treat the body as stationary and shrink
+      // the process noise. Scale stays >= zupt_scale_ to avoid singular Q.
+      double q_scale = 1.0;
+      if (dt > 1e-6) {
+        const double v = delta_p.norm() / dt;
+        const Eigen::Vector3d w_axis = logSO3Local(delta_q);
+        const double w = w_axis.norm() / dt;
+        if (v < zupt_v_ && w < zupt_w_) {
+          q_scale = std::max(zupt_scale_, 1e-3);
+        }
+      }
+
       // Diagonal process-noise covariance, scaled by dt.
       EskfSE3::Cov Q = EskfSE3::Cov::Zero();
-      const double qp = proc_pos_ * proc_pos_ * dt;
-      const double qr = proc_rot_ * proc_rot_ * dt;
+      const double q_total = q_scale * adaptive_q_scale_;
+      const double qp = proc_pos_ * proc_pos_ * dt * q_total;
+      const double qr = proc_rot_ * proc_rot_ * dt * q_total;
       Q(0, 0) = qp; Q(1, 1) = qp; Q(2, 2) = qp;
       Q(3, 3) = qr; Q(4, 4) = qr; Q(5, 5) = qr;
 
       if (eskf_.initialized()) {
         eskf_.predict(delta_p, delta_q, Q);
+        clampCovariance();
       }
     }
 
@@ -241,8 +317,25 @@ private:
 
     const bool accepted = eskf_.update(p_m_b, q_m_b, R, gate_chi2_);
     if (!accepted) {
+      gate_reject_count_ += 1;
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
-        "MCL pose rejected by Mahalanobis gate (chi2 > %.2f)", gate_chi2_);
+        "MCL pose rejected by Mahalanobis gate (chi2 > %.2f), streak=%d",
+        gate_chi2_, gate_reject_count_);
+      if (gate_reset_ > 0 && gate_reject_count_ >= gate_reset_) {
+        EskfSE3::Cov P0 = EskfSE3::Cov::Zero();
+        P0.diagonal() <<
+          init_pos_ * init_pos_, init_pos_ * init_pos_, init_pos_ * init_pos_,
+          init_rot_ * init_rot_, init_rot_ * init_rot_, init_rot_ * init_rot_;
+        eskf_.initialize(p_m_b, q_m_b, P0);
+        gate_reject_count_ = 0;
+        RCLCPP_WARN(get_logger(),
+          "ESKF re-bootstrapped after %d consecutive gate rejects "
+          "at (%.2f, %.2f, %.2f)",
+          gate_reset_, p_m_b.x(), p_m_b.y(), p_m_b.z());
+      }
+    } else {
+      gate_reject_count_ = 0;
+      clampCovariance();
     }
   }
 
@@ -330,6 +423,88 @@ private:
     }
   }
 
+  // -------------------------------------------------------------------------
+  // FAST-LIO residual / feature-count health update. Anything above the
+  // configured baseline ramps up adaptive_q_scale_ which the predict step
+  // multiplies into Q, so the filter trusts MCL more during jolts / dynamic
+  // scenes / featureless corridors.
+  // -------------------------------------------------------------------------
+  void onLioHealth(const std_msgs::msg::Float64MultiArray::ConstSharedPtr msg)
+  {
+    if (msg->data.size() < 1 || adaptive_q_gain_ <= 0.0) return;
+    const double residual = msg->data[0];
+    const int feats = (msg->data.size() >= 2) ?
+                      static_cast<int>(msg->data[1]) : 1000;
+
+    double scale = 1.0;
+    if (residual > adaptive_q_baseline_ && adaptive_q_baseline_ > 1e-9) {
+      const double over = (residual - adaptive_q_baseline_) /
+                          adaptive_q_baseline_;
+      scale = 1.0 + adaptive_q_gain_ * over;
+    }
+    if (feats > 0 && feats < adaptive_q_min_feats_) {
+      // Sparse correspondence -> front-end is starving, boost MCL weight too.
+      scale = std::max(scale, 4.0);
+    }
+    scale = std::min(scale, adaptive_q_max_);
+    std::lock_guard<std::mutex> lk(mtx_);
+    adaptive_q_scale_ = scale;
+  }
+
+  // ---- helpers ---------------------------------------------------------
+  // Local copy of the SO(3) log so we don't have to expose it from the
+  // EskfSE3 header. Returns axis-angle vector (rad).
+  static Eigen::Vector3d logSO3Local(const Eigen::Quaterniond & q_in)
+  {
+    Eigen::Quaterniond q = q_in.normalized();
+    if (q.w() < 0) q.coeffs() = -q.coeffs();
+    const Eigen::Vector3d v(q.x(), q.y(), q.z());
+    const double n = v.norm();
+    if (n < 1e-9) return 2.0 * v;
+    return v * (2.0 * std::atan2(n, q.w()) / n);
+  }
+
+  void clampCovariance()
+  {
+    if (max_cov_pos_ <= 0.0 && max_cov_rot_ <= 0.0) return;
+    EskfSE3::Cov P = eskf_.covariance();
+    bool changed = false;
+    for (int i = 0; i < 3; ++i) {
+      if (max_cov_pos_ > 0.0 && P(i, i) > max_cov_pos_) {
+        P(i, i) = max_cov_pos_; changed = true;
+      }
+    }
+    for (int i = 3; i < 6; ++i) {
+      if (max_cov_rot_ > 0.0 && P(i, i) > max_cov_rot_) {
+        P(i, i) = max_cov_rot_; changed = true;
+      }
+    }
+    if (changed) {
+      eskf_.initialize(eskf_.position(), eskf_.orientation(), P);
+    }
+  }
+
+  // Auto-init fallback: if no MCL pose has arrived after auto_init_to_
+  // seconds we drop the filter at the configured initial pose so downstream
+  // consumers can at least see /odom_filtered. MCL takes over once it
+  // converges (its first message will reset the filter via the gate logic).
+  void tryAutoInit()
+  {
+    std::lock_guard<std::mutex> lk(mtx_);
+    auto_init_timer_->cancel();
+    if (eskf_.initialized()) return;
+    Eigen::Vector3d p(auto_init_x_, auto_init_y_, auto_init_z_);
+    Eigen::Quaterniond q = Eigen::Quaterniond::Identity();
+    EskfSE3::Cov P0 = EskfSE3::Cov::Zero();
+    const double pos2 = init_pos_ * init_pos_;
+    const double rot2 = init_rot_ * init_rot_;
+    P0.diagonal() << pos2, pos2, pos2, rot2, rot2, rot2;
+    eskf_.initialize(p, q, P0);
+    RCLCPP_WARN(get_logger(),
+      "ESKF auto-initialised after %.1fs without MCL at (%.2f, %.2f, %.2f)",
+      auto_init_to_, p.x(), p.y(), p.z());
+  }
+
   // ---- State -----------------------------------------------------------
   std::mutex mtx_;
   EskfSE3 eskf_;
@@ -345,10 +520,23 @@ private:
   bool publish_tf_;
   double proc_pos_, proc_rot_, meas_pos_, meas_rot_;
   double init_pos_, init_rot_, gate_chi2_;
+  double zupt_v_{0.02}, zupt_w_{0.02}, zupt_scale_{0.1};
+  double adaptive_q_baseline_{0.05};
+  double adaptive_q_gain_{0.0};
+  double adaptive_q_max_{16.0};
+  int    adaptive_q_min_feats_{50};
+  double adaptive_q_scale_{1.0};
+  int gate_reset_{0};
+  int gate_reject_count_{0};
+  double max_cov_pos_{0.0}, max_cov_rot_{0.0};
+  double auto_init_to_{0.0};
+  double auto_init_x_{0.0}, auto_init_y_{0.0}, auto_init_z_{0.0};
+  rclcpp::TimerBase::SharedPtr auto_init_timer_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_init_;
+  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_health_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfb_;
 };
