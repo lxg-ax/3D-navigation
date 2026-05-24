@@ -26,10 +26,10 @@ Optional **YOLOv8 + TensorRT**: [`dddnav_trt`](src/dddnav_trt/), build with `-DT
 
 | Path | Role |
 |------|------|
-| [dddnav_bringup](src/dddnav_bringup/) | Launches: mapping / mapping+nav / localization (+ optional camera stack) |
+| [dddnav_bringup](src/dddnav_bringup/) | Launches: mapping / mapping+nav / localization (+ optional camera stack)。**导航调参 yaml 集中在 [`dddnav_bringup/config/nav/`](src/dddnav_bringup/config/nav/)**，launch 用 `nav_profile:=<name>` 切换 |
 | [dddnav_global_planner](src/dddnav_global_planner/) | 3D global planning |
 | [dddnav_local_planner](src/dddnav_local_planner/) | `local_planner`, `mpc_critics`, `trajectory_generators`, `recovery_behaviors`, `base_trajectory` |
-| [dddnav_p2p_move_base](src/dddnav_p2p_move_base/) | `p2p_move_base` node / configs |
+| [dddnav_p2p_move_base](src/dddnav_p2p_move_base/) | `p2p_move_base` 节点（Go2 yaml 仍在本包 `config/`，Mid360 主线 yaml 已搬到 `dddnav_bringup/config/nav/`） |
 | [dddnav_sys_core](src/dddnav_sys_core/) | Shared types / services |
 | [FAST_LIO](src/FAST_LIO/) | `fast_lio` |
 | [LIO-SAM](src/LIO-SAM/) | `lio_sam` |
@@ -107,7 +107,20 @@ ros2 launch dddnav_bringup localization.launch.py
 ros2 launch dddnav_bringup localization_with_camera.launch.py
 ```
 
-Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` after install). `localization*.launch.py` sets `sub_maps.pose_graph_dir` there; `mapping*.launch.py` sets LIO-SAM `savePCDDirectory` there. **`*.pcd` under `map/` is not tracked in git**—run mapping locally, then save maps as in [dddnav_bringup/README.md](src/dddnav_bringup/README.md) (`/lio_sam/save_map`, `/save_liosam_posegraph`).
+常用参数（每个 launch 都支持）：
+
+```bash
+# 切换导航调参 profile（去 dddnav_bringup/config/nav/ 找对应 yaml）
+ros2 launch dddnav_bringup localization.launch.py nav_profile:=mid360_localization_with_camera
+ros2 launch dddnav_bringup mapping_nav.launch.py  nav_profile:=mid360_mapping_with_camera
+# 也可以直接传绝对路径
+ros2 launch dddnav_bringup localization.launch.py nav_profile:=/abs/path/custom.yaml
+
+# 建图模式：启动清旧图 + ctrl-C 自动覆盖到 dddnav_bringup/map/
+ros2 launch dddnav_bringup mapping.launch.py auto_save_on_exit:=true
+```
+
+Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` after install). `localization*.launch.py` sets `sub_maps.pose_graph_dir` there; `mapping*.launch.py` sets LIO-SAM `savePCDDirectory` there. **`*.pcd` under `map/` is not tracked in git**—run mapping locally, then save maps as in [dddnav_bringup/README.md](src/dddnav_bringup/README.md) (先 `/save_liosam_posegraph` 再 `/lio_sam/save_map`，或加 `auto_save_on_exit:=true` 让 launch 自动覆盖)。
 
 关键帧抽取阈值统一在 [`dddnav_bringup/config/keyframes_mid360.yaml`](src/dddnav_bringup/config/keyframes_mid360.yaml)（`keyframe_dist` / `keyframe_angle` / `ground_angle_thresh`），`mapping*.launch.py` 通过 `bringup_paths.keyframes_yaml()` + `keyframes_save_dir_overlay()` 加载并把 `save_dir` 强制定向到 `dddnav_bringup/map/`。换室内/户外场景调这个 yaml 即可，不用改 launch。
 
@@ -131,6 +144,7 @@ Pose graph / map output: **`dddnav_bringup/map/`** (`share/dddnav_bringup/map` a
 |------|------|
 | [`dddnav_bringup/config/runtime.yaml`](src/dddnav_bringup/config/runtime.yaml) | LiDAR 安装外参 / 启动延时 / 初始位姿 / 驱动频率 |
 | [`dddnav_bringup/config/keyframes_mid360.yaml`](src/dddnav_bringup/config/keyframes_mid360.yaml) | 关键帧抽取阈值 |
+| [`dddnav_bringup/config/nav/`](src/dddnav_bringup/config/nav/) | **导航调参主战场**：`mid360_mapping.yaml` / `mid360_localization.yaml` / `*_with_camera.yaml` / `*_with_depth_camera.yaml`。launch 用 `nav_profile:=<name>` 切换。复制一份改名即可成新 profile |
 | [`LIO-SAM/config/params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml) | LIO-SAM 全部调参（IMU、回环、Scan Context） |
 | [`dddnav_pose_fusion/config/pose_fusion.yaml`](src/dddnav_pose_fusion/config/pose_fusion.yaml) | ESKF Q/R 协方差、Mahalanobis 门 |
 

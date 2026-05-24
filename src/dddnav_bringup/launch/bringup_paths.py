@@ -42,3 +42,22 @@ def load_runtime():
     import yaml
     with open(runtime_yaml_path(), 'r') as f:
         return yaml.safe_load(f) or {}
+
+
+def nav_config_path(profile):
+    """Resolve a nav-tuning yaml under dddnav_bringup/config/nav/.
+
+    `profile` may be a bare name (e.g. ``mid360_mapping``), a name with
+    suffix (``mid360_mapping.yaml``) or an absolute path. Absolute paths and
+    paths that already exist on disk are passed through untouched, which lets
+    callers point ``nav_config:=/abs/path/custom.yaml`` for one-off tuning.
+    """
+    if not profile:
+        raise ValueError('nav profile is empty')
+    # Absolute path or already-resolved file: trust it.
+    if os.path.isabs(profile) and os.path.isfile(profile):
+        return profile
+    name = profile if profile.endswith('.yaml') else f'{profile}.yaml'
+    nav_dir = os.path.join(get_package_share_directory('dddnav_bringup'),
+                           'config', 'nav')
+    return os.path.join(nav_dir, name)
