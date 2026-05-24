@@ -1,58 +1,54 @@
 # dddnav_perception_3d
 
-ROS 包名 **`perception_3d`**。3D 点云上的标记/清除、限速区、禁入区等。总览与 bag 路径：[根 README](../../README.md)。规划侧见 [dddnav_global_planner](../dddnav_global_planner/) · [dddnav_local_planner](../dddnav_local_planner/)。
+ROS 包名 **`perception_3d`**。3D 代价地图，对应 Nav2 里 `nav2_costmap_2d` 的角色，但走的是点云。
 
-<table>
-  <tr>
-    <td width="33%"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/perception_3d_global_plan.gif"/>全局规划</td>
-    <td width="33%"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/marking_tracking_clearing.gif"/>标记/清除</td>
-    <td width="33%"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/speed_limit_zone.png"/>限速/禁入</td>
-  </tr>
-</table>
+## 原理
 
-**传感器：** 多线旋转雷达 · 深度相机 · 扫描雷达（Mid360 / Unitree L1 等）  
-**图层：** static · speed limit · no-entry
+* 把"地面 + 障碍"建模成 3D ground graph：地面点连成图（节点 + 邻居边），障碍点投到对应 voxel 标记
+* 多个 layer 叠加（plugin 体系），每层维护自己的标记 / 清除规则
+* 输出两份代价图：`perception_3d_local`（局部，给 local planner 做碰撞）和 `perception_3d_global`（全局，给 global planner 用图搜索）
 
----
+## 内置图层
 
-## Demo 流程（可选 Docker）
+| 插件 | 作用 |
+|------|------|
+| `StaticLayer` | 加载位姿图存的静态点云（`mapcloud` / `mapground` 或 mapping 模式下的 `lego_loam_map`），构 ground graph |
+| `MultiLayerSpinningLidar` | 当前雷达点云做标记 / 清除（按扇区切片，原本写给旋转雷达） |
+| `DepthCameraLayer` | 深度相机 / 语义点云接入，补 LiDAR 近距离盲区 |
+| `PathBlockedStrategy` | 检测路径前方是否被堵 |
+| `SpeedLimitLayer` / `NoEntryLayer` | 限速区 / 禁入区，外部 PCD 加载 |
+| `ClusterMarking` | 点云聚类标记（动态物体雏形） |
 
-`REPO` = 含 `src/`、`dddnav_docker/` 的目录。
+## 在系统中的角色
 
-```bash
-cd /path/to/REPO/dddnav_docker/docker_file && ./build.bash
-cd /path/to/REPO/dddnav_docker && ./run_demo.bash   # 工作区挂到容器 /root/dddnav_navigation
+```
+LiDAR / 深度相机 / 语义点云 ─► perception_3d_local  ─► local_planner
+                                                  
+位姿图 + 子图 ─────────────► perception_3d_global ─► global_planner
 ```
 
-在容器或本机已编译环境中：
+每个 layer 在 `dddnav_bringup/config/nav/<profile>.yaml` 里通过 `plugins:` 列表挂载 + 各自参数。
 
-```bash
-cd /path/to/REPO/src/dddnav_perception_3d && ./download_files.bash   # 按 demo 下 bag
-cd /path/to/REPO && source /opt/ros/humble/setup.bash
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-source install/setup.bash
-```
+## 主要参数
 
-| Demo | Launch |
-|------|--------|
-| 多线雷达 (Leishen C16) | `ros2 launch perception_3d multilayer_spinning_lidar_3d_ros_launch.py` |
-| 双深度相机 | `ros2 launch perception_3d multi_depth_camera_3d_ros_launch.py` |
-| 扫描雷达 (Unitree G4) | `ros2 launch perception_3d scanning_lidar_3d_ros_launch.py` |
+| Key | 含义 |
+|-----|------|
+| `plugins` | 当前代价图挂哪些层 |
+| `inscribed_radius` / `inflation_radius` | 内切圆 / 膨胀半径 |
+| `inflation_descending_rate` | 代价随距离衰减率 |
+| `max_obstacle_distance` | 障碍点保留的最大距离 |
+| 各插件子段 | 插件自己的细参数 |
 
-Launch 后约 3s 自动播 bag；bag 默认在 **`~/dddnav_bags/...`**（与根 README / docker 说明一致）。
+## 限速区 / 禁入区
 
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/multilayer_lidar_demo.gif" width="640" height="400"/></p>
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/multi_depth_camera_demo.gif" width="640" height="400"/></p>
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/scanning_lidar_demo.gif" width="640" height="400"/></p>
+YAML 在 [`config/speed_limit_layer.yaml`](config/speed_limit_layer.yaml) / [`config/no_entry_layer.yaml`](config/no_entry_layer.yaml)，运行时用 PCD 文件圈定区域。
 
-## 限速 / 禁入 YAML
-
-运行时相对 **`perception_3d` 的 share** 解析路径：[speed_limit_layer.yaml](config/speed_limit_layer.yaml) · [no_entry_layer.yaml](config/no_entry_layer.yaml)
-
-## Zone 编辑
+## Zone 编辑器
 
 ```bash
 ros2 launch perception_3d zone_editor_utils.launch
 ```
 
-[![zone editor](https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/perception_3d/point_cloud_editor.png)](https://youtu.be/DHgzRD4HrjU)
+## 已知点（Mid360 适配）
+
+`MultiLayerSpinningLidar` 默认是给旋转雷达写的扇区切片；Mid360 的非重复扫描下 `vertical_FOV_*` + `scan_effective_*` 这套切片不准。短期内通过 `perception_window_size` / `segmentation_ignore_ratio` 调整能用，长期建议给 Mid360 写一个基于时空积累的专用动态层。

@@ -1,38 +1,43 @@
-# mcl_3dl
+# dddnav_mcl_3dl
 
-ROS 包 **`mcl_3dl`**（目录 `dddnav_mcl_3dl/`）。基于 [at-wat/mcl_3dl](https://github.com/at-wat/mcl_3dl) 改地面车版本。总览：[根 README](../../README.md)。
+ROS 包名 **`mcl_3dl`**。基于 [at-wat/mcl_3dl](https://github.com/at-wat/mcl_3dl) 改的 3D 蒙特卡洛定位，适配地面机器人。
 
-**位姿图：** 默认 Mid360 线用 **LIO-SAM + `liosam_to_posegraph`** 写到 **`dddnav_bringup/map`**，`localization.launch.py` 设 `sub_maps.pose_graph_dir`。老 **Go2 / bag** 演示仍可能走 **`lego_loam_bor` + `mcl_feature`**。子图按 `sub_maps.pose_graph_dir` 加载，不是单张大 PCD。
+## 原理
 
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/dddnav_mcl_3dl/dddnav_mcl_3dl.gif" width="640" height="400"/></p>
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/dddnav_mcl_3dl/mcl_3dl_diagram.png" width="640" height="400"/></p>
+* 粒子滤波，每个粒子是 6-DoF 位姿（x, y, z, roll, pitch, yaw）
+* **预测**：用 FAST-LIO 输出的 `/Odometry` 做 odom 预积分
+* **观测**：当前点云的 4 类特征（边 / 面 / 地面 / 强度）与子地图做最近邻匹配，按距离打分
+* **重采样**：按行驶距离 / 转角触发，配合 KLD 风格的协方差扩展
+* 不发 `map→odom`（`publish_tf=false`），交给 `dddnav_pose_fusion` 做高频融合后统一输出
 
-相对原版要点：ROS 2；粒子更新按行驶距离/转角减负；子图降算力；地面约束；聚类+法向的打分减轻远点稀疏与“假不动”。
+## 子地图机制
 
-子图尺度量级：`2 * lidar_detection_distance + 2 * sub_map_search_radius`。
+地图按位姿图组织（`liosam_to_posegraph` 写到 `dddnav_bringup/map/`），运行时按机器人当前位置加载半径 `sub_map_search_radius` 的关键帧子图。子图尺度量级 ≈ `2 * lidar_detection_distance + 2 * sub_map_search_radius`。降算力，也方便多楼层。
 
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/dddnav_mcl_3dl/mcl_3dl_submap_illustration.png" width="850" height="260"/></p>
+## 在系统中的角色
+
+定位流程的全局观测来源：
+
+```
+LiDAR ─► mcl_feature ─► mcl_3dl ─► /mcl_pose ─► pose_fusion (ESKF) ─► map→odom
+                                              ▲
+                              FAST-LIO /Odometry (100Hz 预测)
+```
+
+启动初始位姿现在由 `sc_global_init` 自动给（Scan Context 全局重定位），`runtime.yaml.initial_pose` 仍是兜底。
+
+## 主要参数
+
+集中在 `dddnav_bringup/config/nav/base.yaml` 的 `mcl_3dl` / `sub_maps` / `mcl_ip` / `mcl_fa` 段。常调：
+
+| Key | 含义 |
+|-----|------|
+| `num_particles` | 粒子数（默认 80，Mid360 点云质量好够用） |
+| `update_min_d` / `update_min_a` | 触发更新的最小行驶/转角 |
+| `likelihood.match_dist_min` / `match_dist_flat` | 边/面匹配距离阈值 |
+| `sub_maps.sub_map_search_radius` | 子图搜索半径 |
+| `publish_tf` / `publish_odom_tf` | 都关掉，TF 由 pose_fusion 与 FAST-LIO 接管 |
 
 ## Bag 演示
 
-`REPO` = 仓库根。
-
-```bash
-cd /path/to/REPO/dddnav_docker/docker_file && ./build.bash
-cd /path/to/REPO/dddnav_docker && ./run_demo.bash
-cd /path/to/REPO/src/dddnav_mcl_3dl && ./download_files.bash
-cd /path/to/REPO && source /opt/ros/humble/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-source install/setup.bash
-ros2 launch mcl_3dl mcl_3dlXfeatureXbag.launch
-```
-
-另开终端：`docker exec -it dddnav_humble_dev bash`（容器名按实际），内执行：
-
-```bash
-cd /root/dddnav_navigation && source install/setup.bash
-cd /root/dddnav_bags && ros2 bag play benanli_detention_basin_localization
-```
-
-主机 bag 放 **`~/dddnav_bags`**。
-
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/dddnav_mcl_3dl/mcl_initial_pose.png" width="640" height="400"/></p>
+`mcl_3dlXfeatureXbag.launch` 仍然可用（旧主线、Go2 / 上游样例）；Mid360 主线请用 `dddnav_bringup/localization*.launch.py`。

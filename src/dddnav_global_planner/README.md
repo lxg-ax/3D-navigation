@@ -1,24 +1,34 @@
 # dddnav_global_planner
 
-ROS 包 **`global_planner`**。地面点云上的图搜索全局路径；接 **`perception_3d`** 动静态图。总览：[根 README](../../README.md)。
+ROS 包名 **`global_planner`**。在 `perception_3d` 输出的地面图（ground graph）上做全局路径规划。
 
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/global_planner/global_plan.png" width="640"/></p>
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/global_planner/boundary_annotated.png" width="640"/></p>
+总览：[根 README](../../README.md)。规划下游对接 [`dddnav_local_planner`](../dddnav_local_planner/) 与 [`dddnav_p2p_move_base`](../dddnav_p2p_move_base/)。
 
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/global_planner/global_planner_diagram.png" width="640" height="420"/></p>
+## 原理
+
+* 输入：`perception_3d` 把地面点云抽成节点，邻居按半径 + 高度差连边形成 3D ground graph
+* 算法：节点上的 A\* 搜索；`turning_weight` 抑制 zig-zag，`a_star_expanding_radius` 控制每次扩展的邻居半径
+* 静态地图模式（`use_pre_graph: true`）会预构图，每次规划只查图，省掉在线展开邻居
+* 输出：`nav_msgs/Path`，经 `p2p_global_plan_manager` 按 `global_plan_query_frequency` 周期重查
+
+## 在系统中的角色
+
+定位流程下，`p2p_move_base` 收到目标 → 调 `global_planner` 的 action 拿全局路径 → 交给 `local_planner` 跟随。回环或重定位让 `map→odom` 跳变时，`p2p_global_plan_manager` 5Hz 重查路径自动刷新。
+
+## 主要参数
+
+`dddnav_bringup/config/nav/base.yaml` 与各 profile overlay 里的 `global_planner` 段：
+
+| Key | 说明 |
+|-----|------|
+| `turning_weight` | 转弯代价权重，越大路径越直 |
+| `a_star_expanding_radius` | A\* 单次扩展邻居半径（米） |
+| `use_pre_graph` | 静态地图下预构图加速规划 |
 
 ## Demo
 
-`REPO` = 含 `dddnav_docker/` 的根目录。
-
 ```bash
-cd /path/to/REPO/dddnav_docker/docker_file && ./build.bash
-cd /path/to/REPO/dddnav_docker && ./run_demo.bash
-cd /path/to/REPO && source /opt/ros/humble/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-source install/setup.bash
 ros2 launch global_planner path_planning_on_static_layer.launch
 ```
 
-RViz 里用 **Publish Point** 发目标。
-
-<p align="center"><img src="https://github.com/dfl-rlab/dddnav_documentation_materials/blob/main/global_planner/global_planner_demo.png" width="640" height="400"/></p>
+RViz 里 **Publish Point** 发目标。
