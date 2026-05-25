@@ -82,6 +82,22 @@ public:
     // Mahalanobis gate (chi^2_6 quantile). 99% ≈ 16.81. Set <=0 to disable.
     declare_parameter<double>("mahalanobis_gate", 16.81);
 
+    // Adaptive Mahalanobis gate. The fixed χ²₆ at the line above is the
+    // baseline; we additionally inflate it whenever MCL itself reports a
+    // high covariance (the filter is uncertain, so a wider innovation is
+    // expected and should not be rejected). Final threshold is:
+    //
+    //   gate = mahalanobis_gate + adapt_gate_alpha * trace(P_mcl_xy)
+    //
+    // capped at adapt_gate_max. We also outright drop the MCL update if
+    // its trace exceeds mcl_cov_reject_trace (m^2) — that almost always
+    // means MCL hasn't converged and shouldn't pull the fused filter.
+    // Set adapt_gate_alpha<=0 to disable adaptation; mcl_cov_reject_trace
+    // <=0 disables the hard reject.
+    declare_parameter<double>("adapt_gate_alpha",       30.0);
+    declare_parameter<double>("adapt_gate_max",         60.0);
+    declare_parameter<double>("mcl_cov_reject_trace",   3.0);   // m^2
+
     // ZUPT: when both translational + angular speed estimates are below the
     // configured thresholds we treat the body as stationary and shrink the
     // process noise. Helps avoid covariance ballooning while parked.
@@ -128,6 +144,9 @@ public:
     init_pos_    = get_parameter("init_cov_pos").as_double();
     init_rot_    = get_parameter("init_cov_rot").as_double();
     gate_chi2_   = get_parameter("mahalanobis_gate").as_double();
+    adapt_gate_alpha_ = get_parameter("adapt_gate_alpha").as_double();
+    adapt_gate_max_   = get_parameter("adapt_gate_max").as_double();
+    mcl_cov_reject_trace_ = get_parameter("mcl_cov_reject_trace").as_double();
     zupt_v_      = get_parameter("zupt_lin_vel_thresh").as_double();
     zupt_w_      = get_parameter("zupt_ang_vel_thresh").as_double();
     zupt_scale_  = get_parameter("zupt_proc_scale").as_double();
@@ -289,6 +308,7 @@ private:
     // the configured floor. MCL 3DL packs cov as a 6x6 row-major (xyz, rpy).
     EskfSE3::Cov R = EskfSE3::Cov::Zero();
     bool used_msg_cov = false;
+    double mcl_pos_trace = 0.0;
     if (msg->pose.covariance.size() == 36) {
       double trace = 0.0;
       for (int i = 0; i < 6; ++i) {
@@ -307,20 +327,43 @@ private:
         for (int i = 0; i < 3; ++i) R(i, i) = std::max(R(i, i), rp_floor);
         for (int i = 3; i < 6; ++i) R(i, i) = std::max(R(i, i), rr_floor);
         used_msg_cov = true;
+        mcl_pos_trace = R(0, 0) + R(1, 1) + R(2, 2);
       }
     }
     if (!used_msg_cov) {
       const double rp = meas_pos_ * meas_pos_;
       const double rr = meas_rot_ * meas_rot_;
       R.diagonal() << rp, rp, rp, rr, rr, rr;
+      mcl_pos_trace = 3.0 * rp;
     }
 
-    const bool accepted = eskf_.update(p_m_b, q_m_b, R, gate_chi2_);
+    // Hard reject MCL when its own position covariance is too large — the
+    // particle cloud hasn't converged yet, and pulling the fused state to
+    // such a noisy measurement is worse than coasting on FAST-LIO.
+    if (mcl_cov_reject_trace_ > 0.0 &&
+        mcl_pos_trace > mcl_cov_reject_trace_) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
+        "MCL pose dropped: pos cov trace %.3f > %.3f m^2",
+        mcl_pos_trace, mcl_cov_reject_trace_);
+      return;
+    }
+
+    // Adaptive gate: open it up when MCL itself is uncertain.
+    double gate = gate_chi2_;
+    if (gate_chi2_ > 0.0 && adapt_gate_alpha_ > 0.0) {
+      gate = gate_chi2_ + adapt_gate_alpha_ * mcl_pos_trace;
+      if (adapt_gate_max_ > 0.0) {
+        gate = std::min(gate, adapt_gate_max_);
+      }
+    }
+
+    const bool accepted = eskf_.update(p_m_b, q_m_b, R, gate);
     if (!accepted) {
       gate_reject_count_ += 1;
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000,
-        "MCL pose rejected by Mahalanobis gate (chi2 > %.2f), streak=%d",
-        gate_chi2_, gate_reject_count_);
+        "MCL pose rejected by Mahalanobis gate (chi2 > %.2f, "
+        "mcl_pos_trace=%.3f m^2), streak=%d",
+        gate, mcl_pos_trace, gate_reject_count_);
       if (gate_reset_ > 0 && gate_reject_count_ >= gate_reset_) {
         EskfSE3::Cov P0 = EskfSE3::Cov::Zero();
         P0.diagonal() <<
@@ -520,6 +563,9 @@ private:
   bool publish_tf_;
   double proc_pos_, proc_rot_, meas_pos_, meas_rot_;
   double init_pos_, init_rot_, gate_chi2_;
+  double adapt_gate_alpha_{0.0};
+  double adapt_gate_max_{0.0};
+  double mcl_cov_reject_trace_{0.0};
   double zupt_v_{0.02}, zupt_w_{0.02}, zupt_scale_{0.1};
   double adaptive_q_baseline_{0.05};
   double adaptive_q_gain_{0.0};

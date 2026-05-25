@@ -5,8 +5,9 @@
 Forked and reworked from [dddmr_navigation](https://github.com/dfl-rlab/dddmr_navigation) (BSD-3-Clause). Notable changes:
 
 - SLAM swapped to **FAST-LIO2 (front-end, 100 Hz)** + **LIO-SAM (back-end, Scan Context + GICP loop closure)**, replacing LeGO-LOAM
-- Added **`dddnav_pose_fusion`** — SE(3) ESKF that fuses FAST-LIO and MCL 3DL into a 100 Hz `/odom_filtered` and owns `map → odom`
-- Added **`dddnav_utils/sc_global_init`** — Scan Context global localiser at boot, no operator-supplied initial pose required
+- Added **`dddnav_pose_fusion`** — SE(3) ESKF that fuses FAST-LIO and MCL 3DL into a 100 Hz `/odom_filtered` and owns `map → odom`; adaptive Mahalanobis gate + hard reject when MCL covariance is unconverged
+- **MCL 3DL adaptive particle count** — KLD-style lightweight replacement: grows on re-localisation / low match_ratio, decays exponentially once stable
+- Added **`dddnav_utils/sc_global_init`** — Scan Context global localiser at boot **plus** an online watchdog that re-bootstraps MCL after a kidnap / drift to a wrong floor, with a spatial gate against the fused-pose prior to suppress repetitive-geometry false matches
 - Bringup launches refactored (`common_nodes.py` for shared blocks); navigation tuning flattened to `base + overlay` yaml under `config/nav/`
 - Docker images: x64 / CUDA / Jetson L4T / Gazebo (see [`dddnav_docker/`](dddnav_docker/))
 - Runtime telemetry: `slam_health_monitor` + `nav_perf_monitor`, both publishing to `/diagnostics`
@@ -119,7 +120,7 @@ To create a new profile, copy `nav/mid360_localization.yaml` and edit only the k
 |---------|------|
 | [`livox_ros_driver2`](src/livox_ros_driver2/) | Livox Mid360 ROS 2 driver |
 | [`dddnav_semantic_segmentation`](src/dddnav_semantic_segmentation/) | DDRNet + TensorRT, publishes `/sematic_segmentation_point_cloud` |
-| [`dddnav_trt`](src/dddnav_trt/) | YOLOv8 + TensorRT (optional, build with `-DTRT_ENABLED=ON`) |
+| [`dddnav_yolo_trt`](src/dddnav_yolo_trt/) | YOLOv8 + TensorRT (optional, build with `-DTRT_ENABLED=ON`) |
 
 ### Utilities / messages / visualisation
 
@@ -172,7 +173,7 @@ Subscribe to `/diagnostics` from Foxglove or the RViz Diagnostic panel for live 
 | Perception 3D | [src/dddnav_perception_3d/README.md](src/dddnav_perception_3d/README.md) |
 | Global / local planner | [src/dddnav_global_planner/README.md](src/dddnav_global_planner/README.md) · [src/dddnav_local_planner/README.md](src/dddnav_local_planner/README.md) |
 | P2P move_base | [src/dddnav_p2p_move_base/README.md](src/dddnav_p2p_move_base/README.md) |
-| Semantic / TRT | [src/dddnav_semantic_segmentation/README.md](src/dddnav_semantic_segmentation/README.md) · [src/dddnav_trt/README.md](src/dddnav_trt/README.md) |
+| Semantic / TRT | [src/dddnav_semantic_segmentation/README.md](src/dddnav_semantic_segmentation/README.md) · [src/dddnav_yolo_trt/README.md](src/dddnav_yolo_trt/README.md) |
 | sys_core / rviz_tools | [src/dddnav_sys_core/README.md](src/dddnav_sys_core/README.md) · [src/dddnav_rviz_tools/README.md](src/dddnav_rviz_tools/README.md) |
 | Gazebo Go2 | [src/gz_quadbot/README.md](src/gz_quadbot/README.md) |
 

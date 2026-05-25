@@ -44,7 +44,7 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 source install/setup.bash
 ```
 
-TRT YOLO package: add `-DTRT_ENABLED=ON` to `colcon` if you build `dddnav_trt` there.
+TRT YOLO package: add `-DTRT_ENABLED=ON` to `colcon` if you build `dddnav_yolo_trt` there.
 
 ## Registry
 

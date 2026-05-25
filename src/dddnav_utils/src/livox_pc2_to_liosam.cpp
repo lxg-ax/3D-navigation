@@ -95,18 +95,27 @@ public:
     const auto ls_topic   = get_parameter("liosam_output_topic").as_string();
     const auto xyzi_topic = get_parameter("xyzi_output_topic").as_string();
 
-    // Sensor-stream QoS: best-effort, depth 5. The point cloud topic is at
-    // 10 Hz with ~640KB payload; reliable QoS would back-pressure the driver
-    // on a slow link.
-    rclcpp::QoS sensor_qos(rclcpp::KeepLast(5));
-    sensor_qos.best_effort();
+    // Sensor-stream QoS:
+    //   * Subscriber on /livox/lidar uses BEST_EFFORT to match the Livox
+    //     driver's default sensor-data publisher.
+    //   * Publishers downstream use RELIABLE because LIO-SAM's
+    //     imageProjection subscribes with RELIABLE QoS (qos_lidar in
+    //     utility.hpp). A QoS mismatch silently drops the connection,
+    //     leaving imageProjection waiting forever.
+    //
+    //   /livox/lidar_liosam_xyzi consumers (mcl_feature, sc_global_init)
+    //   accept either profile, so RELIABLE is safe across the board.
+    rclcpp::QoS sub_qos(rclcpp::KeepLast(5));
+    sub_qos.best_effort();
+    rclcpp::QoS pub_qos(rclcpp::KeepLast(5));
+    pub_qos.reliable();
 
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-      in_topic, sensor_qos,
+      in_topic, sub_qos,
       std::bind(&LivoxAdapter::callback, this, std::placeholders::_1));
 
-    pub_liosam_ = create_publisher<sensor_msgs::msg::PointCloud2>(ls_topic, sensor_qos);
-    pub_xyzi_   = create_publisher<sensor_msgs::msg::PointCloud2>(xyzi_topic, sensor_qos);
+    pub_liosam_ = create_publisher<sensor_msgs::msg::PointCloud2>(ls_topic, pub_qos);
+    pub_xyzi_   = create_publisher<sensor_msgs::msg::PointCloud2>(xyzi_topic, pub_qos);
 
     // Pre-build static field descriptors so we don't allocate vector<PointField>
     // every frame.

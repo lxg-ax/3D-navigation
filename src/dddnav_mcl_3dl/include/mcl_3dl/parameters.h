@@ -68,6 +68,11 @@ public:
   double map_grid_max_;
   double global_localization_grid_;
   int global_localization_div_yaw_;
+  int num_particles_min_;
+  int num_particles_max_;
+  int num_particles_grow_on_init_;
+  double match_ratio_grow_thresh_;
+  double particle_decay_;
   double resample_var_x_;
   double resample_var_y_;
   double resample_var_z_;

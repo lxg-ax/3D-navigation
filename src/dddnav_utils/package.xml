@@ -12,12 +12,12 @@
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>std_msgs</depend>
   <depend>pcl_conversions</depend>
   <depend>lio_sam</depend>
 
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>sensor_msgs_py</exec_depend>
   <exec_depend>tf2_ros</exec_depend>

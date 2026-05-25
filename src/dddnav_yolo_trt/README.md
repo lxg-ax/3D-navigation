@@ -1,4 +1,4 @@
-# dddnav_trt
+# dddnav_yolo_trt
 
 可选的 YOLOv8 + TensorRT C++ 库。**默认主线不用**，需要时单独打开。
 
@@ -17,7 +17,7 @@
 ```bash
 cd /path/to/REPO
 source /opt/ros/humble/setup.bash
-colcon build --packages-select dddnav_trt --cmake-args -DTRT_ENABLED=ON -DCMAKE_BUILD_TYPE=Release
+colcon build --packages-select dddnav_yolo_trt --cmake-args -DTRT_ENABLED=ON -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## 注意

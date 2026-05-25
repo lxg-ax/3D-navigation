@@ -5,8 +5,9 @@
 基于 [dddmr_navigation](https://github.com/dfl-rlab/dddmr_navigation) (BSD-3-Clause) 二次开发，主要变动：
 
 - SLAM 路线换成 **FAST-LIO2 (前端 100Hz)** + **LIO-SAM (后端回环, Scan Context + GICP)**，不再用 LeGO-LOAM
-- 加 **`dddnav_pose_fusion`**：SE(3) ESKF 融合 FAST-LIO 与 MCL 3DL，输出 100Hz `/odom_filtered` 和 `map→odom`
-- 加 **`dddnav_utils/sc_global_init`**：定位启动时 Scan Context 全局重定位，免操作员点初始位姿
+- 加 **`dddnav_pose_fusion`**：SE(3) ESKF 融合 FAST-LIO 与 MCL 3DL，输出 100Hz `/odom_filtered` 和 `map→odom`；自适应 Mahalanobis 门 + MCL 协方差硬拒，鲁棒性显著提升
+- **MCL 3DL 自适应粒子数**：重定位 / 低 match_ratio 时按需放大（KLD 风格的轻量替代），收敛后指数回落
+- 加 **`dddnav_utils/sc_global_init`**：启动期 Scan Context 全局重定位 + 运行期在线 watchdog（被搬运 / 走错楼层 / MCL 卡死自动恢复，spatial gate 杀掉重复几何误匹配）
 - bringup launch 重构（`common_nodes.py` 抽公共组件）+ nav 调参 yaml `base + overlay` 化（`config/nav/`）
 - Docker 镜像：x64 / CUDA / Jetson L4T / Gazebo 四档（[`dddnav_docker/`](dddnav_docker/)）
 - 运行时 telemetry：`slam_health_monitor` + `nav_perf_monitor` 都发到 `/diagnostics`
@@ -118,7 +119,7 @@ ros2 launch dddnav_bringup localization.launch.py nav_profile:=/abs/path/custom.
 |------|------|
 | [`livox_ros_driver2`](src/livox_ros_driver2/) | Livox Mid360 ROS 2 驱动 |
 | [`dddnav_semantic_segmentation`](src/dddnav_semantic_segmentation/) | DDRNet + TensorRT 语义分割，输出 `/sematic_segmentation_point_cloud` |
-| [`dddnav_trt`](src/dddnav_trt/) | YOLOv8 + TensorRT (可选, `-DTRT_ENABLED=ON`) |
+| [`dddnav_yolo_trt`](src/dddnav_yolo_trt/) | YOLOv8 + TensorRT (可选, `-DTRT_ENABLED=ON`) |
 
 ### 工具 / 消息 / 可视化
 
@@ -171,7 +172,7 @@ Foxglove / RViz Diagnostic 面板订 `/diagnostics` 即可。
 | Perception 3D | [src/dddnav_perception_3d/README.md](src/dddnav_perception_3d/README.md) |
 | Global / Local planner | [src/dddnav_global_planner/README.md](src/dddnav_global_planner/README.md) · [src/dddnav_local_planner/README.md](src/dddnav_local_planner/README.md) |
 | P2P move_base | [src/dddnav_p2p_move_base/README.md](src/dddnav_p2p_move_base/README.md) |
-| Semantic / TRT | [src/dddnav_semantic_segmentation/README.md](src/dddnav_semantic_segmentation/README.md) · [src/dddnav_trt/README.md](src/dddnav_trt/README.md) |
+| Semantic / TRT | [src/dddnav_semantic_segmentation/README.md](src/dddnav_semantic_segmentation/README.md) · [src/dddnav_yolo_trt/README.md](src/dddnav_yolo_trt/README.md) |
 | sys_core / rviz_tools | [src/dddnav_sys_core/README.md](src/dddnav_sys_core/README.md) · [src/dddnav_rviz_tools/README.md](src/dddnav_rviz_tools/README.md) |
 | Gazebo Go2 | [src/gz_quadbot/README.md](src/gz_quadbot/README.md) |
 

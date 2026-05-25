@@ -27,6 +27,19 @@
     # Mahalanobis chi^2_6 gate for outlier rejection. 99% ≈ 16.81. Set <=0 to disable.
     mahalanobis_gate:   16.81
 
+    # Adaptive gate scaling. The gate widens when MCL itself reports a high
+    # covariance:
+    #   gate = mahalanobis_gate + adapt_gate_alpha * trace(P_mcl_xyz)
+    # capped at adapt_gate_max. Stops legitimate but uncertain MCL updates
+    # from being rejected as outliers right after a global re-localisation.
+    # Set adapt_gate_alpha<=0 to disable.
+    adapt_gate_alpha:    30.0
+    adapt_gate_max:      60.0
+    # Hard reject any MCL update whose position covariance trace exceeds this
+    # threshold (m^2). MCL hasn't converged yet — pulling the fused state
+    # towards it is usually worse than coasting on FAST-LIO. Set <=0 to off.
+    mcl_cov_reject_trace: 3.0
+
     # ZUPT: when both linear and angular speed estimates are below the
     # thresholds, the predict step uses Q * zupt_proc_scale. Stops the
     # covariance from drifting while parked.

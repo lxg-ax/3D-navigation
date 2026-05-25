@@ -34,7 +34,10 @@ MCL 必须 `publish_tf=false` + `publish_odom_tf=false`，TF 单一所有者由�
 |-----|------|
 | `proc_noise_pos` / `proc_noise_rot` | 过程噪声标准差，越大越信 MCL |
 | `meas_noise_pos` / `meas_noise_rot` | 量测噪声下限（MCL 协方差不可信时兜底） |
-| `mahalanobis_gate` | χ²₆ 阈值，默认 16.81（99%） |
+| `mahalanobis_gate` | χ²₆ 阈值基础值，默认 16.81（99%） |
+| `adapt_gate_alpha` | 自适应门系数：`gate = mahalanobis_gate + α·trace(P_mcl_xyz)` |
+| `adapt_gate_max` | 自适应门上限，避免门永远开着失去拒收能力 |
+| `mcl_cov_reject_trace` | MCL 自身位置协方差 trace 超阈直接丢量测（m²），杀掉未收敛的 MCL |
 
 **鲁棒性增强**
 

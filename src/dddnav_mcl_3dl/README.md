@@ -32,11 +32,25 @@ LiDAR ─► mcl_feature ─► mcl_3dl ─► /mcl_pose ─► pose_fusion (ESK
 
 | Key | 含义 |
 |-----|------|
-| `num_particles` | 粒子数（默认 80，Mid360 点云质量好够用） |
+| `num_particles` | 粒子数稳态目标（默认 80，Mid360 点云质量好够用） |
+| `num_particles_min` / `num_particles_max` | 自适应粒子数下/上界（KLD 风格的轻量替代） |
+| `num_particles_grow_on_init` | 收到 `/initial_3d_pose` 时立即扩到的目标粒子数 |
+| `match_ratio_grow_thresh` | match_ratio 低于该值翻倍粒子直到 max |
+| `particle_decay` | 健康场景下指数回落系数（default 0.9，越小回落越快） |
 | `update_min_d` / `update_min_a` | 触发更新的最小行驶/转角 |
 | `likelihood.match_dist_min` / `match_dist_flat` | 边/面匹配距离阈值 |
 | `sub_maps.sub_map_search_radius` | 子图搜索半径 |
 | `publish_tf` / `publish_odom_tf` | 都关掉，TF 由 pose_fusion 与 FAST-LIO 接管 |
+
+### 自适应粒子数
+
+老逻辑只把 `num_particles` 当固定值，重定位时拿放宽 likelihood 凑数，搜索空间不够。现在：
+
+1. 收到 `/initial_3d_pose` → 直接 `resizeParticle(num_particles_grow_on_init)`，给重定位足够的搜索预算
+2. `measure()` 里 `match_ratio_max < match_ratio_grow_thresh` → 粒子数翻倍（capped at `num_particles_max`），同时重置 fix_cnt 让滤波器再静默几拍
+3. 收敛后（fix_cnt 到 0、match_ratio 健康）每次 measure 按 `particle_decay` 指数回落，下界为 `max(num_particles, num_particles_min)`
+
+`min >= max` 时整套机制关掉，行为退化到旧版。
 
 ## Bag 演示
 

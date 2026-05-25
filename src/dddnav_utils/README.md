@@ -6,8 +6,8 @@
 
 | 可执行 | 语言 | 作用 |
 |--------|------|------|
-| `livox_pc2_to_liosam` | C++ | Livox PointCloud2 → LIO-SAM 用的 `VelodynePointXYZIRT` + MCL 用的 `PointXYZI` 双发布。10Hz 数据路径，C++ 是为了避开 Python GIL 抖动。 |
-| `sc_global_init` | C++ | Scan Context 全局重定位。加载建图阶段写的 `sc_db.bin` + `poses.pcd`，对第一帧雷达查表，连续 N 帧一致就发 `/initial_3d_pose`。免操作员点 RViz 初始位姿。 |
+| `livox_pc2_to_liosam` | C++ | Livox PointCloud2 → LIO-SAM 用的 `VelodynePointXYZIRT` + MCL 用的 `PointXYZI` 双发布。10Hz 数据路径，C++ 是为了避开 Python GIL 抖动。**Publisher 用 RELIABLE QoS** 与 LIO-SAM `imageProjection` 的 `qos_lidar`（RELIABLE）匹配，否则 DDS QoS 不兼容会让 LIO-SAM 后端永远收不到点云。 |
+| `sc_global_init` | C++ | Scan Context 全局重定位。启动期对第一帧雷达查表给 `/initial_3d_pose`；运行期低频比对当前帧 SC 与 MCL 当前关键帧，连续不一致且候选靠近 `/odom_filtered` 先验时再次发种子触发 MCL 重启。免操作员点 RViz 初始位姿，也能从被搬运 / 走错楼层中自动恢复。 |
 | `liosam_to_posegraph.py` | Python | 订 LIO-SAM 关键帧，写 binary PCD + pose graph 到 `dddnav_bringup/map/`。 |
 | `fastlio_to_posegraph.py` | Python | 同上，但走纯 FAST-LIO 不挂 LIO-SAM 的场景。 |
 | `slam_health_monitor.py` | Python | 看 `/Odometry` 和 LIO-SAM odom 速率、TF 边 liveness、`map→odom` 跳变、`/odom_filtered` cov trace，发 `diagnostic_msgs/DiagnosticArray`。 |
@@ -16,12 +16,17 @@
 
 ## 原理要点
 
-### Scan Context 全局初始化
+### Scan Context 全局初始化 + 在线重定位巡检
 
 * 描述符（20×60 的极坐标俯视图）在建图阶段每个关键帧算一遍，body 帧描述符落盘 `sc_db.bin`
-* 启动时对当前 LiDAR 帧算同样描述符，KD-Tree 找 ring key 候选 → 列移位余弦距离精排
-* 阈值 `sc_dist_threshold` + 连续 `min_consensus_frames` 一致才发，过滤偶然误匹配
+* **启动期**：对当前 LiDAR 帧算同样描述符，KD-Tree 找 ring key 候选 → 列移位余弦距离精排；阈值 `sc_dist_threshold` + 连续 `min_consensus_frames` 一致才发，过滤偶然误匹配
+* **运行期（watchdog）**：节点持续订 `/odom_filtered`。在 `watchdog_warmup_sec` 后以 `watchdog_check_hz`（默认 2 Hz）评估每帧
+  1. 取当前 MCL 位姿对应最近关键帧的 SC 距离（live_dist）
+  2. 在 DB 上搜全局最佳候选（cand_dist）
+  3. 仅当 `cand_dist + relocate_min_delta < live_dist` **且** 候选关键帧到 odom 先验位置 < `relocate_max_jump_m` **且** 候选 yaw 与先验 yaw 之差 < `relocate_max_jump_yaw` **且** 连续 `relocate_consensus` 次都满足，才再发 `/initial_3d_pose`
+  4. `relocate_holdoff_sec` 是发布后的冷却时间，给 MCL 收敛
 * 列移位顺便给出 yaw 修正，roll/pitch 直接复制关键帧位姿（地面机器人这两个量小）
+* 这套门控同时解决：长走廊 / 对称楼道 SC 误匹配（spatial gate 杀掉）和被搬运 / 漂错楼层 MCL 卡死（持续不一致触发重启）
 
 ### Adaptive save sequence
 
@@ -29,25 +34,37 @@ LIO-SAM 的 `save_map` service 会 `rm -r` 自己的目录，必须先存 pose g
 
 ### Health / perf 阈值
 
-* `slam_health_monitor`：`OK` (≤ 0.5 s) → `WARN` (≤ 2 s) → `ERROR` (> 2 s) per topic / TF 边
+* `slam_health_monitor`：默认 `OK` (≤ 0.5 s) → `WARN` (≤ 2 s) → `ERROR` (> 2 s) per topic / TF 边；建图模式下 launch 端把 `ok_timeout` 放宽到 1.0 s、`fail_timeout` 到 3.0 s（LIO-SAM `mappingProcessInterval=0.1` + 单次优化偶发 100~150 ms 会让默认阈值产生周期性误报），同时把 `filtered_odom_topic` 置空（`pose_fusion` 不在建图链里）
 * `nav_perf_monitor`：阈值跟着 100Hz odom + 5Hz planner 的预期速率走，慢于一半进 WARN，慢于五分之一进 ERROR；FAST-LIO 残差走自己的 `lio_residual_warn / error`
 
 两个节点都只对 WARN/ERROR 出文字日志，OK 状态靠 `/diagnostics` 流式呈现。
 
+### Bridge QoS 兼容性（坑点）
+
+`livox_pc2_to_liosam` 的两个 publisher（`/livox/lidar_liosam` 和 `/livox/lidar_liosam_xyzi`）一律 **RELIABLE**，订阅侧 `/livox/lidar` 走 BEST_EFFORT 与 livox 驱动对齐。如果 publisher 改回 BEST_EFFORT，LIO-SAM `imageProjection` 因 `qos_lidar=RELIABLE` 不兼容直接收不到点云，整条后端管道（`cloud_deskewed`/`feature/cloud_info`/`mapping/odometry`/`map→odom` TF）全程空转，但表面上节点都活着，定位很难看出根因。改 QoS 时务必保留 RELIABLE。
+
 ## 在系统中的角色
 
 * 建图链：Livox driver → `livox_pc2_to_liosam` → FAST-LIO + LIO-SAM → `liosam_to_posegraph` 写 pose graph → `save_map_on_exit` 落盘
-* 定位链：`sc_global_init` 给初始位姿 → MCL 收敛 → `slam_health_monitor` + `nav_perf_monitor` 在线监控
+* 定位链：`sc_global_init` 给初始位姿 + 在线 watchdog → MCL 收敛 → `slam_health_monitor` + `nav_perf_monitor` 在线监控
 
-## SC 全局初始化参数
+## SC 全局初始化 / watchdog 参数
 
 通常默认就够，要改在 launch 里通过 `sc_init_yaml` 或者 CLI `-p` 传：
 
 | Key | 默认 | 含义 |
 |-----|------|------|
-| `sc_dist_threshold` | 0.30 | 余弦距离阈值，越小越严格 |
-| `min_consensus_frames` | 3 | 连续命中同一索引才确认 |
+| `sc_dist_threshold` | 0.30 | 启动期余弦距离阈值，越小越严格 |
+| `min_consensus_frames` | 3 | 启动期连续命中同一索引才确认 |
 | `min_points` | 1500 | 输入点过少跳过查询 |
 | `init_cov_xy / z / yaw / rp` | 1.0 / 0.25 / 0.09 / 0.04 | 发出去给 MCL 的协方差 |
+| `enable_watchdog` | true | 关掉就退化为旧版"启动期一次性"行为 |
+| `watchdog_check_hz` | 2.0 | watchdog 评估频率 |
+| `watchdog_warmup_sec` | 8.0 | 首次发布后多久 watchdog 才上线 |
+| `relocate_max_jump_m / _yaw` | 6.0 / 1.05 rad | 候选与 odom 先验的位置/朝向上限，杀掉重复几何误匹配 |
+| `relocate_min_delta` | 0.05 | 候选 SC 距离至少比 live 小这么多才视作"新位置" |
+| `relocate_max_candidate_dist` | 0.25 | 候选自身的距离上限，避免"all rows are bad"时乱跳 |
+| `relocate_consensus` | 4 | 连续多少 watchdog tick 一致才再发 `/initial_3d_pose` |
+| `relocate_holdoff_sec` | 10.0 | 发布后的冷却时间 |
 
 无 `sc_db.bin` 时节点直接退出，`runtime.yaml.initial_pose` 仍生效。

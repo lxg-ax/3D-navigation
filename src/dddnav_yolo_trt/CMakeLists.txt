@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(dddnav_trt)
+project(dddnav_yolo_trt)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,9 +50,9 @@ if(TRT_ENABLED)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "cmake")
   add_subdirectory(src/yolo/yolo_trt/tensorrt-cpp-api)
 
-  add_library(DDDNAV_YoloV8_TRT SHARED src/yolo/yolo_trt/yolov8.cpp)
-  target_link_libraries(DDDNAV_YoloV8_TRT PUBLIC tensorrt_cpp_api ${OpenCV_LIBRARIES} CUDA::cudart)
-  target_include_directories(DDDNAV_YoloV8_TRT PUBLIC src/yolo/yolo_trt/tensorrt-cpp-api/src ${CUDAToolkit_INCLUDE_DIRS})
+  add_library(dddnav_yolo_trt SHARED src/yolo/yolo_trt/yolov8.cpp)
+  target_link_libraries(dddnav_yolo_trt PUBLIC tensorrt_cpp_api ${OpenCV_LIBRARIES} CUDA::cudart)
+  target_include_directories(dddnav_yolo_trt PUBLIC src/yolo/yolo_trt/tensorrt-cpp-api/src ${CUDAToolkit_INCLUDE_DIRS})
 
   install(
     DIRECTORY include/ src/yolo/yolo_trt/tensorrt-cpp-api/src/
@@ -60,13 +60,13 @@ if(TRT_ENABLED)
   )
 
   install(TARGETS
-    DDDNAV_YoloV8_TRT
+    dddnav_yolo_trt
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
   )
   ament_export_include_directories(include)
-  ament_export_libraries(DDDNAV_YoloV8_TRT)
+  ament_export_libraries(dddnav_yolo_trt)
   # --- Everything CUDA finish here ---
 
 else()

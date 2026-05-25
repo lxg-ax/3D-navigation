@@ -665,20 +665,46 @@ void MCL3dlNode::measure(std::map<std::string, pcl::PointCloud<mcl_3dl::pcl_t>::
               params_->expansion_var_yaw_)));
   }
 
-  if (static_cast<int>(pf_->getParticleSize()) > params_->num_particles_)
+  // ------------------------------------------------------------------
+  // Adaptive particle count.
+  //
+  //   Low match_ratio  -> grow (cap at num_particles_max_)
+  //   Healthy match    -> exponentially decay back towards the steady
+  //                       state target (bounded below by
+  //                       num_particles_min_).
+  //
+  // The post-init `global_localization_fix_cnt_` countdown also keeps the
+  // current size for that many measurements so the filter can settle
+  // without thrashing.
+  // ------------------------------------------------------------------
+  const int cur_size = static_cast<int>(pf_->getParticleSize());
+  const int steady = std::max(params_->num_particles_, params_->num_particles_min_);
+  if (match_ratio_max < params_->match_ratio_grow_thresh_ &&
+      params_->num_particles_max_ > 0 &&
+      cur_size < params_->num_particles_max_)
   {
-    const int reduced = pf_->getParticleSize() * 0.75;
-    if (reduced > params_->num_particles_)
-    {
-      pf_->resizeParticle(reduced);
-    }
-    else
-    {
-      pf_->resizeParticle(params_->num_particles_);
-    }
-    // wait 99.7% fix (three-sigma)
+    const int grown = std::min(params_->num_particles_max_, std::max(cur_size + 1, cur_size * 2));
+    pf_->resizeParticle(static_cast<size_t>(grown));
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *clock_, 2000,
+                          "Grew particles %d -> %d (match_ratio=%.2f)",
+                          cur_size, grown, match_ratio_max);
+    // Re-arm the post-grow settle window.
     global_localization_fix_cnt_ = 1 + std::ceil(params_->lpf_step_) * 3.0;
   }
+  else if (global_localization_fix_cnt_ == 0 &&
+           cur_size > steady &&
+           params_->particle_decay_ < 1.0)
+  {
+    int decayed = static_cast<int>(std::round(cur_size * params_->particle_decay_));
+    if (decayed < steady) decayed = steady;
+    if (decayed != cur_size) {
+      pf_->resizeParticle(static_cast<size_t>(decayed));
+      RCLCPP_DEBUG(this->get_logger(),
+                   "Decayed particles %d -> %d (match_ratio=%.2f)",
+                   cur_size, decayed, match_ratio_max);
+    }
+  }
+
   if (global_localization_fix_cnt_)
   {
     global_localization_fix_cnt_--;
@@ -787,6 +813,19 @@ void MCL3dlNode::cbPosition(const geometry_msgs::msg::PoseWithCovarianceStamped:
 
   publishParticles();
   first_tf_ = false;
+
+  // After a global init request, grow the particle population so the next
+  // measurement has search room. The legacy code relied on an external
+  // resize service that no longer exists; we now do it here.
+  if (params_->num_particles_grow_on_init_ > 0 &&
+      params_->num_particles_grow_on_init_ != static_cast<int>(pf_->getParticleSize()))
+  {
+    pf_->resizeParticle(static_cast<size_t>(params_->num_particles_grow_on_init_));
+    RCLCPP_INFO(this->get_logger(),
+                "Grew particles to %zu after global init",
+                pf_->getParticleSize());
+  }
+  global_localization_fix_cnt_ = 1 + std::ceil(params_->lpf_step_) * 3.0;
 }
 
 /*

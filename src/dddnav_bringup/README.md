@@ -103,7 +103,7 @@ depth ────────────────────────�
 |--------|------|
 | `lidar_driver_and_tf(rt)` | Livox driver + `base_link→livox_frame` static TF |
 | `lidar_front_end(rt, fastlio_yaml)` | livox→liosam 桥接 + FAST-LIO |
-| `liosam_back_end(...)` | LIO-SAM 4 节点 + `liosam_to_posegraph` + `slam_health_monitor` |
+| `liosam_back_end(...)` | LIO-SAM 4 节点 + `liosam_to_posegraph` + `slam_health_monitor`（建图模式下 `ok_timeout=1.0s/fail_timeout=3.0s`，并把 `filtered_odom_topic` 置空避开 `pose_fusion` 误报） |
 | `localization_stack(...)` | MCL 3DL + pose_fusion + mcl_feature + `sc_global_init` + 兜底初始位姿 |
 | `nav_stack(rt, params)` | global_planner + p2p_move_base + clicked2goal + `nav_perf_monitor` |
 | `auto_save_actions(...)` | 启动前清旧图 + Ctrl-C 触发 `save_map_on_exit.py` |
@@ -123,6 +123,31 @@ rviz/     mapping / mapping_nav / localization 三套
 map/      建图输出（`*.pcd` 不入库）
 scripts/  辅助脚本
 ```
+
+## 排错
+
+### 建图启动后 `slam_health_monitor` 一直刷 `lio_sam/mapping/odometry no message` / `tf map->odom not available`
+
+最可能是**桥接 publisher 与 LIO-SAM 订阅 QoS 不兼容**。`livox_pc2_to_liosam` 的两个 publisher 必须是 RELIABLE，与 LIO-SAM `imageProjection` 的 `qos_lidar=RELIABLE` 匹配；如果改成 BEST_EFFORT，DDS 会拒绝建立连接，imageProjection 一帧点云都收不到，整条后端管道空转但节点都活着，从外部看不出根因。
+
+诊断顺序：
+
+```bash
+# 1. 桥接是否在出
+ros2 topic hz /livox/lidar_liosam       # 应 ~10 Hz
+# 2. 两端 QoS 是否对齐（关键）
+ros2 topic info -v /livox/lidar_liosam  # publisher / subscriber 都应 RELIABLE
+# 3. imageProjection 是否产出
+ros2 topic hz /lio_sam/deskew/cloud_deskewed
+# 4. mapOptimization 是否产出
+ros2 topic hz /lio_sam/mapping/odometry
+```
+
+第 2 步发现一边 BEST_EFFORT、一边 RELIABLE，就是这个问题。修法：保持 `dddnav_utils/src/livox_pc2_to_liosam.cpp` 里的 `pub_qos.reliable()` 不要回退。
+
+### 雷达静止时偶发 `[tf map->odom] stamp_age=0.5s`
+
+LIO-SAM `mappingProcessInterval=0.1` + 单次优化偶发 100~150 ms，原默认 `ok_timeout=0.5s` 会被偶尔触达。建图链已经把 `slam_health_monitor` 的阈值放宽（`ok_timeout=1.0s`、`fail_timeout=3.0s`），见 `common_nodes.py::liosam_back_end`。再调可以直接改那一行。
 
 ## 导航调参（base + overlay）
 

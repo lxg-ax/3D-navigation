@@ -105,7 +105,20 @@ def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
     ]))
     actions.append(TimerAction(period=d['health'], actions=[
         Node(package='dddnav_utils', executable='slam_health_monitor.py',
-             name='slam_health_monitor', output='screen'),
+             name='slam_health_monitor', output='screen',
+             # In mapping mode pose_fusion is not running, so /odom_filtered
+             # has no publisher. Disable that watch path here; topic/TF
+             # liveness is still meaningful — those WARNs flag a stalled
+             # mapOptimization (which is the real problem, not noise).
+             # ok_timeout/fail_timeout are also relaxed: LIO-SAM
+             # mapOptimization throttles by mappingProcessInterval (0.1 s)
+             # and a single optimisation can spike to ~150 ms, so 0.5 s
+             # is too tight on stamp_age.
+             parameters=[{
+                 'filtered_odom_topic': '',
+                 'ok_timeout':   1.0,
+                 'fail_timeout': 3.0,
+             }]),
     ]))
     return actions
 
@@ -171,7 +184,19 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
             'sc_db_path':     os.path.join(map_dir, 'lio_sam', 'sc_db.bin'),
             'poses_pcd_path': os.path.join(map_dir, 'poses.pcd'),
             'cloud_topic':    '/livox/lidar_liosam_xyzi',
+            'odom_topic':     '/odom_filtered',
             'init_pose_topic': '/initial_3d_pose',
+            # Watchdog defaults: 2 Hz check, 8 s warm-up, ±6 m / ±60deg gate
+            # against the fused pose. Override via sc_init_yaml when needed.
+            'enable_watchdog':           True,
+            'watchdog_check_hz':         2.0,
+            'watchdog_warmup_sec':       8.0,
+            'relocate_max_jump_m':       6.0,
+            'relocate_max_jump_yaw':     1.05,
+            'relocate_min_delta':        0.05,
+            'relocate_max_candidate_dist': 0.25,
+            'relocate_consensus':        4,
+            'relocate_holdoff_sec':      10.0,
         }]
         if sc_init_yaml:
             sc_params.append(sc_init_yaml)

@@ -206,6 +206,20 @@ mcl_3dl:
     map_downsample_z: 0.1
     map_update_interval_sec: 2
     num_particles: 80                       # Mid360 cloud quality is good
+
+    # Adaptive particle count.
+    #   Steady state target = num_particles. The filter is allowed to grow
+    #   up to num_particles_max when match_ratio drops below
+    #   match_ratio_grow_thresh, and to expand to num_particles_grow_on_init
+    #   immediately after a /initial_3d_pose so re-localisation has search
+    #   budget. After that the count exponentially decays
+    #   (size *= particle_decay each measurement) towards
+    #   max(num_particles, num_particles_min).
+    num_particles_min: 60
+    num_particles_max: 400
+    num_particles_grow_on_init: 400
+    match_ratio_grow_thresh: 0.55
+    particle_decay: 0.9
     resample_var_x: 0.2
     resample_var_y: 0.2
     resample_var_z: 0.2

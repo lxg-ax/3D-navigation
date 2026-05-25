@@ -25,7 +25,7 @@
 #include <filesystem>
 
 #ifdef TRT_ENABLED
-#include "dddnav_trt/yolov8.h"
+#include "dddnav_yolo_trt/yolov8.h"
 #include <opencv2/cudaimgproc.hpp>
 #endif
 

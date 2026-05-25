@@ -93,6 +93,52 @@ Parameters::Parameters(const rclcpp::node_interfaces::NodeLoggingInterface::Shar
   num_particles_ = num_particles.as_int();
   RCLCPP_INFO(logger_->get_logger(), "num_particles: %d", num_particles_);
 
+  // Adaptive particle count. The filter keeps `num_particles_` as the steady
+  // state target but is allowed to swing between [num_particles_min,
+  // num_particles_max] depending on uncertainty (match_ratio / re-loc):
+  //
+  //   * On /initial_3d_pose we jump the particle count to
+  //     num_particles_grow_on_init (defaults to num_particles_max if
+  //     unset/<=0) to give global re-localisation the search budget it
+  //     needs.
+  //   * Whenever match_ratio falls below match_ratio_grow_thresh we double
+  //     the particle count (capped at num_particles_max) so the filter can
+  //     spread out — same idea as KLD-sampling without the bin maths.
+  //   * After a successful update we shrink particles by particle_decay
+  //     (exponential decay), bounded below by max(num_particles_,
+  //     num_particles_min).
+  //
+  // Setting num_particles_min >= num_particles_max disables adaptation.
+  parameter_->declare_parameter("num_particles_min",
+                                rclcpp::ParameterValue(0));
+  parameter_->declare_parameter("num_particles_max",
+                                rclcpp::ParameterValue(0));
+  parameter_->declare_parameter("num_particles_grow_on_init",
+                                rclcpp::ParameterValue(0));
+  parameter_->declare_parameter("match_ratio_grow_thresh",
+                                rclcpp::ParameterValue(0.0));
+  parameter_->declare_parameter("particle_decay",
+                                rclcpp::ParameterValue(1.0));
+  num_particles_min_ = parameter_->get_parameter("num_particles_min").as_int();
+  num_particles_max_ = parameter_->get_parameter("num_particles_max").as_int();
+  num_particles_grow_on_init_ =
+      parameter_->get_parameter("num_particles_grow_on_init").as_int();
+  match_ratio_grow_thresh_ =
+      parameter_->get_parameter("match_ratio_grow_thresh").as_double();
+  particle_decay_ = parameter_->get_parameter("particle_decay").as_double();
+  if (num_particles_min_ <= 0) num_particles_min_ = num_particles_;
+  if (num_particles_max_ <= 0) num_particles_max_ = num_particles_;
+  if (num_particles_grow_on_init_ <= 0) {
+    num_particles_grow_on_init_ = num_particles_max_;
+  }
+  if (particle_decay_ <= 0.0 || particle_decay_ > 1.0) particle_decay_ = 1.0;
+  RCLCPP_INFO(logger_->get_logger(),
+              "particles adaptive: steady=%d min=%d max=%d "
+              "grow_on_init=%d match_thresh=%.2f decay=%.3f",
+              num_particles_, num_particles_min_, num_particles_max_,
+              num_particles_grow_on_init_, match_ratio_grow_thresh_,
+              particle_decay_);
+
   parameter_->declare_parameter("resample_var_x", rclcpp::ParameterValue(0.0));
   rclcpp::Parameter resample_var_x = parameter_->get_parameter("resample_var_x");
   resample_var_x_ = resample_var_x.as_double();
