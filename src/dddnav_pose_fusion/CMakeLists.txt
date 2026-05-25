@@ -49,6 +49,15 @@ install(DIRECTORY launch config
   OPTIONAL
 )
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_eskf_se3 test/test_eskf_se3.cpp src/eskf_se3.cpp)
+  if(TARGET test_eskf_se3)
+    target_include_directories(test_eskf_se3 PRIVATE
+      include ${EIGEN3_INCLUDE_DIRS})
+  endif()
+endif()
+
 ament_export_include_directories(include)
 ament_export_dependencies(${deps})
 ament_package()

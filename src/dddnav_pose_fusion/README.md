@@ -58,14 +58,57 @@ q_scale = 1 + adaptive_q_gain * max(0, residual - baseline) / baseline   （capp
 
 颠簸 / 动态 / 长走廊时让 MCL 拿更大权重；feats 不足同样会 boost 到 ≥4x。`adaptive_q_gain=0` 关掉。
 
+## 退化与质量信号
+
+定位单点失效是工程化最常见的"看起来好好的但是错了"。pose_fusion 内置一个有限状态机来兜底，状态在 `HEALTHY → DEGRADED_LIO_LOST → DEGRADED_MCL_STUCK` 之间切换：
+
+* **HEALTHY → DEGRADED_LIO_LOST**：FAST-LIO odom 沉默超过 `lio_blackout_sec`（默认 1 s）。此时 ESKF 不再 predict，但 MCL 一来就把当前 ESKF 状态直接当 `/odom_filtered` 推出去，下游消费者维持 5–10 Hz 输出而不是 0 Hz 冻结。
+* **HEALTHY → DEGRADED_MCL_STUCK**：MCL 自报位置 cov trace 持续超过 `mcl_stuck_cov`（默认 2 m²）超过 `mcl_stuck_sec`（默认 8 s）。每 `recovery_holdoff_sec`（默认 15 s）把当前融合 pose 作为 `/initial_3d_pose` 重发一次，触发 `sc_global_init` 重新跑 SC 候选 + MCL 大粒子云重启。
+
+每次模式切换会 `RCLCPP_WARN`，并把状态写到 `/localization_status`（`std_msgs/Float64MultiArray`），数据布局：
+
+```
+[0] quality       ∈ [0, 1]，由 LIO 寿命、MCL 接受寿命、ESKF cov trace、MCL 自报 trace 取 min
+[1] mode_id       0=HEALTHY, 1=DEGRADED_LIO_LOST, 2=DEGRADED_MCL_STUCK
+[2] lio_age (s)   离 FAST-LIO 上一次 odom 的秒数，-1 表示从未收到
+[3] mcl_age (s)   离 MCL 上一次被 ESKF 接受的秒数
+[4] cov_trace     ESKF 协方差 trace（位置 3 + 旋转 3）
+[5] mcl_pos_trace MCL 上次接受时的位置 cov trace
+```
+
+`quality` 取 min 是因为上层 cmd_vel_gate / 规划器只关心最差那条腿。需要原始信号就直接订阅这条 array 解析。
+
+相关参数：
+
+| Key | 默认 | 含义 |
+|-----|------|------|
+| `lio_blackout_sec` | 1.0 | LIO-LOST 触发阈值（s） |
+| `mcl_stuck_cov` | 2.0 | MCL 位置 cov trace 上限（m²） |
+| `mcl_stuck_sec` | 8.0 | trace 持续超限多久才进 STUCK |
+| `recovery_holdoff_sec` | 15.0 | 两次 recovery 重发的最短间隔 |
+| `status_topic` | `/localization_status` | 输出话题，空字符串关闭 |
+| `recovery_pub_topic` | `/initial_3d_pose` | recovery 时重发的种子话题 |
+| `status_rate_hz` | 2.0 | 状态评估 + publish 频率 |
+| `enable_recovery_publish` | `true` | 关掉就退化为只发状态、不主动重发种子 |
+
 ## 文件
 
 | 路径 | 内容 |
 |------|------|
 | `include/dddnav_pose_fusion/eskf_se3.h` | ESKF 数学（右扰动、Joseph form） |
 | `src/eskf_se3.cpp` | Rodrigues / log-SO(3) / predict / update |
-| `src/pose_fusion_node.cpp` | ROS 接线 |
+| `src/pose_fusion_node.cpp` | ROS 接线 + 退化状态机 + 质量信号 |
 | `config/pose_fusion.yaml` | 全部调参 |
+| `test/test_eskf_se3.cpp` | gtest：exp/log 往返、predict/update 协方差对称 + PSD、零创新 R 减小、Mahalanobis 门 |
+
+## 测试
+
+```bash
+colcon build --packages-select dddnav_pose_fusion --cmake-args -DBUILD_TESTING=ON
+colcon test --packages-select dddnav_pose_fusion
+```
+
+CI 与本地都跑这一条。失败的具体 case 在 `build/dddnav_pose_fusion/test_results/dddnav_pose_fusion/test_eskf_se3.gtest.xml`。
 
 ## 单独启动
 

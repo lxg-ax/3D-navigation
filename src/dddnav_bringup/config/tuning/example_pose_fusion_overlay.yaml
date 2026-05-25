@@ -1,0 +1,24 @@
+# tuning overlay: pose_fusion 收紧版（室内 / 慢速场景）
+#
+# 用法：把这一份覆盖在默认 pose_fusion.yaml 之上：
+#
+#   ros2 launch dddnav_bringup localization.launch.py \
+#     pose_fusion_yaml:=$(pwd)/src/dddnav_bringup/config/tuning/example_pose_fusion_overlay.yaml
+#
+# 注意：launch 只接受单个 pose_fusion_yaml。overlay 里只列要改的键，
+# ROS 2 会和默认 yaml 合并。删除不需要的键，保留你确实要覆盖的那几条。
+#
+# 默认值 / 各键含义见 `dddnav_pose_fusion/README.md` 与
+# `dddnav_bringup/config/PARAMETERS.md` 的 E 段。
+
+/**:
+  ros__parameters:
+    # 室内慢速：减小过程噪声，让 ESKF 更信 FAST-LIO，不被 MCL 抖动牵着走。
+    proc_noise_pos:     0.02
+    proc_noise_rot:     0.01
+
+    # 拒收门收紧：MCL 自报 cov trace > 1 m^2 直接丢。
+    mcl_cov_reject_trace: 1.0
+
+    # 退化降级阈值收紧：LIO 沉默 0.5s 就进 DEGRADED_LIO_LOST。
+    lio_blackout_sec:        0.5

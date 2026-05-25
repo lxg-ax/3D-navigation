@@ -114,21 +114,44 @@ depth ────────────────────────�
 ```
 launch/   每个模式一个入口 + common_nodes.py / common_camera_nodes.py / bringup_paths.py
 config/
+  PARAMETERS.md             整套调参的参数索引（参数 → 来源文件 → 调参建议）
   runtime.yaml              安装外参 / 启动延时 / 初始位姿 / 驱动频率
   keyframes_mid360.yaml     关键帧抽取阈值
   nav/
     base.yaml               导航公共参数（机器人外形、控制频率、规划器、MCL 默认值）
     mid360_*.yaml           各模式 overlay
+  tuning/
+    README.md               覆盖层使用说明
+    example_*.yaml          常见现场调参的 overlay 模板
 rviz/     mapping / mapping_nav / localization 三套
 map/      建图输出（`*.pcd` 不入库）
 scripts/  辅助脚本
 ```
 
+## 调参怎么找
+
+整套栈的"调什么、在哪改、为什么"全部走 [`config/PARAMETERS.md`](config/PARAMETERS.md)，按分类索引：
+
+* A 启动 / 装机（`runtime.yaml`）
+* B 雷达 + IMU 前端（`FAST_LIO/config/`）
+* C 雷达建图后端（`LIO-SAM/config/`，仅建图链）
+* D 关键帧抽取（`keyframes_mid360.yaml`）
+* E ESKF 融合 / 退化（`pose_fusion.yaml`）
+* F 全局定位 / SC 重定位（`nav/base.yaml` mcl_3dl/sub_maps 段 + launch 注入）
+* G 局部规划 / 行为生成 / 评价器（`nav/base.yaml`）
+* H 全局规划（`nav/<profile>.yaml`）
+* I 感知（`nav/<profile>.yaml` perception_3d 段）
+* J 健康监控 / 启动期自检（节点参数 + launch 覆盖）
+
+文档遵守"不复制参数值"原则：参数定义只在原 yaml，索引只指路。每条参数的含义与对应包 README 一致。
+
+`config/tuning/` 是覆盖层目录，不要改默认 yaml。
+
 ## 排错
 
 ### 建图启动后 `slam_health_monitor` 一直刷 `lio_sam/mapping/odometry no message` / `tf map->odom not available`
 
-最可能是**桥接 publisher 与 LIO-SAM 订阅 QoS 不兼容**。`livox_pc2_to_liosam` 的两个 publisher 必须是 RELIABLE，与 LIO-SAM `imageProjection` 的 `qos_lidar=RELIABLE` 匹配；如果改成 BEST_EFFORT，DDS 会拒绝建立连接，imageProjection 一帧点云都收不到，整条后端管道空转但节点都活着，从外部看不出根因。
+最可能是**桥接 publisher 与 LIO-SAM 订阅 QoS 不兼容**。`livox_pc2_to_liosam` 的两个 publisher 必须是 RELIABLE，与 LIO-SAM `imageProjection` 的 `qos_lidar=RELIABLE` 匹配。如果改成 BEST_EFFORT，DDS 会拒绝建立连接，imageProjection 一帧点云都收不到，整条后端管道空转但节点都活着，从外部看不出根因。
 
 诊断顺序：
 
@@ -147,7 +170,7 @@ ros2 topic hz /lio_sam/mapping/odometry
 
 ### 雷达静止时偶发 `[tf map->odom] stamp_age=0.5s`
 
-LIO-SAM `mappingProcessInterval=0.1` + 单次优化偶发 100~150 ms，原默认 `ok_timeout=0.5s` 会被偶尔触达。建图链已经把 `slam_health_monitor` 的阈值放宽（`ok_timeout=1.0s`、`fail_timeout=3.0s`），见 `common_nodes.py::liosam_back_end`。再调可以直接改那一行。
+LIO-SAM `mappingProcessInterval=0.1` + 单次优化偶发 100~150 ms，原默认 `ok_timeout=0.5s` 会偶尔触达。建图链已经把 `slam_health_monitor` 的阈值放宽（`ok_timeout=1.0s`、`fail_timeout=3.0s`），见 `common_nodes.py::liosam_back_end`。再调可以直接改那一行。
 
 ## 导航调参（base + overlay）
 

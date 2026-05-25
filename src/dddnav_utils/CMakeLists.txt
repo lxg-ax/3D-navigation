@@ -40,6 +40,7 @@ install(PROGRAMS
   scripts/slam_health_monitor.py
   scripts/save_map_on_exit.py
   scripts/nav_perf_monitor.py
+  scripts/dddnav_preflight.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

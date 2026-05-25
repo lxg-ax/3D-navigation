@@ -22,7 +22,7 @@ import common_nodes
 def generate_launch_description():
     bringup_dir       = get_package_share_directory('dddnav_bringup')
     fast_lio_dir      = get_package_share_directory('fast_lio')
-    pose_fusion_yaml  = os.path.join(
+    pose_fusion_yaml_default  = os.path.join(
         get_package_share_directory('dddnav_pose_fusion'),
         'config', 'pose_fusion.yaml')
 
@@ -30,6 +30,7 @@ def generate_launch_description():
 
     fastlio_config = LaunchConfiguration('fastlio_config')
     rviz_config    = LaunchConfiguration('rviz_config')
+    pose_fusion_yaml = LaunchConfiguration('pose_fusion_yaml')
 
     declare_fastlio_config_cmd = DeclareLaunchArgument(
         'fastlio_config',
@@ -40,6 +41,11 @@ def generate_launch_description():
         'rviz_config',
         default_value=os.path.join(bringup_dir, 'rviz', 'localization.rviz'),
         description='Full path to the RVIZ config file',
+    )
+    declare_pose_fusion_yaml_cmd = DeclareLaunchArgument(
+        'pose_fusion_yaml',
+        default_value=pose_fusion_yaml_default,
+        description='pose_fusion yaml — use config/tuning/*.yaml for overlays',
     )
 
     nav_profile_decl, nav_profile_resolve = bringup_paths.nav_profile_argument(
@@ -53,6 +59,7 @@ def generate_launch_description():
     ld = LaunchDescription([
         declare_fastlio_config_cmd,
         declare_rviz_config_cmd,
+        declare_pose_fusion_yaml_cmd,
         nav_profile_decl,
         nav_profile_resolve,
     ])

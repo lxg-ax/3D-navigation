@@ -75,3 +75,20 @@
     auto_init_x:         0.0
     auto_init_y:         0.0
     auto_init_z:         0.0
+
+    # Degradation state machine. The fusion node tracks wall-clock liveness
+    # for FAST-LIO odom and MCL accept; once the configured thresholds are
+    # exceeded it transitions to a DEGRADED mode and (a) keeps publishing
+    # /odom_filtered straight from MCL when LIO is dead, (b) re-publishes
+    # /initial_3d_pose to nudge SC global re-localisation when MCL is stuck.
+    # The single-number quality scalar lands on /localization_status =
+    # [quality, mode_id, lio_age, mcl_age, cov_trace, mcl_pos_trace] for
+    # upper-layer consumers (cmd_vel_gate, planner, dashboards).
+    lio_blackout_sec:        1.0       # LIO-LOST threshold (s)
+    mcl_stuck_cov:           2.0       # m^2, MCL pos cov trace ceiling
+    mcl_stuck_sec:           8.0       # how long over ceiling before STUCK
+    recovery_holdoff_sec:   15.0       # min gap between recovery republishes
+    status_topic:            "/localization_status"
+    recovery_pub_topic:      "/initial_3d_pose"
+    status_rate_hz:          2.0
+    enable_recovery_publish: true

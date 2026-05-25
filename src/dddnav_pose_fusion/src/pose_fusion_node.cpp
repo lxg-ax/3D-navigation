@@ -27,6 +27,7 @@
 //     updates still come in but with no high-rate output.
 
 #include <chrono>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -129,6 +130,25 @@ public:
     declare_parameter<double>("auto_init_y",         0.0);
     declare_parameter<double>("auto_init_z",         0.0);
 
+    // ---- Degradation state machine -------------------------------------
+    // Mode HEALTHY -> DEGRADED_LIO_LOST when no FAST-LIO odom for
+    // lio_blackout_sec; in that mode we keep publishing /odom_filtered at
+    // pass-through rate from each MCL update so downstream consumers don't
+    // freeze. Mode HEALTHY -> DEGRADED_MCL_STUCK when MCL position cov
+    // trace stays above mcl_stuck_cov for mcl_stuck_sec consecutively;
+    // we then bump /initial_3d_pose via recovery_pub_topic to trigger
+    // SC re-localisation, and reset the ESKF on the next accepted MCL.
+    // status_topic is a Float64MultiArray = [quality, mode_id,
+    //   lio_age, mcl_age, cov_trace, mcl_pos_trace] for upper layers.
+    declare_parameter<double>("lio_blackout_sec",    1.0);
+    declare_parameter<double>("mcl_stuck_cov",       2.0);   // m^2
+    declare_parameter<double>("mcl_stuck_sec",       8.0);
+    declare_parameter<double>("recovery_holdoff_sec", 15.0);
+    declare_parameter<std::string>("status_topic",   "/localization_status");
+    declare_parameter<std::string>("recovery_pub_topic", "/initial_3d_pose");
+    declare_parameter<double>("status_rate_hz",      2.0);
+    declare_parameter<bool>("enable_recovery_publish", true);
+
     odom_topic_  = get_parameter("odom_topic").as_string();
     pose_topic_  = get_parameter("pose_topic").as_string();
     init_topic_  = get_parameter("initial_pose_topic").as_string();
@@ -162,6 +182,15 @@ public:
     auto_init_y_  = get_parameter("auto_init_y").as_double();
     auto_init_z_  = get_parameter("auto_init_z").as_double();
 
+    lio_blackout_sec_ = get_parameter("lio_blackout_sec").as_double();
+    mcl_stuck_cov_    = get_parameter("mcl_stuck_cov").as_double();
+    mcl_stuck_sec_    = get_parameter("mcl_stuck_sec").as_double();
+    recovery_holdoff_sec_ = get_parameter("recovery_holdoff_sec").as_double();
+    status_topic_     = get_parameter("status_topic").as_string();
+    recovery_pub_topic_ = get_parameter("recovery_pub_topic").as_string();
+    status_rate_hz_   = get_parameter("status_rate_hz").as_double();
+    enable_recovery_pub_ = get_parameter("enable_recovery_publish").as_bool();
+
     // ---- IO --------------------------------------------------------------
     rclcpp::QoS sensor_qos(rclcpp::KeepLast(50));
     sensor_qos.best_effort();
@@ -192,6 +221,27 @@ public:
       tfb_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
     }
 
+    // Localization status (single quality scalar + mode id) for upper-layer
+    // consumers and diagnostics aggregators.
+    if (!status_topic_.empty()) {
+      pub_status_ = create_publisher<std_msgs::msg::Float64MultiArray>(
+        status_topic_, 10);
+    }
+    // SC re-localisation recovery: pose_fusion publishes its own best
+    // guess (last fused pose) onto recovery_pub_topic when MCL is stuck so
+    // the SC watchdog / mcl_3dl re-seed properly.
+    if (enable_recovery_pub_ && !recovery_pub_topic_.empty()) {
+      pub_recovery_ = create_publisher<
+        geometry_msgs::msg::PoseWithCovarianceStamped>(
+          recovery_pub_topic_, 2);
+    }
+    if (status_rate_hz_ > 0.0) {
+      const auto period = std::chrono::milliseconds(
+        static_cast<int>(1000.0 / status_rate_hz_));
+      status_timer_ = create_wall_timer(
+        period, std::bind(&PoseFusionNode::onStatusTick, this));
+    }
+
     if (auto_init_to_ > 0.0) {
       auto_init_timer_ = create_wall_timer(
         std::chrono::milliseconds(static_cast<int>(auto_init_to_ * 1000)),
@@ -213,6 +263,8 @@ private:
   void onFastLioOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
   {
     std::lock_guard<std::mutex> lk(mtx_);
+
+    wall_last_lio_ = nowSec();
 
     Eigen::Vector3d p_o_b(
       msg->pose.pose.position.x,
@@ -280,6 +332,8 @@ private:
   void onMclPose(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
   {
     std::lock_guard<std::mutex> lk(mtx_);
+
+    wall_last_mcl_msg_ = nowSec();
 
     Eigen::Vector3d p_m_b(
       msg->pose.pose.position.x,
@@ -378,7 +432,19 @@ private:
       }
     } else {
       gate_reject_count_ = 0;
+      wall_last_mcl_accept_ = nowSec();
+      mcl_pos_trace_last_ = mcl_pos_trace;
       clampCovariance();
+    }
+
+    // Degraded path: FAST-LIO is dead, but we still want /odom_filtered to
+    // tick (downstream consumers — costmap, control — freeze at 0 Hz output
+    // otherwise). Publish the just-fused state directly without waiting for
+    // the next FAST-LIO message.
+    if (mode_ == Mode::DEGRADED_LIO_LOST && eskf_.initialized()) {
+      const Eigen::Vector3d & p_o_b = p_o_b_last_;
+      const Eigen::Quaterniond & q_o_b = q_o_b_last_;
+      publishFused(now(), p_o_b, q_o_b, base_frame_);
     }
   }
 
@@ -467,11 +533,140 @@ private:
   }
 
   // -------------------------------------------------------------------------
-  // FAST-LIO residual / feature-count health update. Anything above the
-  // configured baseline ramps up adaptive_q_scale_ which the predict step
-  // multiplies into Q, so the filter trusts MCL more during jolts / dynamic
-  // scenes / featureless corridors.
+  // Periodic mode evaluation + /localization_status publication. Wall-time
+  // based: a node-shutdown should naturally roll us into DEGRADED_LIO_LOST
+  // because nothing is updating wall_last_lio_ anymore.
   // -------------------------------------------------------------------------
+  void onStatusTick()
+  {
+    std::lock_guard<std::mutex> lk(mtx_);
+    const double tnow = nowSec();
+
+    auto age_or_inf = [&](double t) -> double {
+      if (t <= 0.0) return std::numeric_limits<double>::infinity();
+      return tnow - t;
+    };
+
+    const double lio_age = age_or_inf(wall_last_lio_);
+    const double mcl_age = age_or_inf(wall_last_mcl_accept_);
+    const double cov_trace = eskf_.initialized() ? covarianceTrace() : 1e6;
+
+    // ---- Mode arbitration ------------------------------------------------
+    Mode new_mode = Mode::HEALTHY;
+    if (lio_age > lio_blackout_sec_) {
+      new_mode = Mode::DEGRADED_LIO_LOST;
+    }
+    // MCL stuck check: covariance trace persistently high *and* we're not
+    // already in LIO-lost mode (LIO-lost takes priority).
+    if (new_mode == Mode::HEALTHY) {
+      if (mcl_pos_trace_last_ > mcl_stuck_cov_) {
+        if (!mcl_stuck_active_) {
+          mcl_stuck_since_ = tnow;
+          mcl_stuck_active_ = true;
+        }
+        if (tnow - mcl_stuck_since_ > mcl_stuck_sec_) {
+          new_mode = Mode::DEGRADED_MCL_STUCK;
+        }
+      } else {
+        mcl_stuck_active_ = false;
+      }
+    } else {
+      mcl_stuck_active_ = false;
+    }
+
+    if (new_mode != mode_) {
+      RCLCPP_WARN(get_logger(),
+        "pose_fusion mode change %d -> %d  (lio_age=%.2fs mcl_age=%.2fs "
+        "mcl_pos_trace=%.3f cov_trace=%.3f)",
+        static_cast<int>(mode_), static_cast<int>(new_mode),
+        lio_age, mcl_age, mcl_pos_trace_last_, cov_trace);
+      mode_ = new_mode;
+    }
+
+    // ---- Recovery action: bump SC re-localisation ----------------------
+    if (mode_ == Mode::DEGRADED_MCL_STUCK
+        && enable_recovery_pub_
+        && pub_recovery_
+        && eskf_.initialized()
+        && (tnow - wall_last_recovery_) > recovery_holdoff_sec_) {
+      geometry_msgs::msg::PoseWithCovarianceStamped seed;
+      seed.header.stamp = now();
+      seed.header.frame_id = map_frame_;
+      const auto & p = eskf_.position();
+      const auto & q = eskf_.orientation();
+      seed.pose.pose.position.x = p.x();
+      seed.pose.pose.position.y = p.y();
+      seed.pose.pose.position.z = p.z();
+      seed.pose.pose.orientation.w = q.w();
+      seed.pose.pose.orientation.x = q.x();
+      seed.pose.pose.orientation.y = q.y();
+      seed.pose.pose.orientation.z = q.z();
+      // Wider covariance so MCL spreads particles before reseeding.
+      const double pos2 = init_pos_ * init_pos_;
+      const double rot2 = init_rot_ * init_rot_;
+      for (int i = 0; i < 6; ++i) {
+        seed.pose.covariance[i * 6 + i] = (i < 3) ? pos2 : rot2;
+      }
+      pub_recovery_->publish(seed);
+      wall_last_recovery_ = tnow;
+      RCLCPP_WARN(get_logger(),
+        "MCL stuck for %.1fs (cov_trace=%.3f m^2) -> republished "
+        "%s to nudge SC re-localisation",
+        mcl_stuck_sec_, mcl_pos_trace_last_, recovery_pub_topic_.c_str());
+    }
+
+    // ---- Quality scalar + status publication ---------------------------
+    if (pub_status_) {
+      std_msgs::msg::Float64MultiArray msg;
+      msg.data.resize(6);
+      msg.data[0] = computeQuality(lio_age, mcl_age, cov_trace,
+                                   mcl_pos_trace_last_);
+      msg.data[1] = static_cast<double>(static_cast<int>(mode_));
+      msg.data[2] = std::isfinite(lio_age) ? lio_age : -1.0;
+      msg.data[3] = std::isfinite(mcl_age) ? mcl_age : -1.0;
+      msg.data[4] = cov_trace;
+      msg.data[5] = mcl_pos_trace_last_;
+      pub_status_->publish(msg);
+    }
+  }
+
+  double nowSec()
+  {
+    return get_clock()->now().nanoseconds() * 1e-9;
+  }
+
+  double covarianceTrace() const
+  {
+    const auto & P = eskf_.covariance();
+    double t = 0.0;
+    for (int i = 0; i < 6; ++i) t += P(i, i);
+    return t;
+  }
+
+  // Aggregate localization quality in [0, 1]. Combines LIO liveness, MCL
+  // acceptance recency, filter cov trace, and MCL self-reported trace via
+  // min() so a single bad axis drives the number low.
+  double computeQuality(double lio_age, double mcl_age,
+                        double cov_trace, double mcl_pos_trace) const
+  {
+    auto ramp = [](double x, double good, double bad) {
+      if (!std::isfinite(x)) return 0.0;
+      if (x <= good) return 1.0;
+      if (x >= bad)  return 0.0;
+      return 1.0 - (x - good) / std::max(1e-6, bad - good);
+    };
+    const double q_lio  = ramp(lio_age, 0.2,
+                               std::max(lio_blackout_sec_, 0.5));
+    const double q_mcl  = ramp(mcl_age, 2.0,
+                               4.0 * std::max(mcl_stuck_sec_, 1.0));
+    const double q_cov  = ramp(cov_trace, 0.25, 4.0);
+    const double q_mclv = ramp(mcl_pos_trace, 0.25,
+                               std::max(mcl_stuck_cov_, 0.5));
+    return std::min({q_lio, q_mcl, q_cov, q_mclv});
+  }
+
+  // -------------------------------------------------------------------------
+  // FAST-LIO residual / feature-count health update.
   void onLioHealth(const std_msgs::msg::Float64MultiArray::ConstSharedPtr msg)
   {
     if (msg->data.size() < 1 || adaptive_q_gain_ <= 0.0) return;
@@ -557,6 +752,23 @@ private:
   Eigen::Quaterniond q_o_b_last_{Eigen::Quaterniond::Identity()};
   rclcpp::Time stamp_last_;
 
+  // Liveness tracking for the degradation state machine. Wall clock is used
+  // (not the message stamp) because we react to "we haven't heard anything
+  // in a while" — that is a wall-time concept. We store seconds-since-epoch
+  // as plain doubles to avoid rclcpp::Time clock-type mismatches when
+  // diff'ing against now().
+  double wall_last_lio_{0.0};
+  double wall_last_mcl_accept_{0.0};
+  double wall_last_mcl_msg_{0.0};
+  double wall_last_recovery_{0.0};
+  double mcl_pos_trace_last_{0.0};
+  double mcl_stuck_since_{0.0};
+  bool mcl_stuck_active_{false};
+
+  enum class Mode { HEALTHY, DEGRADED_LIO_LOST, DEGRADED_MCL_STUCK };
+  Mode mode_{Mode::HEALTHY};
+  std::string base_frame_default_{"base_link"};
+
   // ---- IO --------------------------------------------------------------
   std::string odom_topic_, pose_topic_, init_topic_, out_topic_;
   std::string map_frame_, odom_frame_, base_frame_;
@@ -579,11 +791,23 @@ private:
   double auto_init_x_{0.0}, auto_init_y_{0.0}, auto_init_z_{0.0};
   rclcpp::TimerBase::SharedPtr auto_init_timer_;
 
+  double lio_blackout_sec_{1.0};
+  double mcl_stuck_cov_{2.0};
+  double mcl_stuck_sec_{8.0};
+  double recovery_holdoff_sec_{15.0};
+  double status_rate_hz_{2.0};
+  bool   enable_recovery_pub_{true};
+  std::string status_topic_;
+  std::string recovery_pub_topic_;
+
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_init_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_health_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_status_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_recovery_;
+  rclcpp::TimerBase::SharedPtr status_timer_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfb_;
 };
 

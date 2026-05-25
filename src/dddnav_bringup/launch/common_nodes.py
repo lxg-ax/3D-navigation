@@ -129,7 +129,8 @@ def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
 # ---------------------------------------------------------------------------
 
 def localization_stack(rt, nav_config_params, pose_fusion_yaml,
-                       sc_init_enabled=True, sc_init_yaml=None):
+                       sc_init_enabled=True, sc_init_yaml=None,
+                       preflight_enabled=True):
     """MCL 3DL + pose_fusion + mcl_feature + (optional) SC global init +
     operator-supplied initial-pose bootstrap.
 
@@ -142,6 +143,10 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
     keeps the legacy behaviour (use runtime.yaml.initial_pose).
     ``sc_init_yaml`` is an optional dict / yaml file with overrides. The
     helper auto-injects the canonical sc_db / poses paths.
+
+    ``preflight_enabled`` runs the dddnav_preflight node ~5s after launch
+    so QoS / TF / cross-node parameter mismatches surface as ERROR-level
+    diagnostics within seconds of bringup instead of after a long bag run.
     """
     d = rt['delays']
     ip = rt['initial_pose']
@@ -217,6 +222,19 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
             initial_pose_msg,
         ], output='screen'),
     ]))
+
+    if preflight_enabled:
+        # QoS / TF / parameter sanity check. Runs once at warmup_sec post
+        # launch (before the planner sees first odom) and then every
+        # recheck_sec. Cheap.
+        warmup = max(d.get('initial_pose', 5.0) - 2.0, 3.0)
+        actions.append(TimerAction(period=warmup, actions=[
+            Node(package='dddnav_utils', executable='dddnav_preflight.py',
+                 name='dddnav_preflight', output='screen',
+                 parameters=[{'mode': 'localization',
+                              'warmup_sec': 2.0,
+                              'recheck_sec': 30.0}]),
+        ]))
     return actions
 
 
