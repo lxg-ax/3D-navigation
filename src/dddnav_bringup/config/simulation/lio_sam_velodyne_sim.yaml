@@ -1,0 +1,99 @@
+/**:
+  ros__parameters:
+
+    # LIO-SAM back-end tuned for the Gazebo VLP-16 sim. FAST-LIO still
+    # produces /Odometry + /cloud_registered_body, so this profile only
+    # tweaks the bits that depend on sensor model & noise.
+
+    # Topics
+    pointCloudTopic: "/velodyne_points"   # raw Velodyne, no Livox bridge in sim
+    imuTopic:        "/imu/data"
+    odomTopic:       "odometry/imu"
+    gpsTopic:        "odometry/gpsz"
+
+    # Frames
+    lidarFrame:    "velodyne"
+    baselinkFrame: "base_link"
+    odometryFrame: "odom"
+    mapFrame:      "map"
+
+    # GPS
+    useImuHeadingInitialization: false
+    useGpsElevation: false
+    gpsCovThreshold: 2.0
+    poseCovThreshold: 25.0
+
+    # Export
+    savePCD: false
+    savePCDDirectory: "/tmp/lio_sam_save_pcd/"
+
+    # Sensor: 16-line spinning lidar with offset_time
+    sensor: velodyne
+    N_SCAN: 16
+    Horizon_SCAN: 440           # matches velodyne.xacro <samples>440</samples>
+    downsampleRate: 1
+    lidarMinRange: 0.9
+    lidarMaxRange: 130.0
+
+    # Sim IMU is much cleaner than a real Mid360. Keep noise low and let
+    # FAST-LIO drive; LIO-SAM only refines the back-end.
+    imuAccNoise: 0.02
+    imuGyrNoise: 0.005
+    imuAccBiasN: 0.0001
+    imuGyrBiasN: 0.00001
+    imuGravity:  9.81
+    imuRPYWeight: 0.1
+
+    # FastLIO publishes odom→base_link; LIO-SAM owns map→odom.
+    publishTF: false
+
+    # IMU mounted at base_link (imu_link xyz=0 0 0). LiDAR offset already
+    # applied via FAST-LIO mapping.extrinsic_T; LIO-SAM consumes FAST-LIO
+    # odom directly so identity here is fine.
+    extrinsicTrans: [0.0, 0.0, 0.0]
+    extrinsicRot:   [1.0, 0.0, 0.0,
+                     0.0, 1.0, 0.0,
+                     0.0, 0.0, 1.0]
+    extrinsicRPY:   [1.0, 0.0, 0.0,
+                     0.0, 1.0, 0.0,
+                     0.0, 0.0, 1.0]
+
+    # LOAM features — VLP-16 sim is lower density, soften thresholds.
+    edgeThreshold: 1.0
+    surfThreshold: 0.1
+    edgeFeatureMinValidNum: 5
+    surfFeatureMinValidNum: 50
+
+    # Voxel filter
+    odometrySurfLeafSize: 0.4
+    mappingCornerLeafSize: 0.2
+    mappingSurfLeafSize: 0.4
+
+    z_tollerance: 5.0
+    rotation_tollerance: 0.5
+
+    numberOfCores: 4
+    mappingProcessInterval: 0.1
+
+    # Keyframe cadence — sim has no microdrift, allow a bit more spread.
+    surroundingkeyframeAddingDistThreshold: 0.5
+    surroundingkeyframeAddingAngleThreshold: 0.2
+    surroundingKeyframeDensity: 1.0
+    surroundingKeyframeSearchRadius: 50.0
+
+    # Loop closure
+    loopClosureEnableFlag: true
+    loopClosureFrequency: 1.0
+    surroundingKeyframeSize: 50
+    historyKeyframeSearchRadius: 15.0
+    historyKeyframeSearchTimeDiff: 30.0
+    historyKeyframeSearchNum: 25
+    historyKeyframeFitnessScore: 0.3
+
+    scExcludeRecent:  30
+    scDistThreshold:  0.3
+    scMinDatabase:    30        # smaller worlds → activate SC sooner
+
+    globalMapVisualizationSearchRadius: 1000.0
+    globalMapVisualizationPoseDensity:  10.0
+    globalMapVisualizationLeafSize:     0.1

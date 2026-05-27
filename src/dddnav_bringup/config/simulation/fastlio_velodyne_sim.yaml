@@ -1,0 +1,60 @@
+/**:
+    ros__parameters:
+        # Sim Velodyne front-end for FAST-LIO. Mirrors mid360_pc2.yaml but
+        # subscribes to /velodyne_points + /imu/data and uses VLP-16 layout.
+
+        feature_extract_enable: false
+        point_filter_num: 1
+        max_iteration: 3
+        filter_size_surf: 0.3
+        filter_size_map: 0.3
+        cube_side_length: 1000.0
+        runtime_pos_log_enable: false
+        map_file_path: "./test.pcd"
+
+        common:
+            lid_topic:  "/velodyne_points"
+            imu_topic:  "/imu/data"
+            time_sync_en: false
+            time_offset_lidar_to_imu: 0.0
+
+        preprocess:
+            lidar_type: 2          # 2 = Velodyne
+            scan_line:  16
+            blind:      0.5
+            timestamp_unit: 2      # microseconds (gazebo_ros_velodyne_laser uses us)
+            scan_rate:  10
+
+        mapping:
+            # Sim IMU is much cleaner than a real Mid360; trim noise so the
+            # filter actually trusts it. Adjust if the trajectory wobbles.
+            acc_cov:    0.05
+            gyr_cov:    0.05
+            b_acc_cov:  0.0001
+            b_gyr_cov:  0.0001
+            fov_degree: 360.0
+            det_range:  100.0
+            extrinsic_est_en: false
+            # base_link → velodyne offset from go2_description velodyne.xacro:
+            #   <origin xyz="0.2 0 0.08"/> + base_scan offset 0 0 0.0377
+            # IMU sits at imu_link (xyz 0 0 0 from base_link), so
+            # T_imu_lidar = (0.2, 0, 0.1177).
+            extrinsic_T: [0.2, 0.0, 0.1177]
+            extrinsic_R: [1.0, 0.0, 0.0,
+                          0.0, 1.0, 0.0,
+                          0.0, 0.0, 1.0]
+
+        publish:
+            path_en: true
+            effect_map_en: false
+            map_en: true
+            scan_publish_en:  true
+            dense_publish_en: true
+            scan_bodyframe_pub_en: true
+            tf_en: true
+            world_frame: "odom"
+            body_frame: "base_link"
+
+        pcd_save:
+            pcd_save_en: false
+            interval: -1

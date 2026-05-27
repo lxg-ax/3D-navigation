@@ -69,7 +69,7 @@ ros2 launch dddnav_bringup localization_with_camera.launch.py
 
 * RealSense（D435/D455），默认 848×480
 * DDRNet 的 TensorRT 引擎，需在**目标 GPU** 上 `trtexec` 转 ONNX（见根 README「Semantic」段或 `dddnav_semantic_segmentation/README.md`）
-* 相机外参在 [`config/runtime.yaml`](config/runtime.yaml) 的 `camera_mount`（与 `lidar_mount` 同级），改 yaml 即可，不动 launch
+* 相机外参在 [`config/reality/runtime.yaml`](config/reality/runtime.yaml) 的 `camera_mount`（与 `lidar_mount` 同级），改 yaml 即可，不动 launch
 
 数据流：
 
@@ -145,7 +145,7 @@ scripts/  辅助脚本
 
 文档遵守"不复制参数值"原则：参数定义只在原 yaml，索引只指路。每条参数的含义与对应包 README 一致。
 
-`config/tuning/` 是覆盖层目录，不要改默认 yaml。
+`config/reality/tuning/` 是覆盖层目录，不要改默认 yaml。
 
 ## 排错
 
@@ -174,7 +174,7 @@ LIO-SAM `mappingProcessInterval=0.1` + 单次优化偶发 100~150 ms，原默认
 
 ## 导航调参（base + overlay）
 
-`config/nav/base.yaml` 是公共层。每个 profile 只写差异，launch 用 `parameters=[base.yaml, profile.yaml]` 顺序加载，后者覆盖前者：
+`config/nav_base.yaml` 是公共层。每个 profile 只写差异，launch 用 `parameters=[base.yaml, profile.yaml]` 顺序加载，后者覆盖前者：
 
 | Profile | 说明 |
 |------|------|
@@ -197,7 +197,7 @@ ros2 launch dddnav_bringup mapping_nav.launch.py  nav_profile:=mid360_mapping_wi
 ros2 launch dddnav_bringup localization.launch.py nav_profile:=/abs/path/custom.yaml
 ```
 
-新做一个 profile：复制 `config/nav/mid360_localization.yaml` 改名（如 `myrobot_indoor.yaml`），写差异即可。`p2p_move_base/config/` 现在只留 Go2 专用 yaml。
+新做一个 profile：复制 `config/reality/nav/mid360_localization.yaml` 改名（如 `myrobot_indoor.yaml`），写差异即可。`p2p_move_base/config/` 现在只留 Go2 专用 yaml。
 
 ## 参数示例
 

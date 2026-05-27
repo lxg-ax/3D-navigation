@@ -43,6 +43,36 @@ ros2 launch champ_config navigate.launch.py \
 
 标准位姿图数据放 **`src/dddnav_bringup/map/`**。Go2 老 demo `ros2 launch p2p_move_base go2_localization.launch` 在 launch 里把 `sub_maps.pose_graph_dir` 指向那个目录；Mid360 主线 `ros2 launch dddnav_bringup localization.launch.py` 走同一份位姿图。
 
+## 仿真导航（Mid360 主线 + Gazebo VLP-16）
+
+`dddnav_bringup` 提供三个仿真专用 launch，自动起 Gazebo Go2 + 整套 SLAM/定位/规划栈，全程 `use_sim_time:=true`：
+
+| Launch | 用途 |
+|------|------|
+| `sim_mapping.launch.py` | Gazebo + FAST-LIO + LIO-SAM 后端，纯建图 |
+| `sim_mapping_nav.launch.py` | 上行 + 全局 / 局部规划，边建边跑 |
+| `sim_localization.launch.py` | Gazebo + FAST-LIO + MCL + ESKF + 规划，需先有位姿图 |
+
+```bash
+# 1. 先用仿真建一张图（自动落到 share/dddnav_bringup/map/）
+ros2 launch dddnav_bringup sim_mapping.launch.py auto_save_on_exit:=true
+# 操作 cmd_vel 走一圈，Ctrl-C 出图
+
+# 2. 用刚建的图启动定位 + 导航
+ros2 launch dddnav_bringup sim_localization.launch.py
+```
+
+仿真专用配置：
+
+| 文件 | 作用 |
+|------|------|
+| `dddnav_bringup/config/simulation/fastlio_velodyne_sim.yaml` | FAST-LIO 适配 VLP-16，订阅 `/velodyne_points` + `/imu/data` |
+| `dddnav_bringup/config/simulation/lio_sam_velodyne_sim.yaml` | LIO-SAM 后端，N_SCAN=16、轻噪声 IMU |
+| `dddnav_bringup/config/simulation/nav/sim_velodyne_mapping.yaml` | mapping_nav 的 perception/planner overlay |
+| `dddnav_bringup/config/simulation/nav/sim_velodyne_localization.yaml` | localization 的 perception/planner overlay |
+
+仿真和真机走两条独立链路：仿真无 Livox 桥接，FAST-LIO 直接吃 `/velodyne_points`；mcl_feature 与 sc_global_init 在仿真里改吃 `/cloud_registered_body`。其余节点接线与真机一致。
+
 ## 致谢
 
 * [CHAMP](https://github.com/chvmp/champ) 和 [chvmp/robots](https://github.com/chvmp/robots) — 步态控制框架与配置生成器

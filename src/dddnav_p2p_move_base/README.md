@@ -30,7 +30,7 @@ RViz / 业务节点 ─► /goal ─► p2p_move_base
 
 ## 主要参数
 
-`dddnav_bringup/config/nav/base.yaml` 的 `p2p_move_base` 段：
+`dddnav_bringup/config/nav_base.yaml` 的 `p2p_move_base` 段：
 
 | Key | 含义 |
 |-----|------|

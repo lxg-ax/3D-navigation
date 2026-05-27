@@ -8,7 +8,7 @@
 - 加 **`dddnav_pose_fusion`**：SE(3) ESKF 融合 FAST-LIO 与 MCL 3DL，输出 100Hz `/odom_filtered` 和 `map→odom`；自适应 Mahalanobis 门 + MCL 协方差硬拒，鲁棒性显著提升
 - **MCL 3DL 自适应粒子数**：重定位 / 低 match_ratio 时按需放大（KLD 风格的轻量替代），收敛后指数回落
 - 加 **`dddnav_utils/sc_global_init`**：启动期 Scan Context 全局重定位 + 运行期在线 watchdog（被搬运 / 走错楼层 / MCL 卡死自动恢复，spatial gate 杀掉重复几何误匹配）
-- bringup launch 重构（`common_nodes.py` 抽公共组件）+ nav 调参 yaml `base + overlay` 化（`config/nav/`）
+- bringup launch 重构（`common_nodes.py` 抽公共组件）+ nav 调参 yaml `base + overlay` 化（`config/reality/nav/` 与 `config/simulation/nav/`）
 - Docker 镜像：x64 / CUDA / Jetson L4T / Gazebo 四档（[`dddnav_docker/`](dddnav_docker/)）
 - 运行时 telemetry：`slam_health_monitor` + `nav_perf_monitor` 都发到 `/diagnostics`
 
@@ -78,10 +78,10 @@ ros2 launch dddnav_bringup localization_with_camera.launch.py      # + 语义点
 
 | 文件 | 作用 |
 |------|------|
-| [`dddnav_bringup/config/runtime.yaml`](src/dddnav_bringup/config/runtime.yaml) | LiDAR / 相机外参，启动延时，初始位姿，驱动频率 |
-| [`dddnav_bringup/config/keyframes_mid360.yaml`](src/dddnav_bringup/config/keyframes_mid360.yaml) | 关键帧抽取阈值（`keyframe_dist` / `keyframe_angle`） |
-| [`dddnav_bringup/config/nav/base.yaml`](src/dddnav_bringup/config/nav/base.yaml) | 公共导航参数（机器人外形、控制频率、规划器） |
-| [`dddnav_bringup/config/nav/mid360_*.yaml`](src/dddnav_bringup/config/nav/) | 模式 overlay：`mid360_mapping[_with_camera]` / `mid360_localization[_with_camera/_with_depth_camera]` |
+| [`dddnav_bringup/config/reality/runtime.yaml`](src/dddnav_bringup/config/reality/runtime.yaml) | LiDAR / 相机外参，启动延时，初始位姿，驱动频率 |
+| [`dddnav_bringup/config/reality/keyframes_mid360.yaml`](src/dddnav_bringup/config/reality/keyframes_mid360.yaml) | 关键帧抽取阈值（`keyframe_dist` / `keyframe_angle`） |
+| [`dddnav_bringup/config/nav_base.yaml`](src/dddnav_bringup/config/nav_base.yaml) | 公共导航参数（机器人外形、控制频率、规划器） |
+| [`dddnav_bringup/config/reality/nav/mid360_*.yaml`](src/dddnav_bringup/config/reality/nav/) | 模式 overlay：`mid360_mapping[_with_camera]` / `mid360_localization[_with_camera/_with_depth_camera]` |
 | [`LIO-SAM/config/params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml) | LIO-SAM 全部调参（IMU、回环、Scan Context） |
 | [`dddnav_pose_fusion/config/pose_fusion.yaml`](src/dddnav_pose_fusion/config/pose_fusion.yaml) | ESKF Q/R、ZUPT、自适应 Q、auto-init |
 

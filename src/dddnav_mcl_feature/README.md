@@ -30,7 +30,7 @@ MCL 3DL 的特征提取器：原始点云 → 4 类特征（边 / 强边 / 面 /
 
 ## 主要参数
 
-`dddnav_bringup/config/nav/base.yaml` 的 `mcl_ip` / `mcl_fa` 段：
+`dddnav_bringup/config/nav_base.yaml` 的 `mcl_ip` / `mcl_fa` 段：
 
 | Key | 含义 |
 |-----|------|

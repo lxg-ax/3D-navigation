@@ -1,0 +1,42 @@
+# Sim bringup knobs. Loaded by sim_*.launch.py via load_runtime('simulation').
+# Intentionally trims real-robot-only fields (Livox driver freq, lidar_mount)
+# because the Gazebo VLP-16 sim publishes /velodyne_points + /imu/data with
+# the URDF-defined static TF tree.
+
+# --- Camera mounting (sim-only consumers; *_with_camera profiles) ------------
+camera_mount:
+  x:     0.2
+  y:     0.0
+  z:     0.3
+  roll:  0.0
+  pitch: 0.0
+  yaw:   0.0
+
+# --- Launch timing (s) -------------------------------------------------------
+# Sim brings up Gazebo + URDF + gait controller before the SLAM stack lands,
+# so first-data timing is later than the real-robot path. The delays below
+# are tuned so FAST-LIO sees its first /velodyne_points before LIO-SAM's
+# imageProjection comes online and so the planner only spins up once a
+# /Odometry stream is available.
+delays:
+  bridges:        3.0          # FAST-LIO (no Livox bridge in sim)
+  rviz:           5.0
+  mcl_3dl:        6.0
+  pose_fusion:    7.0
+  mcl_feature:    8.0
+  initial_pose:  12.0
+  global_planner: 18.0
+  move_base:     20.0
+  clicked_goal:  22.0
+  liosam_back:    8.0          # sim_mapping / sim_mapping_nav only
+  liosam_to_pg:  11.0
+  health:        13.0
+
+# --- Initial pose ------------------------------------------------------------
+# Robot spawns at world (0,0,0.275) in slope_with_pillar_2.world. Map frame
+# is anchored at the spawn pose during sim_mapping, so the localization
+# launch can reuse (0,0,0) as a sane bootstrap if SC misses.
+initial_pose:
+  x: 0.0
+  y: 0.0
+  z: 0.0

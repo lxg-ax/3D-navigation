@@ -60,6 +60,27 @@ def lidar_driver_and_tf(rt):
     ]
 
 
+# ---------------------------------------------------------------------------
+# Sim front-end (Gazebo VLP-16): no Livox driver, no Livox bridge. Robot URDF
+# already publishes base_link→velodyne and base_link→imu_link statically, so
+# we only run FAST-LIO. /cloud_registered_body is the LIO-SAM input + the
+# perception layer input, replacing the Livox xyzi cloud the real bringup
+# emits via livox_pc2_to_liosam.
+# ---------------------------------------------------------------------------
+
+def lidar_front_end_sim(rt, fastlio_config, use_sim_time=True):
+    """FAST-LIO only, for the Gazebo Velodyne sim."""
+    d = rt['delays']
+    return [
+        TimerAction(period=d['bridges'], actions=[
+            Node(package='fast_lio', executable='fastlio_mapping',
+                 name='fast_lio', output='screen',
+                 parameters=[fastlio_config,
+                             {'use_sim_time': use_sim_time}]),
+        ]),
+    ]
+
+
 def lidar_front_end(rt, fastlio_config):
     """Livox→LIO-SAM bridge + FAST-LIO mapping node."""
     d = rt['delays']
@@ -85,10 +106,14 @@ def lidar_front_end(rt, fastlio_config):
 # ---------------------------------------------------------------------------
 
 def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
-                    keyframes_yaml, keyframes_save_dir_overlay):
+                    keyframes_yaml, keyframes_save_dir_overlay,
+                    use_sim_time=False):
     """LIO-SAM (imu/proj/feat/opt) + liosam_to_posegraph + health monitor."""
     d = rt['delays']
+    sim_overlay = {'use_sim_time': use_sim_time} if use_sim_time else {}
     lio_sam_params = [lio_sam_config, save_pcd_overlay]
+    if sim_overlay:
+        lio_sam_params.append(sim_overlay)
 
     actions = []
     for execu in ('lio_sam_imuPreintegration', 'lio_sam_imageProjection',
@@ -98,11 +123,21 @@ def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
                  output='screen', parameters=lio_sam_params),
         ]))
 
+    pg_params = [keyframes_yaml, keyframes_save_dir_overlay]
+    if sim_overlay:
+        pg_params.append(sim_overlay)
     actions.append(TimerAction(period=d['liosam_to_pg'], actions=[
         Node(package='dddnav_utils', executable='liosam_to_posegraph.py',
              name='liosam_to_posegraph', output='screen',
-             parameters=[keyframes_yaml, keyframes_save_dir_overlay]),
+             parameters=pg_params),
     ]))
+    health_params = [{
+        'filtered_odom_topic': '',
+        'ok_timeout':   1.0,
+        'fail_timeout': 3.0,
+    }]
+    if sim_overlay:
+        health_params.append(sim_overlay)
     actions.append(TimerAction(period=d['health'], actions=[
         Node(package='dddnav_utils', executable='slam_health_monitor.py',
              name='slam_health_monitor', output='screen',
@@ -114,11 +149,7 @@ def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
              # mapOptimization throttles by mappingProcessInterval (0.1 s)
              # and a single optimisation can spike to ~150 ms, so 0.5 s
              # is too tight on stamp_age.
-             parameters=[{
-                 'filtered_odom_topic': '',
-                 'ok_timeout':   1.0,
-                 'fail_timeout': 3.0,
-             }]),
+             parameters=health_params),
     ]))
     return actions
 
@@ -130,7 +161,9 @@ def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
 
 def localization_stack(rt, nav_config_params, pose_fusion_yaml,
                        sc_init_enabled=True, sc_init_yaml=None,
-                       preflight_enabled=True):
+                       preflight_enabled=True, use_sim_time=False,
+                       mcl_feature_cloud_topic='/livox/lidar_liosam_xyzi',
+                       sc_cloud_topic='/livox/lidar_liosam_xyzi'):
     """MCL 3DL + pose_fusion + mcl_feature + (optional) SC global init +
     operator-supplied initial-pose bootstrap.
 
@@ -150,6 +183,7 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
     """
     d = rt['delays']
     ip = rt['initial_pose']
+    sim_overlay = {'use_sim_time': use_sim_time} if use_sim_time else {}
 
     initial_pose_msg = (
         f"{{header: {{frame_id: 'map'}}, "
@@ -161,7 +195,8 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         TimerAction(period=d['mcl_3dl'], actions=[
             Node(package='mcl_3dl', executable='mcl_3dl', output='screen',
                  parameters=[*nav_config_params,
-                             {'publish_tf': False, 'publish_odom_tf': False}],
+                             {'publish_tf': False, 'publish_odom_tf': False},
+                             *([sim_overlay] if sim_overlay else [])],
                  remappings=[('odom', '/Odometry'),
                              ('laser_cloud_sharp', '/laser_cloud_sharp'),
                              ('laser_cloud_less_sharp', '/laser_cloud_less_sharp'),
@@ -171,12 +206,15 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         TimerAction(period=d['pose_fusion'], actions=[
             Node(package='dddnav_pose_fusion', executable='pose_fusion_node',
                  name='pose_fusion', output='screen',
-                 parameters=[pose_fusion_yaml]),
+                 parameters=[pose_fusion_yaml,
+                             *([sim_overlay] if sim_overlay else [])]),
         ]),
         TimerAction(period=d['mcl_feature'], actions=[
             Node(package='dddnav_mcl_feature', executable='mcl_feature',
-                 output='screen', parameters=nav_config_params,
-                 remappings=[('/lslidar_point_cloud', '/livox/lidar_liosam_xyzi'),
+                 output='screen',
+                 parameters=[*nav_config_params,
+                             *([sim_overlay] if sim_overlay else [])],
+                 remappings=[('/lslidar_point_cloud', mcl_feature_cloud_topic),
                              ('/odom', '/Odometry')]),
         ]),
     ]
@@ -188,7 +226,7 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         sc_params = [{
             'sc_db_path':     os.path.join(map_dir, 'lio_sam', 'sc_db.bin'),
             'poses_pcd_path': os.path.join(map_dir, 'poses.pcd'),
-            'cloud_topic':    '/livox/lidar_liosam_xyzi',
+            'cloud_topic':    sc_cloud_topic,
             'odom_topic':     '/odom_filtered',
             'init_pose_topic': '/initial_3d_pose',
             # Watchdog defaults: 2 Hz check, 8 s warm-up, ±6 m / ±60deg gate
@@ -205,6 +243,8 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         }]
         if sc_init_yaml:
             sc_params.append(sc_init_yaml)
+        if sim_overlay:
+            sc_params.append(sim_overlay)
         # Run a hair before mcl_3dl finishes spinning up so its first
         # particle distribution can already be re-centred.
         actions.append(TimerAction(period=max(d['mcl_3dl'] - 0.5, 1.0), actions=[
@@ -214,7 +254,9 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         ]))
 
     # Operator-supplied seed (legacy) — still useful when SC misses or when
-    # there is no map yet (no sc_db.bin → SC node returns early).
+    # there is no map yet (no sc_db.bin → SC node returns early). Stamp
+    # source doesn't matter here (consumer reads xyz only) so use_sim_time
+    # has no effect on the one-shot seed.
     actions.append(TimerAction(period=d['initial_pose'], actions=[
         ExecuteProcess(cmd=[
             'ros2', 'topic', 'pub', '--once', '/initial_3d_pose',
@@ -228,12 +270,15 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         # launch (before the planner sees first odom) and then every
         # recheck_sec. Cheap.
         warmup = max(d.get('initial_pose', 5.0) - 2.0, 3.0)
+        preflight_params = [{'mode': 'localization',
+                             'warmup_sec': 2.0,
+                             'recheck_sec': 30.0}]
+        if sim_overlay:
+            preflight_params.append(sim_overlay)
         actions.append(TimerAction(period=warmup, actions=[
             Node(package='dddnav_utils', executable='dddnav_preflight.py',
                  name='dddnav_preflight', output='screen',
-                 parameters=[{'mode': 'localization',
-                              'warmup_sec': 2.0,
-                              'recheck_sec': 30.0}]),
+                 parameters=preflight_params),
         ]))
     return actions
 
@@ -242,25 +287,29 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
 # Navigation stack (global planner + p2p_move_base + clicked2goal).
 # ---------------------------------------------------------------------------
 
-def nav_stack(rt, nav_config_params):
+def nav_stack(rt, nav_config_params, use_sim_time=False):
     d = rt['delays']
+    sim_overlay = {'use_sim_time': use_sim_time} if use_sim_time else {}
+    extra = [sim_overlay] if sim_overlay else []
     return [
         TimerAction(period=d['global_planner'], actions=[
             Node(package='global_planner', executable='global_planner_node',
-                 output='screen', parameters=nav_config_params)]),
+                 output='screen', parameters=[*nav_config_params, *extra])]),
         TimerAction(period=d['move_base'], actions=[
             Node(package='p2p_move_base', executable='p2p_move_base_node',
-                 output='screen', parameters=nav_config_params)]),
+                 output='screen', parameters=[*nav_config_params, *extra])]),
         TimerAction(period=d['clicked_goal'], actions=[
             Node(package='p2p_move_base', executable='clicked2goal.py',
-                 name='clicked2goal', output='screen')]),
+                 name='clicked2goal', output='screen',
+                 parameters=extra)]),
         # Telemetry: planner / control / front-end rate + payload health
         # to /diagnostics. Cheap (~1Hz timer, small subscriptions) and
         # invaluable when tuning. Pair with slam_health_monitor for the
         # complete picture.
         TimerAction(period=d['move_base'], actions=[
             Node(package='dddnav_utils', executable='nav_perf_monitor.py',
-                 name='nav_perf_monitor', output='screen')]),
+                 name='nav_perf_monitor', output='screen',
+                 parameters=extra)]),
     ]
 
 
@@ -268,10 +317,12 @@ def nav_stack(rt, nav_config_params):
 # RViz (delayed so there is something to render when it pops up).
 # ---------------------------------------------------------------------------
 
-def rviz_action(rt, rviz_config):
+def rviz_action(rt, rviz_config, use_sim_time=False):
+    extra = [{'use_sim_time': use_sim_time}] if use_sim_time else []
     return TimerAction(period=rt['delays']['rviz'], actions=[
         Node(package='rviz2', executable='rviz2', name='rviz2',
-             output='screen', arguments=['-d', rviz_config]),
+             output='screen', arguments=['-d', rviz_config],
+             parameters=extra),
     ])
 
 

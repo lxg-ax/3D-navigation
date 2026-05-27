@@ -1,7 +1,7 @@
 """Mapping + navigation + vision (RealSense + DDRNet).
 
 Camera path is unverified on real hardware. Tunables in
-``src/dddnav_bringup/config/runtime.yaml``.
+``src/dddnav_bringup/config/reality/runtime.yaml``.
 """
 
 import os
@@ -24,7 +24,7 @@ def generate_launch_description():
     fast_lio_dir = get_package_share_directory('fast_lio')
     lio_sam_dir  = get_package_share_directory('lio_sam')
 
-    rt = bringup_paths.load_runtime()
+    rt = bringup_paths.load_runtime('reality')
     cam_mount = bringup_paths.camera_mount(rt)
 
     fastlio_config = LaunchConfiguration('fastlio_config')
@@ -48,7 +48,7 @@ def generate_launch_description():
     )
 
     nav_profile_decl, nav_profile_resolve = bringup_paths.nav_profile_argument(
-        default_profile='mid360_mapping_with_camera')
+        default_profile='mid360_mapping_with_camera', variant='reality')
     nav_config_param_files = [
         bringup_paths.nav_base_yaml(),
         LaunchConfiguration('nav_config'),
@@ -69,7 +69,7 @@ def generate_launch_description():
     for action in common_nodes.liosam_back_end(
             rt, lio_sam_config,
             bringup_paths.lio_sam_save_pcd_overlay(),
-            bringup_paths.keyframes_yaml(),
+            bringup_paths.keyframes_yaml('reality'),
             bringup_paths.keyframes_save_dir_overlay()):
         ld.add_action(action)
     for action in common_nodes.nav_stack(rt, nav_config_param_files):

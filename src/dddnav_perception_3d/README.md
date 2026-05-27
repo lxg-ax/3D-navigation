@@ -27,7 +27,7 @@ LiDAR / 深度相机 / 语义点云 ─► perception_3d_local  ─► local_pla
 位姿图 + 子图 ─────────────► perception_3d_global ─► global_planner
 ```
 
-每个 layer 在 `dddnav_bringup/config/nav/<profile>.yaml` 里通过 `plugins:` 列表挂载 + 各自参数。
+每个 layer 在 `dddnav_bringup/config/reality/nav/<profile>.yaml` 里通过 `plugins:` 列表挂载 + 各自参数。
 
 ## 主要参数
 

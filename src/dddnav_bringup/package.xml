@@ -28,6 +28,12 @@
   <exec_depend>dddnav_utils</exec_depend>
   <exec_depend>dddnav_mcl_feature</exec_depend>
 
+  <!-- Sim launches (sim_*.launch.py) include the Gazebo Go2 stack. -->
+  <exec_depend>go2_config</exec_depend>
+  <exec_depend>go2_description</exec_depend>
+  <exec_depend>champ_bringup</exec_depend>
+  <exec_depend>champ_gazebo</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>

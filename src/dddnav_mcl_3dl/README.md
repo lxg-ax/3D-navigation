@@ -28,7 +28,7 @@ LiDAR ─► mcl_feature ─► mcl_3dl ─► /mcl_pose ─► pose_fusion (ESK
 
 ## 主要参数
 
-集中在 `dddnav_bringup/config/nav/base.yaml` 的 `mcl_3dl` / `sub_maps` / `mcl_ip` / `mcl_fa` 段。常调：
+集中在 `dddnav_bringup/config/nav_base.yaml` 的 `mcl_3dl` / `sub_maps` / `mcl_ip` / `mcl_fa` 段。常调：
 
 | Key | 含义 |
 |-----|------|

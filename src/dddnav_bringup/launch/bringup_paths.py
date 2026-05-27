@@ -1,8 +1,32 @@
-"""Resolve install-space paths for dddnav_bringup (no hardcoded workspace roots)."""
+"""Resolve install-space paths for dddnav_bringup.
+
+Config layout (post-restructure)::
+
+    config/
+      nav_base.yaml                # shared planner/controller defaults
+      reality/
+        runtime.yaml               # real-robot delays / mounts / driver freq
+        keyframes_mid360.yaml      # liosam_to_posegraph thresholds (real)
+        nav/<profile>.yaml         # mid360_*.yaml overlays
+        tuning/                    # in-field overlays (pose_fusion / mcl)
+      simulation/
+        runtime.yaml               # sim delays / spawn pose
+        fastlio_velodyne_sim.yaml
+        lio_sam_velodyne_sim.yaml
+        nav/<profile>.yaml         # sim_velodyne_*.yaml overlays
+
+All helpers below resolve against the *installed* share path so they keep
+working when the workspace is sourced from ``install/``.
+"""
 import os
 
 from ament_index_python.packages import get_package_share_directory
 
+
+# ---------------------------------------------------------------------------
+# Map / pose graph (shared between reality and sim — sim writes here, then
+# the localization launch reads it back).
+# ---------------------------------------------------------------------------
 
 def bringup_map_dir():
     return os.path.join(get_package_share_directory('dddnav_bringup'), 'map')
@@ -14,90 +38,117 @@ def pose_graph_overlay():
 
 
 def lio_sam_save_pcd_overlay():
-    """LIO-SAM savePCDDirectory must end with '/' (see utility.hpp / mapOptimization)."""
+    """LIO-SAM savePCDDirectory must end with '/' (utility.hpp / mapOptimization)."""
     d = bringup_map_dir()
     return {'savePCDDirectory': d if d.endswith(os.sep) else d + os.sep}
 
 
-def keyframes_yaml():
-    """Path to the shared keyframe-extraction yaml (used by liosam_to_posegraph)."""
-    return os.path.join(get_package_share_directory('dddnav_bringup'),
-                        'config', 'keyframes_mid360.yaml')
-
-
 def keyframes_save_dir_overlay():
-    """Override save_dir in the keyframes yaml so output lands in
+    """Override save_dir in keyframes yaml → outputs land in
     dddnav_bringup/map/ regardless of how the yaml is shipped."""
     return {'liosam_to_posegraph': {'ros__parameters': {'save_dir': bringup_map_dir()}}}
 
 
-def runtime_yaml_path():
-    """Path to runtime.yaml (timing / lidar mount / initial pose knobs)."""
+# ---------------------------------------------------------------------------
+# Variant-aware base directory + runtime.yaml loader.
+# ---------------------------------------------------------------------------
+
+_VALID_VARIANTS = ('reality', 'simulation')
+
+
+def _variant_dir(variant):
+    if variant not in _VALID_VARIANTS:
+        raise ValueError(
+            f"variant must be one of {_VALID_VARIANTS}, got {variant!r}")
     return os.path.join(get_package_share_directory('dddnav_bringup'),
-                        'config', 'runtime.yaml')
+                        'config', variant)
 
 
-def load_runtime():
-    """Parse runtime.yaml. Cached so launch files can call freely."""
+def runtime_yaml_path(variant='reality'):
+    return os.path.join(_variant_dir(variant), 'runtime.yaml')
+
+
+def load_runtime(variant='reality'):
+    """Parse the variant's runtime.yaml. Launch files call this once."""
     import yaml
-    with open(runtime_yaml_path(), 'r') as f:
+    with open(runtime_yaml_path(variant), 'r') as f:
         return yaml.safe_load(f) or {}
 
 
-def nav_config_path(profile):
-    """Resolve a nav-tuning yaml under dddnav_bringup/config/nav/.
+def keyframes_yaml(variant='reality'):
+    """Path to the keyframe-extraction yaml used by liosam_to_posegraph.
 
-    ``profile`` may be a bare name (e.g. ``mid360_mapping``), a name with
-    suffix (``mid360_mapping.yaml``) or an absolute path. Absolute paths and
-    paths that already exist on disk are passed through untouched, which lets
-    callers point ``nav_profile:=/abs/path/custom.yaml`` for one-off tuning.
+    Real robot ships the Mid360-tuned values; sim reuses the same defaults
+    today, so simulation/keyframes_mid360.yaml is optional and falls back to
+    reality/ when absent.
+    """
+    candidate = os.path.join(_variant_dir(variant), 'keyframes_mid360.yaml')
+    if os.path.isfile(candidate):
+        return candidate
+    # Fallback to reality copy (sim doesn't customise keyframe thresholds yet).
+    return os.path.join(_variant_dir('reality'), 'keyframes_mid360.yaml')
+
+
+# ---------------------------------------------------------------------------
+# Nav profile resolution (variant-aware).
+# ---------------------------------------------------------------------------
+
+def nav_base_yaml():
+    """Shared planner / controller / critic / MCL defaults.
+
+    Lives at ``config/nav_base.yaml`` (one file for both variants). Each
+    profile yaml only writes the keys it changes.
+    """
+    return os.path.join(get_package_share_directory('dddnav_bringup'),
+                        'config', 'nav_base.yaml')
+
+
+def nav_config_path(profile, variant='reality'):
+    """Resolve a nav profile to an absolute yaml path.
+
+    ``profile`` accepts:
+      * bare name (``mid360_mapping``) — looked up under the variant nav dir
+      * with suffix (``mid360_mapping.yaml``)
+      * absolute path — passed through untouched
+
+    Falls through to the other variant directory if the file isn't in the
+    expected one. Avoids confusing failures when callers mix variant and
+    profile name.
     """
     if not profile:
         raise ValueError('nav profile is empty')
-    # Absolute path or already-resolved file: trust it.
     if os.path.isabs(profile) and os.path.isfile(profile):
         return profile
     name = profile if profile.endswith('.yaml') else f'{profile}.yaml'
-    nav_dir = os.path.join(get_package_share_directory('dddnav_bringup'),
-                           'config', 'nav')
-    return os.path.join(nav_dir, name)
+    primary = os.path.join(_variant_dir(variant), 'nav', name)
+    if os.path.isfile(primary):
+        return primary
+    # Cross-variant fallback (e.g. user passed a sim profile to a reality launch).
+    other = 'simulation' if variant == 'reality' else 'reality'
+    fallback = os.path.join(_variant_dir(other), 'nav', name)
+    if os.path.isfile(fallback):
+        return fallback
+    return primary  # let the launcher fail loudly with the expected path
 
 
-def nav_base_yaml():
-    """Common nav yaml: every profile is layered on top of this.
-
-    Anything robot-shape, controller-frequency, or planner-graph related lives
-    here. Keep mode-specific knobs (mapping vs localization, depth-camera
-    plugin, etc.) in the per-profile overlay.
-    """
-    return os.path.join(get_package_share_directory('dddnav_bringup'),
-                        'config', 'nav', 'base.yaml')
-
-
-def nav_param_chain(profile):
-    """Build the parameter file list for a nav profile.
-
-    Returns ``[base.yaml, profile.yaml]``. ROS 2 lets later parameter files
-    override earlier ones, so the profile yaml only needs to repeat keys it
-    actually changes.
-    """
-    chain = [nav_base_yaml(), nav_config_path(profile)]
+def nav_param_chain(profile, variant='reality'):
+    """Return ``[nav_base.yaml, profile.yaml]`` filtering out missing files."""
+    chain = [nav_base_yaml(), nav_config_path(profile, variant)]
     return [p for p in chain if os.path.isfile(p)]
 
 
-def nav_profile_argument(default_profile):
-    """Return ``(DeclareLaunchArgument, OpaqueFunction)`` so launch files do
-    not have to re-implement the nav_profile→nav_config indirection.
+def nav_profile_argument(default_profile, variant='reality'):
+    """Bundle nav_profile launch arg + nav_config OpaqueFunction.
 
     Usage in a launch file::
 
-        from launch.actions import DeclareLaunchArgument, OpaqueFunction
-        ...
-        ld.add_action(declare_nav_profile_cmd)
-        ld.add_action(OpaqueFunction(function=resolve_nav_config))
-
-    This helper just bundles the boilerplate; see ``nav_param_chain`` if you
-    only need the resolved file list synchronously.
+        decl, resolve = bringup_paths.nav_profile_argument(
+            'mid360_localization', variant='reality')
+        ld.add_action(decl)
+        ld.add_action(resolve)
+        params = [bringup_paths.nav_base_yaml(),
+                  LaunchConfiguration('nav_config'),
+                  bringup_paths.pose_graph_overlay()]
     """
     from launch.actions import DeclareLaunchArgument, OpaqueFunction
     from launch.substitutions import LaunchConfiguration
@@ -105,15 +156,15 @@ def nav_profile_argument(default_profile):
     declare = DeclareLaunchArgument(
         'nav_profile',
         default_value=default_profile,
-        description='Nav tuning profile under dddnav_bringup/config/nav/, '
-                    'or an absolute path to a custom yaml',
+        description=f'Nav tuning profile under config/{variant}/nav/, or '
+                    'an absolute path to a custom yaml',
     )
 
     def _resolve(context, *args, **kwargs):
         profile = LaunchConfiguration('nav_profile').perform(context)
         return [DeclareLaunchArgument(
             'nav_config',
-            default_value=nav_config_path(profile),
+            default_value=nav_config_path(profile, variant),
             description='Resolved absolute path to nav yaml '
                         '(auto from nav_profile).',
         )]
@@ -121,12 +172,12 @@ def nav_profile_argument(default_profile):
     return declare, OpaqueFunction(function=_resolve)
 
 
-def camera_mount(rt):
-    """Return camera mount xyz/rpy from runtime.yaml.
+# ---------------------------------------------------------------------------
+# Camera mount accessor (kept for the *_with_camera launches).
+# ---------------------------------------------------------------------------
 
-    Falls back to a sensible default so legacy ``runtime.yaml`` files without
-    a ``camera_mount`` key still work.
-    """
+def camera_mount(rt):
+    """Return camera mount xyz/rpy from runtime.yaml with safe defaults."""
     cm = (rt or {}).get('camera_mount') or {}
     return {
         'x':     float(cm.get('x',     0.2)),

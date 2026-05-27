@@ -23,7 +23,7 @@ Metapackage，包含五个子包：
 
 ## 主要参数
 
-`dddnav_bringup/config/nav/base.yaml` 是公共层。常调：
+`dddnav_bringup/config/nav_base.yaml` 是公共层。常调：
 
 | Key | 含义 |
 |-----|------|

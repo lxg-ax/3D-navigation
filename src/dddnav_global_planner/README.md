@@ -17,7 +17,7 @@ ROS 包名 **`global_planner`**。在 `perception_3d` 输出的地面图（groun
 
 ## 主要参数
 
-`dddnav_bringup/config/nav/base.yaml` 与各 profile overlay 里的 `global_planner` 段：
+`dddnav_bringup/config/nav_base.yaml` 与各 profile overlay 里的 `global_planner` 段：
 
 | Key | 说明 |
 |-----|------|

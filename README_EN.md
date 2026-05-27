@@ -8,7 +8,7 @@ Forked and reworked from [dddmr_navigation](https://github.com/dfl-rlab/dddmr_na
 - Added **`dddnav_pose_fusion`** — SE(3) ESKF that fuses FAST-LIO and MCL 3DL into a 100 Hz `/odom_filtered` and owns `map → odom`; adaptive Mahalanobis gate + hard reject when MCL covariance is unconverged
 - **MCL 3DL adaptive particle count** — KLD-style lightweight replacement: grows on re-localisation / low match_ratio, decays exponentially once stable
 - Added **`dddnav_utils/sc_global_init`** — Scan Context global localiser at boot **plus** an online watchdog that re-bootstraps MCL after a kidnap / drift to a wrong floor, with a spatial gate against the fused-pose prior to suppress repetitive-geometry false matches
-- Bringup launches refactored (`common_nodes.py` for shared blocks); navigation tuning flattened to `base + overlay` yaml under `config/nav/`
+- Bringup launches refactored (`common_nodes.py` for shared blocks); navigation tuning flattened to `base + overlay` yaml under `config/reality/nav/` and `config/simulation/nav/`
 - Docker images: x64 / CUDA / Jetson L4T / Gazebo (see [`dddnav_docker/`](dddnav_docker/))
 - Runtime telemetry: `slam_health_monitor` + `nav_perf_monitor`, both publishing to `/diagnostics`
 
@@ -79,10 +79,10 @@ Tuning rule of thumb: **edit yaml, not launch.py**.
 
 | File | Purpose |
 |------|---------|
-| [`dddnav_bringup/config/runtime.yaml`](src/dddnav_bringup/config/runtime.yaml) | LiDAR / camera mounts, startup delays, initial pose, driver rate |
-| [`dddnav_bringup/config/keyframes_mid360.yaml`](src/dddnav_bringup/config/keyframes_mid360.yaml) | Keyframe extraction thresholds |
-| [`dddnav_bringup/config/nav/base.yaml`](src/dddnav_bringup/config/nav/base.yaml) | Shared nav defaults (robot footprint, controller frequency, planner graph) |
-| [`dddnav_bringup/config/nav/mid360_*.yaml`](src/dddnav_bringup/config/nav/) | Mode overlays: `mid360_mapping[_with_camera]` / `mid360_localization[_with_camera/_with_depth_camera]` |
+| [`dddnav_bringup/config/reality/runtime.yaml`](src/dddnav_bringup/config/reality/runtime.yaml) | LiDAR / camera mounts, startup delays, initial pose, driver rate |
+| [`dddnav_bringup/config/reality/keyframes_mid360.yaml`](src/dddnav_bringup/config/reality/keyframes_mid360.yaml) | Keyframe extraction thresholds |
+| [`dddnav_bringup/config/nav_base.yaml`](src/dddnav_bringup/config/nav_base.yaml) | Shared nav defaults (robot footprint, controller frequency, planner graph) |
+| [`dddnav_bringup/config/reality/nav/mid360_*.yaml`](src/dddnav_bringup/config/reality/nav/) | Mode overlays: `mid360_mapping[_with_camera]` / `mid360_localization[_with_camera/_with_depth_camera]` |
 | [`LIO-SAM/config/params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml) | LIO-SAM tuning (IMU, loop closure, Scan Context) |
 | [`dddnav_pose_fusion/config/pose_fusion.yaml`](src/dddnav_pose_fusion/config/pose_fusion.yaml) | ESKF Q/R, ZUPT, adaptive Q, auto-init |
 
