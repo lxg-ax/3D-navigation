@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-6430905602510a1068e0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "dddnav_std_descriptor",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "dddnav_std_descriptor::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-dddnav_std_descriptor-Release-3c192946fafb331adc99.json",
+					"name" : "dddnav_std_descriptor",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "dddnav_std_descriptor_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-dddnav_std_descriptor_uninstall-Release-3b6657ff5a8b21b0b554.json",
+					"name" : "dddnav_std_descriptor_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-Release-f1c2ccaa5b950b1ae102.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor",
+		"source" : "/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

@@ -84,6 +84,7 @@ namespace base_trajectory {
     cuboids_.clear();
     cuboids_min_max_.clear();
     pcl_trajectory_path_.points.clear();
+    controls_.clear();
   }
 
   void Trajectory::getEndpoint(double& x, double& y, double& th) const {

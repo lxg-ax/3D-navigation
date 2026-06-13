@@ -110,4 +110,15 @@ bool StackedGenerator::nextTrajectory(std::string pname, base_trajectory::Trajec
 
 }
 
+bool StackedGenerator::combineByScores(std::string pname,
+                                       std::vector<base_trajectory::Trajectory>& scored,
+                                       base_trajectory::Trajectory& combined){
+  auto it = theories_.find(pname);
+  if (it == theories_.end()){
+    RCLCPP_FATAL(logger_->get_logger(), "combineByScores: unknown plugin %s", pname.c_str());
+    return false;
+  }
+  return it->second->combineByScores(scored, combined);
+}
+
 }//end of name space

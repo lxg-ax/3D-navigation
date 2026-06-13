@@ -104,6 +104,12 @@ bool Trajectory_Generators_ROS::nextTrajectory(std::string pname, base_trajector
   return stacked_generator_->nextTrajectory(pname, comp_traj);
 }
 
+bool Trajectory_Generators_ROS::combineByScores(std::string pname,
+                                                std::vector<base_trajectory::Trajectory>& scored,
+                                                base_trajectory::Trajectory& combined){
+  return stacked_generator_->combineByScores(pname, scored, combined);
+}
+
 void Trajectory_Generators_ROS::initializeTheories_wi_Shared_data() {
 
   stacked_generator_->initializeTheories_wi_Shared_data();

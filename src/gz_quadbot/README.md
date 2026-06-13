@@ -71,7 +71,7 @@ ros2 launch dddnav_bringup sim_localization.launch.py
 | `dddnav_bringup/config/simulation/nav/sim_velodyne_mapping.yaml` | mapping_nav 的 perception/planner overlay |
 | `dddnav_bringup/config/simulation/nav/sim_velodyne_localization.yaml` | localization 的 perception/planner overlay |
 
-仿真和真机走两条独立链路：仿真无 Livox 桥接，FAST-LIO 直接吃 `/velodyne_points`；mcl_feature 与 sc_global_init 在仿真里改吃 `/cloud_registered_body`。其余节点接线与真机一致。
+仿真和真机走两条独立链路：仿真无 Livox 桥接，FAST-LIO 直接吃 `/velodyne_points`；mcl_feature 与 std_global_init 在仿真里改吃 `/cloud_registered_body`。其余节点接线与真机一致。
 
 ## 致谢
 

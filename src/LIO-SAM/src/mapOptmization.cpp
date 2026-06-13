@@ -1,5 +1,7 @@
 #include "utility.hpp"
-#include "ScanContext.hpp"
+#include "dddnav_std_descriptor/STDesc.h"
+#include "dddnav_std_descriptor/std_config_loader.h"
+#include "dddnav_std_descriptor/std_db_io.h"
 #include "lio_sam/msg/cloud_info.hpp"
 #include "lio_sam/srv/save_map.hpp"
 #include <gtsam/geometry/Rot3.h>
@@ -167,8 +169,16 @@ public:
     vector<gtsam::noiseModel::Diagonal::shared_ptr> loopNoiseQueue;
     deque<std_msgs::msg::Float64MultiArray> loopInfoVec;
 
-    // Scan Context for robust loop closure detection
-    ScanContext scManager;
+    // STD (Stable Triangle Descriptor) replaces Scan Context for both
+    // online loop-closure detection and the bootstrap descriptor DB that
+    // sc_global_init / std_global_init reads. STDescManager owns its own
+    // ConfigSetting; we populate it once in the constructor via
+    // dddnav_std_descriptor::loadStdConfig.
+    std::unique_ptr<STDescManager> stdManager;
+    // Per-keyframe descriptor lists, kept around so the body-frame DB
+    // dump at saveMap time can re-publish exactly what the online
+    // detector built (no need to re-run GenerateSTDescs from scratch).
+    std::vector<std::vector<STDesc>> stdPerFrame;
     // Store full keyframe clouds for GICP loop closure (merged corner+surf)
     vector<pcl::PointCloud<PointType>::Ptr> fullCloudKeyFrames;
 
@@ -186,6 +196,17 @@ public:
         parameters.relinearizeThreshold = 0.1;
         parameters.relinearizeSkip = 1;
         isam = new ISAM2(parameters);
+
+        // STD descriptor manager — config comes from rclcpp parameters
+        // (declared with sane defaults, override via the lio_sam yaml).
+        // skip_near_num / icp_threshold / sub_frame_num default to the same
+        // semantics as the old SC scExcludeRecent / scDistThreshold /
+        // scMinDatabase, so the launch yaml stays close to before.
+        ConfigSetting std_cfg;
+        dddnav_std_descriptor::loadStdConfig(this, std_cfg);
+        std_cfg.skip_near_num_   = stdSkipNearNum;
+        std_cfg.icp_threshold_   = stdIcpThreshold;
+        stdManager = std::make_unique<STDescManager>(std_cfg);
 
         pubKeyPoses = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/trajectory", 1);
         pubLaserCloudSurround = create_publisher<sensor_msgs::msg::PointCloud2>("lio_sam/mapping/map_global", 1);
@@ -265,31 +286,35 @@ public:
             *globalMapCloud += *globalSurfCloud;
             int ret = pcl::io::savePCDFileBinary(saveMapDirectory + "/GlobalMap.pcd", *globalMapCloud);
 
-            // Persist the Scan Context database alongside the map. The
-            // standalone sc_global_init node (dddnav_utils) loads this on
-            // startup and publishes /initial_3d_pose so MCL can converge
-            // without an operator-supplied seed.
+            // Persist the STD database alongside the map. The standalone
+            // std_global_init node (dddnav_utils) loads this on startup and
+            // publishes /initial_3d_pose so MCL can converge without an
+            // operator-supplied seed.
             //
-            // Loop-closure SC uses world-frame clouds (so column-shift
-            // recovers absolute yaw between two keyframes); for global init
-            // we want body-frame descriptors so the runtime query (a fresh
-            // LiDAR scan) lines up. Build a body-frame DB on the fly here
-            // from the per-keyframe corner+surf clouds.
-            if (!cornerCloudKeyFrames.empty()) {
-                ScanContext bodySc;
-                for (size_t i = 0; i < cornerCloudKeyFrames.size(); ++i) {
-                    pcl::PointCloud<PointType>::Ptr bodyCloud(new pcl::PointCloud<PointType>());
-                    *bodyCloud += *cornerCloudKeyFrames[i];
-                    *bodyCloud += *surfCloudKeyFrames[i];
-                    bodySc.addDescriptor(bodySc.makeDescriptor(bodyCloud));
+            // The online detector below already builds body-frame STDs (one
+            // pass per keyframe in saveCloudKeyFrame), so we just dump what
+            // it accumulated. We rebuild a fresh STDescManager off-thread
+            // instead of dumping `stdManager` directly because the online
+            // manager may have ingested partial frames; building from scratch
+            // gives a clean, ordered DB.
+            if (!stdPerFrame.empty()) {
+                ConfigSetting clean_cfg = stdManager->config_setting_;
+                STDescManager dump(clean_cfg);
+                for (size_t i = 0; i < stdPerFrame.size(); ++i) {
+                    dump.AddSTDescs(stdPerFrame[i]);
+                    if (i < stdManager->plane_cloud_vec_.size())
+                        dump.plane_cloud_vec_.push_back(
+                            stdManager->plane_cloud_vec_[i]);
                 }
-                const std::string scPath = saveMapDirectory + "/sc_db.bin";
-                if (bodySc.saveDescriptors(scPath))
-                    cout << "Scan Context db (body frame) saved ("
-                         << bodySc.size() << " descriptors) -> "
-                         << scPath << endl;
+                const std::string stdPath = saveMapDirectory + "/std_db.bin";
+                size_t total = 0;
+                for (const auto & v : stdPerFrame) total += v.size();
+                if (dddnav_std_descriptor::saveStdDatabase(dump, stdPath))
+                    cout << "STD db saved (" << total << " descriptors over "
+                         << dump.plane_cloud_vec_.size() << " frames) -> "
+                         << stdPath << endl;
                 else
-                    cout << "Scan Context db save FAILED -> " << scPath << endl;
+                    cout << "STD db save FAILED -> " << stdPath << endl;
             }
             res->success = ret == 0;
             downSizeFilterCorner.setLeafSize(mappingCornerLeafSize, mappingCornerLeafSize, mappingCornerLeafSize);
@@ -925,36 +950,45 @@ public:
         loopIndexContainer[loopKeyCur] = loopKeyPre;
     }
 
-    // Scan Context based loop closure detection
+    // STD-based loop closure detection. Drop-in for the previous Scan
+    // Context implementation: keep the same (latestID, closestID) contract
+    // so the downstream GICP refinement and pose-graph stitching are
+    // unchanged. STD adds a 6-DoF relative pose candidate as a bonus, but
+    // we deliberately don't feed it back here — GICP runs anyway and is the
+    // truth of record for loop edges.
     bool detectLoopClosureScanContext(int *latestID, int *closestID)
     {
-        if (scManager.size() < scMinDatabase)  // need enough history
+        if (stdPerFrame.size() < static_cast<size_t>(stdMinDatabase))
             return false;
 
-        int loopKeyCur = copy_cloudKeyPoses3D->size() - 1;
-
-        // Check if already detected
-        auto it = loopIndexContainer.find(loopKeyCur);
-        if (it != loopIndexContainer.end())
+        const int loopKeyCur = copy_cloudKeyPoses3D->size() - 1;
+        if (loopKeyCur < 0 ||
+            loopKeyCur >= static_cast<int>(stdPerFrame.size()))
             return false;
 
-        // Build descriptor for current keyframe
-        pcl::PointCloud<PointType>::Ptr curCloud(new pcl::PointCloud<PointType>());
-        *curCloud += *transformPointCloud(cornerCloudKeyFrames[loopKeyCur], &copy_cloudKeyPoses6D->points[loopKeyCur]);
-        *curCloud += *transformPointCloud(surfCloudKeyFrames[loopKeyCur],   &copy_cloudKeyPoses6D->points[loopKeyCur]);
+        // Already paired earlier — don't re-detect.
+        if (loopIndexContainer.find(loopKeyCur) != loopIndexContainer.end())
+            return false;
 
-        auto scDesc = scManager.makeDescriptor(curCloud);
-        auto scResult = scManager.detectLoopClosure(scDesc, loopKeyCur,
-                                                    scExcludeRecent, scDistThreshold);
-        int candidateIdx = scResult.first;
-        // scResult.second contains the SC distance score (for debug/logging)
+        // Re-use the descriptors we built for this frame at insertion time
+        // instead of regenerating from the world-frame cloud. Identical
+        // result, ~one frame of geometry work saved per call.
+        const auto & query_stds = stdPerFrame[loopKeyCur];
+        if (query_stds.empty())
+            return false;
 
+        std::pair<int, double> loop_result(-1, 0.0);
+        std::pair<Eigen::Vector3d, Eigen::Matrix3d> loop_transform;
+        std::vector<std::pair<STDesc, STDesc>> loop_pairs;
+        stdManager->SearchLoop(query_stds, loop_result, loop_transform,
+                               loop_pairs);
+
+        const int candidateIdx = loop_result.first;
         if (candidateIdx < 0)
             return false;
 
         *latestID = loopKeyCur;
         *closestID = candidateIdx;
-
         return true;
     }
 
@@ -1960,19 +1994,22 @@ public:
         cornerCloudKeyFrames.push_back(thisCornerKeyFrame);
         surfCloudKeyFrames.push_back(thisSurfKeyFrame);
 
-        // Store Scan Context descriptor
+        // Build STD descriptors for this keyframe in body frame. STD's
+        // place-recognition pipeline does its own plane segmentation and is
+        // rotation/translation invariant, so unlike Scan Context (which
+        // needed world-frame clouds for column-shift yaw recovery), we can
+        // feed the body-frame cloud directly. This makes the persisted DB
+        // immediately usable by std_global_init without re-projection.
         {
             pcl::PointCloud<PointType>::Ptr fullCloud(new pcl::PointCloud<PointType>());
             *fullCloud += *thisCornerKeyFrame;
             *fullCloud += *thisSurfKeyFrame;
             fullCloudKeyFrames.push_back(fullCloud);
 
-            // Transform to world frame for Scan Context
-            pcl::PointCloud<PointType>::Ptr worldCloud(new pcl::PointCloud<PointType>());
-            *worldCloud += *transformPointCloud(thisCornerKeyFrame, &thisPose6D);
-            *worldCloud += *transformPointCloud(thisSurfKeyFrame, &thisPose6D);
-            auto scDesc = scManager.makeDescriptor(worldCloud);
-            scManager.addDescriptor(scDesc);
+            std::vector<STDesc> stds;
+            stdManager->GenerateSTDescs(fullCloud, stds);
+            stdManager->AddSTDescs(stds);
+            stdPerFrame.push_back(stds);
         }
 
         // save path for visualization

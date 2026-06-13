@@ -1,230 +1,267 @@
-# 参数索引（dddnav_bringup）
+# 参数调整指南
 
-整个导航栈的调参入口。**索引不复制参数值**，只指出每个参数在哪个文件里。改一处生效一处，避免两份不一致。
+按**场景**找参数。每行的"在哪改"是真正修改 yaml 的位置。
 
-要找一个参数：分类 → 索引行 → 来源文件。
+参数名 / 含义 / 默认值与各包 README 一致，本文档只索引位置 + 联动建议。
+**只在来源文件改**，launch 通过 `parameters=[...]` 串接，不要复制粘贴。
 
-## 索引使用约定
-
-* 每条参数标了"来源文件"。**只在来源文件改**。launch 通过 `parameters=[...]` 把这些 yaml 串接进来，加载顺序就是覆盖顺序。
-* 参数名 / 含义 / 默认值与对应包 README 一致。本文档只做位置索引 + 调参建议。
-* `reality/tuning/` 是覆盖层目录。常见的现场调参在那里写小 overlay，不动默认 yaml。
-* 跨节点联动的参数（如 ESKF `proc_noise_pos` ↔ MCL `update_min_d`）见"组合调参规则"段。
-
-## 一图看清加载顺序
+## 加载顺序
 
 ```
-launch 入口 (mapping / mapping_nav / localization*.launch.py)
-  └─► common_nodes.py 把以下文件按节点拼进 ros__parameters：
+launch (mapping / mapping_nav / localization*.launch.py)
+  └─► common_nodes.py 把以下文件按节点拼进 ros__parameters:
 
-      reality/runtime.yaml / simulation/runtime.yaml   启动级（延迟 / 外参 / 初始位姿）
-        ↓
-      reality/keyframes_mid360.yaml                    关键帧抽取阈值
-        ↓
-      LIO-SAM/config/params_mid360.yaml                建图后端
-      FAST_LIO/config/mid360_pc2.yaml                  IMU+LiDAR 前端
-      (sim 用 simulation/fastlio_velodyne_sim.yaml + simulation/lio_sam_velodyne_sim.yaml)
-        ↓
-      dddnav_pose_fusion/config/pose_fusion.yaml       ESKF / 退化状态机
-        ↓
-      nav_base.yaml + reality/nav/<profile>.yaml       导航 / MCL / 感知
-      (sim 对应 simulation/nav/sim_velodyne_*.yaml)
-        ↓
-      reality/tuning/<override>.yaml                   可选覆盖层
-
-后写入的覆盖前写入的（ROS 2 规范）。
+      reality/runtime.yaml                          启动级（外参 / 延时 / 初始位姿）
+      reality/keyframes_mid360.yaml                 关键帧抽取阈值
+      LIO-SAM/config/params_mid360.yaml             建图后端 (仅 mapping 链)
+      FAST_LIO/config/mid360_pc2.yaml               IMU+LiDAR 前端
+      reality/pose_fusion.yaml                      ESKF + 退化状态机
+      nav_base.yaml + reality/nav/<profile>.yaml    导航 / MCL / 感知
+      reality/tuning/<override>.yaml                可选覆盖层（CLI 注入）
 ```
 
+后写入的覆盖前写入的。`reality/tuning/` 是覆盖层目录，**不动默认 yaml**。
 
-## A. 启动 / 装机参数
+---
 
-启动级，与算法无关。决定机器人有什么、装在哪、什么时候启起来。
+## 场景速查
 
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `lidar_mount.{x,y,z,roll,pitch,yaw}` | base_link → livox_frame 外参（m / rad） | `reality/runtime.yaml` (sim 用 `simulation/runtime.yaml`) |
-| `camera_mount.{x,y,z,roll,pitch,yaw}` | base_link → camera_link 外参，仅 `*_with_camera` 用 | `reality/runtime.yaml` (sim 用 `simulation/runtime.yaml`) |
-| `livox_publish_freq` | Livox Mid360 发布频率（Hz）。改这里要同步 driver MID360_config | `reality/runtime.yaml` (sim 用 `simulation/runtime.yaml`) |
-| `delays.bridges/rviz/mcl_3dl/pose_fusion/...` | 各节点启动延时（s）。慢机加大 | `reality/runtime.yaml` (sim 用 `simulation/runtime.yaml`) |
-| `initial_pose.{x,y,z}` | 没有 SC db 时的兜底初始位姿 | `reality/runtime.yaml` (sim 用 `simulation/runtime.yaml`) |
+### 装机 / 标定
 
-详见 `runtime.yaml` 顶部注释和 `dddnav_bringup/README.md` 的"目录"段。
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 雷达装机位置 | `reality/runtime.yaml` `lidar_mount.{x,y,z,roll,pitch,yaw}` |
+| 相机装机位置（仅 `*_with_camera`） | `reality/runtime.yaml` `camera_mount.{x,y,z,roll,pitch,yaw}` |
+| Mid360 发布频率 | `reality/runtime.yaml` `livox_publish_freq` + 同步驱动 `MID360_config.json` |
+| 慢机启动顺序错乱 | `reality/runtime.yaml` `delays.{bridges, rviz, mcl_3dl, pose_fusion, ...}` 加大 |
+| 没建图先跑定位的兜底起点 | `reality/runtime.yaml` `initial_pose.{x,y,z}`（有 `std_db.bin` 时被覆盖） |
+| 换雷达型号 | `FAST_LIO/config/mid360_pc2.yaml` `preprocess.lidar_type / scan_line / scan_rate / blind` 一起改；`mapping.det_range / fov_degree / extrinsic_T / extrinsic_R` 同步 |
 
-## B. 雷达前端 / IMU 前端（FAST-LIO）
+### 建图
 
-100 Hz 局部里程计 + IMU 预积分。改 IMU 噪声、点云预处理在这里。
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 关键帧太密 / 太稀 | `reality/keyframes_mid360.yaml` `keyframe_dist`、`keyframe_angle` |
+| 地面被错分类 | `reality/keyframes_mid360.yaml` `ground_angle_thresh`（deg） |
+| 回环检测太慢 / 误闭环 | `LIO-SAM/config/params_mid360.yaml` `loopClosureFrequency / historyKeyframeSearchRadius / historyKeyframeFitnessScore` |
+| STD 候选弱（save 后 `std_db.bin` 命中率低） | `LIO-SAM/config/params_mid360.yaml` `stdSkipNearNum / stdIcpThreshold / stdMinDatabase` |
+| IMU 噪声不一致导致漂 | **同步两份**：`FAST_LIO/config/mid360_pc2.yaml` `mapping.{acc_cov, gyr_cov, b_acc_cov, b_gyr_cov}` ↔ `LIO-SAM/config/params_mid360.yaml` `imu{Acc,Gyr}{Noise,BiasN}` |
+| 后端跑不动（CPU 满） | `LIO-SAM/config/params_mid360.yaml` `mappingProcessInterval` ↑ + `numberOfCores` ↑；同步把 `slam_health_monitor.ok_timeout` 放宽（建图链 launch 已设 1.0s） |
+| 体素降太狠丢细节 / 太密太慢 | `FAST_LIO/config/mid360_pc2.yaml` `filter_size_surf` / `filter_size_map` |
 
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `preprocess.lidar_type` | `4 = MID360 (PointCloud2)`。换雷达型号必动 | `FAST_LIO/config/mid360_pc2.yaml` |
-| `preprocess.scan_line / blind / scan_rate` | 扫描线数、盲区半径（m）、帧率（Hz） | 同上 |
-| `mapping.acc_cov / gyr_cov` | IMU 噪声方差。**与 LIO-SAM imuAccNoise 同一物理量两份配置**，调参要同步 | 同上 |
-| `mapping.b_acc_cov / b_gyr_cov` | IMU bias 随机游走 | 同上 |
-| `mapping.det_range / fov_degree` | 雷达有效探测距离 / 视场角。换硬件必动 | 同上 |
-| `mapping.extrinsic_T / extrinsic_R` | LiDAR↔IMU 外参，Mid360 同体单位阵 | 同上 |
-| `feature_extract_enable / point_filter_num` | 是否抽角点 / 间隔降采样 | 同上 |
-| `filter_size_surf / filter_size_map` | 体素大小，越小越准越慢 | 同上 |
+### 全局重定位（STD）
 
-调参建议见 `FAST_LIO/README*.md`。Mid360 IMU 噪声放大 10~50 倍是工程经验值，与 LIO-SAM `imuAccNoise=0.1` 同步。
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 启动期定位失败 | `common_nodes.py::localization_stack` 注入的 `std_score_threshold` ↓（放宽）+ `min_consensus_frames` ↓ |
+| 误匹配（长走廊 / 对称楼道） | `std_score_threshold` ↑ + `min_consensus_frames` ↑ + `relocate_min_dist_from_live_m` ↑ |
+| 走错楼层 / 被搬运不恢复 | `enable_watchdog: true`（默认）+ `relocate_max_jump_m` 放宽到当前楼层尺度 |
+| watchdog 过度触发 | `relocate_consensus` ↑ + `relocate_holdoff_sec` ↑ + `relocate_min_score` ↑ |
 
-## C. 雷达建图后端（LIO-SAM）
+完整 STD 参数表：[`dddnav_utils/README.md` "STD 全局初始化 / watchdog 参数" 段](../../dddnav_utils/README.md)。
 
-仅建图链路（mapping*.launch、mapping_nav*.launch）使用。定位模式不加载。
+### MCL（粒子滤波收敛 / CPU 占用）
 
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `pointCloudTopic` | 接桥接后的点云，必须是 `/livox/lidar_liosam` | `LIO-SAM/config/params_mid360.yaml` |
-| `imuAccNoise / imuGyrNoise / imuAccBiasN / imuGyrBiasN` | IMU 预积分噪声。与 FAST-LIO `mapping.acc_cov` 是同一组物理量 | 同上 |
-| `imuRPYWeight` | 重力对齐权重。0.1~0.3 论文级，0.01 弱约束 | 同上 |
-| `publishTF` | LIO-SAM 是否发 `map→odom`。**localization 模式必须 false** | 同上 |
-| `numberOfCores / mappingProcessInterval` | 建图后端 CPU 利用 / 优化间隔（s） | 同上 |
-| `surroundingkeyframeAddingDistThreshold/AngleThreshold` | LIO-SAM 关键帧抽取阈值 | 同上 |
-| `loopClosureFrequency / historyKeyframeSearchRadius / historyKeyframeFitnessScore` | 回环检测频率 / 半径 / GICP 适合度阈值 | 同上 |
-| `scExcludeRecent / scDistThreshold / scMinDatabase` | Scan Context 检索 | 同上 |
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 重定位时粒子云太小、找不回 | `nav_base.yaml` `mcl_3dl.num_particles_grow_on_init` ↑ + `match_ratio_grow_thresh` ↑ |
+| 收敛后粒子数没回落 | `nav_base.yaml` `mcl_3dl.particle_decay` ↓（更小回落更快） |
+| MCL 拖跟（动得慢） | `nav_base.yaml` `mcl_3dl.update_min_d / update_min_a` ↓ |
+| 子图加载抖动 | `nav_base.yaml` `sub_maps.sub_map_search_radius` 调到 ≥ 0.5 × `FAST-LIO.mapping.det_range` |
+| likelihood 误匹配多 | `nav_base.yaml` `mcl_3dl.likelihood.match_dist_min / match_dist_flat` |
+| MCL 想关掉自适应粒子数 | 把 `num_particles_min ≥ num_particles_max`（强制退化到旧版） |
 
-详细注释直接在 `params_mid360.yaml`，每段都标了严 / 宽方向。
+快速试参用 [`reality/tuning/example_mcl_overlay.yaml`](reality/tuning/example_mcl_overlay.yaml)，`nav_profile:=` 或 CLI `--params-file` 叠上去。
 
-## D. 关键帧 / pose graph 写盘
+### Pose fusion（ESKF 融合 / 退化）
 
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `keyframe_dist / keyframe_angle` | 关键帧最小平移 / 旋转阈值 | `reality/keyframes_mid360.yaml` |
-| `ground_angle_thresh` | 地面法线最大与垂直方向夹角（deg） | 同上 |
-| `save_dir` | 输出目录。launch 自动覆盖到 `share/dddnav_bringup/map`，不用手动改 | 同上 |
+来源文件统一是 [`reality/pose_fusion.yaml`](reality/pose_fusion.yaml)。
 
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| MCL 跳得太狠（每次 update 后 `map→odom` 跳 > 0.3 m） | `mahalanobis_gate` ↓ + `adapt_gate_alpha` ↓ |
+| MCL 太信不上、跟不动 | `proc_noise_pos / proc_noise_rot` ↑（让 ESKF 更信 MCL） |
+| 颠簸 / 长走廊 LIO 残差 spike | `adaptive_q_gain` ↑ + `adaptive_q_max` ↑（自适应 Q 借 FAST-LIO 残差驱动） |
+| 静止时 cov trace 慢慢涨 | `zupt_lin_vel_thresh / zupt_ang_vel_thresh / zupt_proc_scale` 三件一起 + `max_cov_pos / max_cov_rot` 限上界 |
+| MCL 自报 cov 太大想直接拒 | `mcl_cov_reject_trace` ↓（m²） |
+| LIO 断流 1s+ 想触发 DEGRADED_LIO_LOST | `lio_blackout_sec` 改触发阈值；模式切换 WARN 打日志 |
+| MCL 长时间 cov trace 高想触发 STUCK + 重发种子 | `mcl_stuck_cov` / `mcl_stuck_sec` / `recovery_holdoff_sec` 三件 |
+| 想关掉退化时主动重发 `/initial_3d_pose` | `enable_recovery_publish: false`（仍发状态、不主动注入） |
+| 启动一直没 MCL，想自启 | `auto_init_timeout` + `auto_init_x / _y / _z` |
 
-## E. ESKF 融合 / 退化状态机（pose_fusion）
-
-`/odom_filtered` 100 Hz、`map→odom` TF、定位质量与降级逻辑都在这里。
-
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| 输入 / 输出话题、frame、`publish_tf` | ESKF 接线 | `dddnav_pose_fusion/config/pose_fusion.yaml` |
-| `proc_noise_pos / proc_noise_rot` | 过程噪声，越大越信 MCL | 同上 |
-| `meas_noise_pos / meas_noise_rot` | 量测噪声下限（MCL 协方差不可信时兜底） | 同上 |
-| `mahalanobis_gate / adapt_gate_alpha / adapt_gate_max` | 拒绝离群 MCL，越紧越保守 | 同上 |
-| `mcl_cov_reject_trace` | MCL 自报位置 cov trace 上限 (m²) | 同上 |
-| `zupt_lin_vel_thresh / zupt_ang_vel_thresh / zupt_proc_scale` | 静止 ZUPT 缩 Q | 同上 |
-| `lio_health_topic / adaptive_q_baseline / adaptive_q_gain / adaptive_q_max / adaptive_q_min_feats` | 自适应 Q（FAST-LIO 残差驱动） | 同上 |
-| `gate_reset_after / max_cov_pos / max_cov_rot` | 连续拒绝重启 + 协方差上限 | 同上 |
-| `auto_init_timeout / auto_init_x / _y / _z` | 无 MCL 兜底自启 | 同上 |
-| `lio_blackout_sec / mcl_stuck_cov / mcl_stuck_sec / recovery_holdoff_sec` | 退化状态机阈值，HEALTHY ↔ DEGRADED_LIO_LOST ↔ DEGRADED_MCL_STUCK | 同上 |
-| `status_topic / recovery_pub_topic / status_rate_hz / enable_recovery_publish` | `/localization_status` 输出与 SC 重定位重发 | 同上 |
-
-含义沿用 `dddnav_pose_fusion/README.md`。
-
-## F. 全局定位（MCL 3DL + sub_maps + SC 重定位）
-
-定位链路核心。`nav_base.yaml` 给所有 profile 共用的默认值，`reality/nav/<profile>.yaml` 只写差异。
-
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `init_x / init_y / init_z / init_roll / init_pitch / init_yaw` 与 `init_var_*` | 启动时 MCL 粒子云均值 / 方差 | `nav_base.yaml`（mcl_3dl 段） |
-| `num_particles / num_particles_min / num_particles_max / num_particles_grow_on_init` | 自适应粒子数上下界 + 重定位扩展 | 同上 |
-| `match_ratio_grow_thresh / particle_decay` | 低 match → 翻倍粒子；健康 → 指数回落 | 同上 |
-| `update_min_d / update_min_a` | 触发更新的最小行驶 / 转角 | 同上 |
-| `odom_err_*` | 里程计噪声模型 | 同上 |
-| `publish_tf / publish_odom_tf` | localization 启动时被强制改成 false（pose_fusion 拥有 TF） | 同上 + launch override |
-| `expansion_var_*` | 全局扩展粒子的方差 | 同上 |
-| `likelihood.*` | 似然模型阈值 | 同上 |
-| `sub_map_search_radius / sub_map_warmup_trigger_distance` | 子图加载半径 + 预热触发距离 | 同上（sub_maps 段） |
-| `complete_map_voxel_size` | 子图体素降采样 | 同上 |
-| 启动时 SC 阈值 / watchdog | `sc_global_init` 节点参数（DB 路径自动注入） | `dddnav_bringup/launch/common_nodes.py::localization_stack` |
-
-SC 节点完整参数表见 `dddnav_utils/README.md` 的"SC 全局初始化 / watchdog 参数"段。
-
-## G. 局部规划 / 行为生成 / 评价器
-
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `controller_frequency / planner_patience / oscillation_*` | p2p_move_base 主循环 | `nav_base.yaml`（p2p_move_base 段） |
-| `cuboid.{flb,frb,flt,frt,blb,brb,blt,brt}` | 机器人 8 角包围盒，碰撞用 | 同上（local_planner 段） |
-| `differential_drive_simple.{max_vel_x, max_vel_theta, acc_lim_x, acc_lim_theta, sim_time, ...}` | 标准差速 trajectory generator | 同上（trajectory_generators 段） |
-| `differential_drive_rotate_inplace / rotate_shortest_angle.rotation_speed / cuboid` | 原地旋转 / 最短朝向 | 同上 |
-| `mpc_critics.{collision, stick_path, pure_pursuit, toward_global_plan, ...}.weight` | 评价器权重，按场景一组一起调 | 同上 |
-| `recovery_behaviors.rotate_inplace.frequency / tolerance` | 卡住后的恢复行为 | 同上 |
-
-机器人外形 / 速度 / 加速度强相关。换平台时只改 base.yaml 里 cuboid 与 differential_drive_simple 段即可。
-
-## H. 全局规划
-
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `turning_weight / a_star_expanding_radius / enable_detail_log` | 全局规划评价 | `nav_base.yaml`（global_planner 段） |
-| `use_pre_graph` | 静态地图缓存图（localization profile 打开） | `reality/nav/<profile>.yaml`（global_planner 段） |
-| `look_ahead_distance / recompute_frequency` | DWA 全局重规划 | `nav_base.yaml`（dynamic_window_aware_global_planner 段） |
-| `global_planner_action_name / global_plan_query_frequency` | 模式相关 action 与重查频率，profile 必须重写 | `reality/nav/<profile>.yaml`（global_plan_manager 段） |
-
-## I. 感知（perception_3d）
-
-`perception_3d_local` 给 local planner 喂 cost；`perception_3d_global` 给图规划喂可通行性。
-
-| 参数 | 含义 | 来源文件 |
-|------|------|----------|
-| `inscribed_radius / inflation_radius / inflation_descending_rate` | 膨胀层 | `reality/nav/<profile>.yaml`（perception_3d_local / _global 段） |
-| `max_obstacle_distance / sensors_collected_frequency` | 障碍最大距离 / 采集频率 | 同上 |
-| `plugins` | 启用的层（`map`, `lidar`, `path_blocked_strategy`, `depth_camera_layer`, ...） | 同上 |
-| `lidar.vertical_FOV_top / _bottom / scan_effective_*` | 多层旋转雷达层的有效扇区 | 同上 |
-| `lidar.resolution / xy_resolution / height_resolution / marking_height / perception_window_size` | 体素 / 标记高度 / 局部窗口 | 同上 |
-| `map.is_local_planner / mapping_mode / map_topic / ground_topic` | 静态层加载源；mapping 模式 = true 启用动态地图层 | 同上 |
-| 深度相机段（`depth_camera_layer`） | 仅 `*_with_camera`、`*_with_depth_camera` profile | `reality/nav/mid360_*_with_camera.yaml` / `_with_depth_camera.yaml` |
-
-
-## J. 健康监控 / 启动期自检
-
-| 参数 | 含义 | 来源 |
-|------|------|----------|
-| `slam_health_monitor.{ok_timeout, fail_timeout, tf_jump_dist, tf_jump_angle, cov_trace_warn, cov_trace_error}` | SLAM 监控阈值 | `dddnav_bringup/launch/common_nodes.py::liosam_back_end`（建图模式覆盖） + 节点默认 |
-| `nav_perf_monitor.{lio_residual_warn, lio_residual_error, lio_min_feats_warn}` | 导航性能阈值 | 节点参数（`scripts/nav_perf_monitor.py`） |
-| `dddnav_preflight.{mode, warmup_sec, recheck_sec, qos_topics, tf_unique_edges, lidar_max_range}` | QoS / TF / 跨节点参数自检 | 节点参数（`scripts/dddnav_preflight.py`），launch 注入 `mode='localization'` |
-
-完整说明见 `dddnav_utils/README.md`。
-
-## 组合调参规则（牵一发动全身）
-
-下面这些参数实际是一对，单调一个会失衡。
-
-| 触发场景 | 一起调 |
-|----------|--------|
-| MCL 拖跟（FAST-LIO 跑得快但 ESKF 死信 LIO） | `pose_fusion.proc_noise_pos/_rot` ↑ + `mcl_3dl.update_min_d/_a` ↓ |
-| MCL 跳得太狠（每次 update 后 `map→odom` 跳 > 0.3 m） | `pose_fusion.mahalanobis_gate` ↓ + `pose_fusion.adapt_gate_alpha` ↓ |
-| 颠簸 / 长走廊里 LIO 残差 spike | `pose_fusion.adaptive_q_gain` ↑ + `pose_fusion.adaptive_q_max` ↑ |
-| 重定位失败率高 | `mcl_3dl.num_particles_grow_on_init` ↑ + `mcl_3dl.match_ratio_grow_thresh` ↑ + SC `sc_dist_threshold` 收紧 |
-| 静止时 cov trace 慢慢涨 | `pose_fusion.zupt_*` 三个一起 + `pose_fusion.max_cov_pos/_rot` 限制上界 |
-| 子图加载抖动 | `sub_maps.sub_map_search_radius` 与 FAST-LIO `mapping.det_range` 比例 ≥ 0.5 |
-| 雷达里程计稳定但 LIO-SAM 后端飘 | `LIO-SAM.imuAccNoise` 与 `FAST-LIO.mapping.acc_cov` 同步放大 |
-
-## tuning/ 覆盖层
-
-`config/reality/tuning/` 提供小模板。复制一份改名后用 launch CLI 加载，**不要改默认 yaml**。
-
-```bash
-ros2 launch dddnav_bringup localization.launch.py \
-  nav_profile:=mid360_localization \
-  preflight_mode:=localization
-```
-
-需要再叠一层 overlay：
+试参覆盖：[`reality/tuning/example_pose_fusion_overlay.yaml`](reality/tuning/example_pose_fusion_overlay.yaml)，CLI:
 
 ```bash
 ros2 launch dddnav_bringup localization.launch.py \
   pose_fusion_yaml:=$(pwd)/src/dddnav_bringup/config/reality/tuning/example_pose_fusion_overlay.yaml
 ```
 
-`pose_fusion_yaml` / `nav_profile` 都已在 launch 里参数化，方便切。
+### 局部规划 / 速度
 
-## 我应该改哪里？速查
+`nav_base.yaml`，`local_planner` / `trajectory_generators` / `mpc_critics` 段。
 
-| 想改 | 去哪 |
-|------|------|
-| 雷达 / 相机的安装位置 | `reality/runtime.yaml` (sim 用 `simulation/runtime.yaml`) |
-| 启动顺序 / 延时 | `reality/runtime.yaml (或 simulation/runtime.yaml) 的 delays 段` |
-| IMU / LiDAR 噪声 | `FAST_LIO/config/mid360_pc2.yaml` 与 `LIO-SAM/config/params_mid360.yaml` 同步 |
-| ESKF / 退化阈值 | `dddnav_pose_fusion/config/pose_fusion.yaml` |
-| MCL 粒子数 / 更新阈值 | `nav_base.yaml`（mcl_3dl 段） |
-| 子图加载半径 | `nav_base.yaml`（sub_maps 段） |
-| 机器人外形 / 速度 | `nav_base.yaml`（local_planner / trajectory_generators 段） |
-| 评价器权重 | `nav_base.yaml`（mpc_critics 段） |
-| 模式相关 (localization vs mapping) | `reality/nav/<profile>.yaml`（sim: `simulation/nav/<profile>.yaml`） |
-| 关键帧抽取 | `reality/keyframes_mid360.yaml` |
-| 监控阈值 | `dddnav_utils/scripts/*.py` 节点参数 + launch 覆盖 |
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 换底盘外形 | `cuboid.{flb, frb, flt, frt, blb, brb, blt, brt}` 一组（8 顶点 m）+ `inscribed_radius / inflation_radius` |
+| 走廊里太慢 / 太快 | `differential_drive_simple.{max_vel_x, max_vel_theta, acc_lim_x, acc_lim_theta}` |
+| 路径贴不上 / 走得抖 | `mpc_critics.stick_path.weight` ↑（更贴）；`mpc_critics.pure_pursuit.weight` ↑（更前瞻） |
+| 起步朝向不对就硬走 | `mpc_critics.toward_global_plan.weight` ↑（先转再走，旋转 shim） |
+| 转弯响应慢 | `differential_drive_simple.sim_time` ↓ 或 `sim_granularity` ↓（采样粒度变细） |
+| 碰撞检查噪 | `mpc_critics.collision.weight` ↑；或 `differential_drive_simple.sim_granularity` ↓ |
+| 卡住后想要不同 recovery | `recovery_behaviors.rotate_inplace.{frequency, tolerance}`；插槽留了，挂插件即可 |
+
+### MPPI（可选采样规划器）
+
+> 默认主线用 `differential_drive_simple`（DWA + cuboid + argmin）。MPPI 是叠加层，要主动启用。
+
+启用 = 叠 [`reality/tuning/example_mppi_overlay.yaml`](reality/tuning/example_mppi_overlay.yaml) + 把 `p2p_move_base` 直行段的 `traj_gen_name` 切到 `differential_drive_mppi`（业务调度，overlay 不替你切）。
+
+| 现象或目标 | 在哪改（都在 overlay 的 `differential_drive_mppi.mppi.*`） |
+|------------|----------|
+| 行为太激进想更平滑 | `lambda` ↑（softmax 温度大 → 多样本平均） |
+| 行为太保守想更接近 argmin | `lambda` ↓ |
+| 探索不够（贴住次优解） | `sigma_v / sigma_w` ↑（控制扰动方差），但会被 `mppi_stick_path` 罚分制约 |
+| 嵌入式 CPU 不够 | `num_samples` 64 → 32 |
+| 每周期想从 0 重启 nominal | `reset_nominal_each_cycle: true`（默认 false 用 warm start） |
+| 大部分样本都被 critic 砍 | `min_valid_fraction` ↑；触发后 MPPI 自动降级 argmin |
+
+完整说明：[`dddnav_local_planner/README.md`](../../dddnav_local_planner/README.md) MPPI 段。
+
+### 全局规划
+
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 路径绕远 / zig-zag | `nav_base.yaml` `global_planner.turning_weight` ↑ |
+| 静态地图查询慢 | `reality/nav/<profile>.yaml` `global_planner.use_pre_graph: true`（预构图） |
+| A\* 邻居展开太慢 / 太粗 | `nav_base.yaml` `global_planner.a_star_expanding_radius` |
+| 边定位边规划，路径不刷新 | `reality/nav/<profile>.yaml` `global_plan_manager.global_plan_query_frequency` ↑（默认 5Hz） |
+| DWA 全局重规划频率 | `nav_base.yaml` `dynamic_window_aware_global_planner.{look_ahead_distance, recompute_frequency}` |
+
+### 感知 / 代价图（perception_3d）
+
+profile-aware：默认值在 `nav_base.yaml`，模式覆盖在 `reality/nav/<profile>.yaml` 的 `perception_3d_local` / `perception_3d_global` 段。
+
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| 机器人离障碍太近 / 太远才反应 | `inscribed_radius / inflation_radius / inflation_descending_rate` |
+| 远处障碍噪点（误标） | `max_obstacle_distance` ↓ |
+| 想加 / 关图层 | `plugins:` 列表（`map / lidar / depth_camera_layer / path_blocked_strategy / ...`） |
+| Mid360 扇区切片不准（继承自旋转雷达约定） | `lidar.{vertical_FOV_top, vertical_FOV_bottom, scan_effective_*, perception_window_size, segmentation_ignore_ratio}` |
+| 体素 / 标记高度调整 | `lidar.{resolution, xy_resolution, height_resolution, marking_height}` |
+| 静态层切到建图模式 | `map.is_local_planner / mapping_mode / map_topic / ground_topic` |
+| 接 `*_with_camera` 语义点云 | `reality/nav/mid360_*_with_camera.yaml` 的 `depth_camera_layer` 段 |
+| 限速区 / 禁入区 | `dddnav_perception_3d/config/{speed_limit_layer.yaml, no_entry_layer.yaml}` + 对应 PCD |
+
+### 监控 / 自检
+
+| 现象或目标 | 在哪改 |
+|------------|--------|
+| `slam_health_monitor` 误报 / 太迟报 | `common_nodes.py::liosam_back_end` 注入的 `ok_timeout / fail_timeout / tf_jump_dist / tf_jump_angle / cov_trace_warn / cov_trace_error` |
+| FAST-LIO 残差告警阈值 | `dddnav_utils/scripts/nav_perf_monitor.py` 节点参数 `lio_residual_warn / lio_residual_error / lio_min_feats_warn` |
+| Preflight 自检要换模式 / 加 topic | `dddnav_utils/scripts/dddnav_preflight.py` 节点参数 `mode / qos_topics / tf_unique_edges / lidar_max_range`；launch 默认注入 `mode='localization'` |
+
+---
+
+## 按文件分组速查
+
+仅当场景表找不到时回退到这里。每段只列**这个文件里独有的**关键 key，不复制场景表。
+
+### `reality/runtime.yaml`
+
+`lidar_mount` / `camera_mount` / `livox_publish_freq` / `delays.*` / `initial_pose`。详见文件顶部注释。
+
+### `reality/keyframes_mid360.yaml`
+
+`keyframe_dist` / `keyframe_angle` / `ground_angle_thresh` / `save_dir`（launch 自动覆盖到 `share/dddnav_bringup/map/`，**不要手动改**）。
+
+### `FAST_LIO/config/mid360_pc2.yaml`（前端）
+
+| Key | 说明 |
+|-----|------|
+| `preprocess.{lidar_type, scan_line, blind, scan_rate}` | 雷达型号 / 扫描线 / 盲区 / 帧率 |
+| `mapping.{acc_cov, gyr_cov, b_acc_cov, b_gyr_cov}` | IMU 噪声（Mid360 经验：放大 10~50 倍，与 LIO-SAM 同步） |
+| `mapping.{det_range, fov_degree, extrinsic_T, extrinsic_R}` | 探测距离 / FOV / LiDAR↔IMU 外参 |
+| `feature_extract_enable / point_filter_num` | 角点抽取 / 间隔降采样 |
+| `filter_size_surf / filter_size_map` | 体素，越小越准越慢 |
+
+调参建议：[`FAST_LIO/README.md`](../../FAST_LIO/README.md)。
+
+### `LIO-SAM/config/params_mid360.yaml`（仅建图链）
+
+| Key | 说明 |
+|-----|------|
+| `pointCloudTopic` | 必须是 `/livox/lidar_liosam` |
+| `imu{Acc,Gyr}{Noise,BiasN}` | 与 FAST-LIO `mapping.acc_cov` 等同步 |
+| `imuRPYWeight` | 重力对齐权重（论文 0.1~0.3，弱约束 0.01） |
+| `publishTF` | localization 模式必须 `false`，由 launch 强制 |
+| `numberOfCores / mappingProcessInterval` | 后端 CPU / 优化间隔（s） |
+| `surroundingkeyframeAddingDistThreshold / AngleThreshold` | LIO-SAM 自身的关键帧抽取（与 `keyframes_mid360.yaml` 是不同链路） |
+| `loopClosureFrequency / historyKeyframeSearchRadius / historyKeyframeFitnessScore` | 回环 |
+| `stdSkipNearNum / stdIcpThreshold / stdMinDatabase` | STD 候选检索（替代上游的 Scan Context） |
+
+`params_mid360.yaml` 每段都标了严 / 宽方向。
+
+### `reality/pose_fusion.yaml`（ESKF + 退化）
+
+四组 key：**Q/R/门** / **鲁棒性** / **自适应 Q** / **退化状态机**。完整含义见 [`dddnav_pose_fusion/README.md`](../../dddnav_pose_fusion/README.md)，场景速查见上方"Pose fusion"段。
+
+### `nav_base.yaml`（导航公共层）
+
+| 段 | 内容 |
+|----|------|
+| `mcl_3dl` | 初始位姿 / 自适应粒子数 / update 阈值 / odom 噪声 / likelihood / `publish_tf=false`（localization 强制） / `expansion_var_*` |
+| `sub_maps` | `sub_map_search_radius / sub_map_warmup_trigger_distance / complete_map_voxel_size` |
+| `p2p_move_base` | `controller_frequency / planner_patience / oscillation_*` |
+| `local_planner` | `cuboid` / 各 trajectory generator 速度 + sim_time + sim_granularity |
+| `trajectory_generators` | `differential_drive_simple / differential_drive_rotate_inplace / differential_drive_rotate_shortest_angle`，启用 MPPI 时叠 overlay |
+| `mpc_critics` | `collision / stick_path / pure_pursuit / toward_global_plan / ...` weight |
+| `recovery_behaviors` | `rotate_inplace.{frequency, tolerance}` |
+| `global_planner` | `turning_weight / a_star_expanding_radius / enable_detail_log` |
+| `dynamic_window_aware_global_planner` | `look_ahead_distance / recompute_frequency` |
+| `perception_3d_local` / `perception_3d_global` | 默认膨胀 / FOV / 体素，profile 用 overlay 改 |
+
+### `reality/nav/<profile>.yaml`（模式 overlay）
+
+只写差异。常见：`global_plan_manager.{global_planner_action_name, global_plan_query_frequency}`、`global_planner.use_pre_graph`、`perception_3d_*.plugins / depth_camera_layer / map.{is_local_planner, mapping_mode, map_topic, ground_topic}`。
+
+可用 profile：`mid360_mapping[_with_camera] / mid360_localization[_with_camera/_with_depth_camera]`。
+
+---
+
+## 联动规则（牵一发动全身）
+
+单调一个会失衡，必须配对调。
+
+| 场景 | 一起调 |
+|------|--------|
+| MCL 拖跟（FAST-LIO 跑得快但 ESKF 死信 LIO） | `pose_fusion.proc_noise_pos/_rot` ↑ + `mcl_3dl.update_min_d/_a` ↓ |
+| MCL 跳得太狠 | `pose_fusion.mahalanobis_gate` ↓ + `pose_fusion.adapt_gate_alpha` ↓ |
+| 颠簸 / 长走廊 LIO 残差 spike | `pose_fusion.adaptive_q_gain` ↑ + `pose_fusion.adaptive_q_max` ↑ |
+| 重定位失败率高 | `mcl_3dl.num_particles_grow_on_init` ↑ + `mcl_3dl.match_ratio_grow_thresh` ↑ + STD `std_score_threshold` 收紧（↑） |
+| 静止时 cov trace 慢慢涨 | `pose_fusion.zupt_*` 三件 + `pose_fusion.{max_cov_pos, max_cov_rot}` 限上界 |
+| 子图加载抖动 | `sub_maps.sub_map_search_radius` ≥ 0.5 × `FAST-LIO.mapping.det_range` |
+| 雷达里程计稳但 LIO-SAM 后端飘 | `LIO-SAM.imu{Acc,Gyr}Noise` 与 `FAST-LIO.mapping.{acc_cov, gyr_cov}` 同步放大 |
+| MPPI 启用后路径不贴 | `mppi.lambda` ↑（更平滑）+ `mppi_stick_path.weight` ↑ |
+| MPPI 探索不够 | `mppi.sigma_v / sigma_w` ↑ + `mppi.num_samples` ↑（CPU 允许） |
+| 后端 CPU 满 + health 误报 | `LIO-SAM.mappingProcessInterval` ↑ + `slam_health_monitor.{ok_timeout, fail_timeout}` 同步放宽 |
+
+---
+
+## 用 tuning/ 覆盖层试参
+
+`reality/tuning/` 提供小模板。**复制改名**后用 launch CLI 加载，**不要改默认 yaml**：
+
+```bash
+# 切 nav profile
+ros2 launch dddnav_bringup localization.launch.py nav_profile:=mid360_localization_with_depth_camera
+
+# 叠加 pose_fusion overlay
+ros2 launch dddnav_bringup localization.launch.py \
+  pose_fusion_yaml:=$(pwd)/src/dddnav_bringup/config/reality/tuning/example_pose_fusion_overlay.yaml
+
+# MPPI（叠 overlay + 切直行 generator 名）
+ros2 launch dddnav_bringup localization.launch.py \
+  p2p_move_base_yaml:=$(pwd)/src/dddnav_bringup/config/reality/tuning/example_mppi_overlay.yaml
+```
+
+`pose_fusion_yaml` / `nav_profile` / `p2p_move_base_yaml` 已在 launch 里参数化。新做 profile 直接复制 `reality/nav/mid360_localization.yaml` 改差异部分即可。

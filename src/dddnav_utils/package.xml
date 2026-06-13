@@ -15,7 +15,7 @@
   <depend>nav_msgs</depend>
   <depend>std_msgs</depend>
   <depend>pcl_conversions</depend>
-  <depend>lio_sam</depend>
+  <depend>dddnav_std_descriptor</depend>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_srvs</exec_depend>

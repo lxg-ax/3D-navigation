@@ -1,0 +1,10 @@
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/uninstall.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/dddnav_std_descriptor_uninstall.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/dddnav_std_descriptor.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/test.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/edit_cache.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/rebuild_cache.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/list_install_components.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/install.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/install/local.dir
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/CMakeFiles/install/strip.dir

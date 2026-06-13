@@ -91,7 +91,7 @@ class FeatureAssociation : public rclcpp::Node
   
   double timeScanCur;
 
-  cloud_msgs::msg::CloudInfo segInfo;
+  dddnav_cloud_msgs::msg::CloudInfo segInfo;
   std_msgs::msg::Header cloudHeader;
 
   int systemInitCount;

@@ -1,8 +1,8 @@
-#include <chrono> // Date and time
-#include <functional> // Arithmetic, comparisons, and logical operations
-#include <memory> // Dynamic memory management
-#include <string> // String functions
- 
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -13,7 +13,6 @@
 #include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 
-// ros
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
 
@@ -21,14 +20,12 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
-// sync mask and depth
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-// chrono_literals handles user-defined time durations (e.g. 500ms) 
 using namespace std::chrono_literals;
- 
+
 class SemanticSegmentation2PointCloud : public rclcpp::Node
 {
 
@@ -37,9 +34,8 @@ class SemanticSegmentation2PointCloud : public rclcpp::Node
   public:
 
     SemanticSegmentation2PointCloud(std::string name);
-    
+
   private:
-    //@Prepare all subscribers from LegoLoam
     message_filters::Subscriber<sensor_msgs::msg::Image> mask_sub_;
     message_filters::Subscriber<sensor_msgs::msg::Image> depth_img_sub_;
     std::shared_ptr<message_filters::Synchronizer<MaskDepthSyncPolicy>> syncApproximate_;

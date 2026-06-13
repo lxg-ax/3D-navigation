@@ -198,7 +198,6 @@ void SemanticSegmentation2PointCloud::cbMaskDepthImg(const sensor_msgs::msg::Ima
 void SemanticSegmentation2PointCloud::cbCameraInfo(const sensor_msgs::msg::CameraInfo::SharedPtr msg)
 {
 
-  // RCLCPP_INFO_ONCE(this->get_logger(), "Got camera info.");
   if (!has_info_)
   {
     has_info_ = true;
@@ -206,10 +205,8 @@ void SemanticSegmentation2PointCloud::cbCameraInfo(const sensor_msgs::msg::Camer
   }
 }
 
-// Node execution starts here
 int main(int argc, char *argv[])
 {
-  // Initialize ROS 2
   rclcpp::init(argc, argv);
 
   SemanticSegmentation2PointCloud SS2C = SemanticSegmentation2PointCloud("depthimg2pointcloud_right");
@@ -222,7 +219,6 @@ int main(int argc, char *argv[])
 
   mulexecutor_->spin();
 
-  // Shutdown the node when finished
   rclcpp::shutdown();
   return 0;
 }

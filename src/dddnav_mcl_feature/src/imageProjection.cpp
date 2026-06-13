@@ -60,7 +60,7 @@ ImageProjection::ImageProjection(std::string name, Channel<ProjectionOut>& outpu
   _pub_segmented_cloud_pure = this->create_publisher<sensor_msgs::msg::PointCloud2>
       ("segmented_cloud_pure", 1);
 
-  _pub_segmented_cloud_info = this->create_publisher<cloud_msgs::msg::CloudInfo>
+  _pub_segmented_cloud_info = this->create_publisher<dddnav_cloud_msgs::msg::CloudInfo>
       ("segmented_cloud_info", 1); 
 
   _pub_outlier_cloud = this->create_publisher<sensor_msgs::msg::PointCloud2>

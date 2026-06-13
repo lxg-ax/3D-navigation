@@ -30,6 +30,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 import tf2_ros
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Float64MultiArray
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
@@ -57,6 +58,17 @@ class SlamHealth(Node):
         # Pose covariance trace warn / error thresholds (m²+rad²).
         self.declare_parameter('cov_trace_warn',  0.5)
         self.declare_parameter('cov_trace_error', 5.0)
+        # FAST-LIO degeneracy thresholds (Hessian min eigval / cond number).
+        # Min eigval is in (correspondences²), so it scales with feature count;
+        # leave at 0 to disable. Tuned to flag only severe degeneracy
+        # (the SC watchdog handles recovery — this is for visibility).
+        self.declare_parameter('lio_health_topic',         '/fast_lio/health')
+        self.declare_parameter('lio_min_eigval_warn',      50.0)
+        self.declare_parameter('lio_min_eigval_error',     5.0)
+        self.declare_parameter('lio_cond_number_warn',     1.0e4)
+        self.declare_parameter('lio_cond_number_error',    1.0e6)
+        self.declare_parameter('lio_feats_warn',           80)
+        self.declare_parameter('lio_feats_error',          30)
         self.declare_parameter('publish_diagnostics', True)
 
         self.ok_to        = self.get_parameter('ok_timeout').value
@@ -66,6 +78,13 @@ class SlamHealth(Node):
         self.jump_angle   = float(self.get_parameter('tf_jump_angle').value)
         self.cov_warn     = float(self.get_parameter('cov_trace_warn').value)
         self.cov_err      = float(self.get_parameter('cov_trace_error').value)
+        self.lio_health_topic = self.get_parameter('lio_health_topic').value
+        self.lio_min_eig_warn = float(self.get_parameter('lio_min_eigval_warn').value)
+        self.lio_min_eig_err  = float(self.get_parameter('lio_min_eigval_error').value)
+        self.lio_cond_warn    = float(self.get_parameter('lio_cond_number_warn').value)
+        self.lio_cond_err     = float(self.get_parameter('lio_cond_number_error').value)
+        self.lio_feats_warn   = int(self.get_parameter('lio_feats_warn').value)
+        self.lio_feats_err    = int(self.get_parameter('lio_feats_error').value)
         self.pub_diag     = bool(self.get_parameter('publish_diagnostics').value)
 
         edges_str = self.get_parameter('tf_edges').value
@@ -101,6 +120,16 @@ class SlamHealth(Node):
         else:
             self._filtered_topic = None
 
+        # ---------- FAST-LIO degeneracy health ---------------------------
+        # Latest [residual, feats, min_eigval, cond_number]; publisher uses
+        # default reliable QoS so we match it.
+        self._lio_health = None
+        self._lio_health_t = None
+        if self.lio_health_topic:
+            self.create_subscription(
+                Float64MultiArray, self.lio_health_topic,
+                self._on_lio_health, 10)
+
         # ---------- map->odom jump tracking -------------------------------
         self._last_map_odom = None  # (t_sec, x, y, z, qw, qx, qy, qz)
 
@@ -129,6 +158,22 @@ class SlamHealth(Node):
             tr = sum(cov[i * 6 + i] for i in range(6))
             if math.isfinite(tr):
                 self._cov_trace = tr
+
+    def _on_lio_health(self, msg: Float64MultiArray):
+        # data layout (FAST-LIO laserMapping.cpp publish_odometry):
+        #   [residual_m, effct_feats, hessian_min_eigval, cond_number]
+        # Pre-Hessian builds only ship the first two — we tolerate that and
+        # leave the eigval/cond fields as None so checks skip silently.
+        if len(msg.data) < 2:
+            return
+        d = list(msg.data)
+        self._lio_health = (
+            float(d[0]),
+            float(d[1]),
+            float(d[2]) if len(d) > 2 else None,
+            float(d[3]) if len(d) > 3 else None,
+        )
+        self._lio_health_t = self._now()
 
     # ---------------- helpers ----------------------------------------------
 
@@ -225,6 +270,45 @@ class SlamHealth(Node):
             statuses.append(self._make_status(
                 level, f'cov {self._filtered_topic}', summary,
                 {'cov_trace': '' if tr is None else f'{tr:.4f}'}))
+
+        # --- FAST-LIO degeneracy ---
+        # Drops below lio_min_eigval_error → ERROR (long corridor / planar wall
+        # eating the geometry). Cond number is informative — high values warn
+        # but don't error on their own (handled jointly with min_eig).
+        if self.lio_health_topic and self._lio_health is not None:
+            residual, feats, min_eig, cond = self._lio_health
+            stale = (now - self._lio_health_t) if self._lio_health_t else None
+
+            if stale is not None and stale > self.fail_to:
+                level = _ERROR
+                summary = f'health stale={stale:.1f}s'
+            elif feats < self.lio_feats_err:
+                level = _ERROR
+                summary = f'feats={int(feats)} (<{self.lio_feats_err})'
+            elif min_eig is not None and min_eig < self.lio_min_eig_err:
+                level = _ERROR
+                summary = f'min_eig={min_eig:.2f} (<{self.lio_min_eig_err})'
+            elif feats < self.lio_feats_warn:
+                level = _WARN
+                summary = f'feats={int(feats)} (<{self.lio_feats_warn})'
+            elif min_eig is not None and min_eig < self.lio_min_eig_warn:
+                level = _WARN
+                summary = f'min_eig={min_eig:.2f} (<{self.lio_min_eig_warn})'
+            elif cond is not None and cond > self.lio_cond_warn:
+                level = _WARN
+                summary = f'cond={cond:.0f}'
+            else:
+                level = _OK
+                summary = (f'res={residual:.3f} feats={int(feats)}'
+                           + (f' min_eig={min_eig:.2f}' if min_eig is not None else '')
+                           + (f' cond={cond:.0f}' if cond is not None else ''))
+            self._log_at(level, f'[fast_lio degeneracy] {summary}')
+            statuses.append(self._make_status(
+                level, 'fast_lio degeneracy', summary,
+                {'residual_m':   f'{residual:.4f}',
+                 'effct_feats':  f'{int(feats)}',
+                 'min_eigval':   '' if min_eig is None else f'{min_eig:.4f}',
+                 'cond_number':  '' if cond is None else f'{cond:.2f}'}))
 
         # --- publish diagnostics ---
         if self._diag_pub is not None:

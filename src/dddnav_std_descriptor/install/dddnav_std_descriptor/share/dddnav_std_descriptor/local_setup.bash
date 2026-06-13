@@ -1,0 +1,1 @@
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor/ament_cmake_environment_hooks/local_setup.bash

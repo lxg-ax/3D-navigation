@@ -54,7 +54,7 @@ ros2 launch dddnav_bringup localization.launch.py
 ros2 launch dddnav_bringup localization_with_camera.launch.py
 ```
 
-启动时 `sc_global_init` 用 Scan Context 自动找初始位姿，**无需手动点 RViz**。无 `sc_db.bin` 时节点静默退出，`runtime.yaml.initial_pose` 仍兜底。
+启动时 `std_global_init` 用 STD（Stable Triangle Descriptor）三角描述子自动找初始位姿，**无需手动点 RViz**。无 `std_db.bin` 时节点静默退出，`runtime.yaml.initial_pose` 仍兜底。
 
 定位流程同时启两个 watchdog：
 
@@ -104,7 +104,7 @@ depth ────────────────────────�
 | `lidar_driver_and_tf(rt)` | Livox driver + `base_link→livox_frame` static TF |
 | `lidar_front_end(rt, fastlio_yaml)` | livox→liosam 桥接 + FAST-LIO |
 | `liosam_back_end(...)` | LIO-SAM 4 节点 + `liosam_to_posegraph` + `slam_health_monitor`（建图模式下 `ok_timeout=1.0s/fail_timeout=3.0s`，并把 `filtered_odom_topic` 置空避开 `pose_fusion` 误报） |
-| `localization_stack(...)` | MCL 3DL + pose_fusion + mcl_feature + `sc_global_init` + 兜底初始位姿 |
+| `localization_stack(...)` | MCL 3DL + pose_fusion + mcl_feature + `std_global_init` + 兜底初始位姿 |
 | `nav_stack(rt, params)` | global_planner + p2p_move_base + clicked2goal + `nav_perf_monitor` |
 | `auto_save_actions(...)` | 启动前清旧图 + Ctrl-C 触发 `save_map_on_exit.py` |
 | `rviz_action(rt, rviz_yaml)` | RViz 延时启动 |

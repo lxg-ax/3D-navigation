@@ -44,6 +44,9 @@ class Trajectory_Generators_ROS : public rclcpp::Node {
     
     bool hasMoreTrajectories(std::string pname);
     bool nextTrajectory(std::string pname, base_trajectory::Trajectory& comp_traj);
+    bool combineByScores(std::string pname,
+                         std::vector<base_trajectory::Trajectory>& scored,
+                         base_trajectory::Trajectory& combined);
     void initializeTheories_wi_Shared_data();
 
     std::shared_ptr<trajectory_generators::TrajectoryGeneratorSharedData> getSharedDataPtr(){return stacked_generator_->getSharedDataPtr();}

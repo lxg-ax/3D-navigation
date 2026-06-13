@@ -449,32 +449,29 @@ void Local_Planner::getBestTrajectory(std::string traj_gen_name, base_trajectory
   //@ in case we have collision
   best_traj.cost_ = -1;
 
-  double minimum_cost = 9999999;
   geometry_msgs::msg::PoseArray accepted_pose_arr;
   pcl::PointCloud<pcl::PointXYZ> cuboids_pcl;
-  
+
   rejected_trajectories_.clear();
 
+  // 1) Score every candidate via the critic chain. Generator-agnostic.
   for(auto traj_it=trajectories_->begin();traj_it!=trajectories_->end();traj_it++){
 
     mpc_critics_ros_->scoreTrajectory(traj_gen_name, (*traj_it));
-    
-    if((*traj_it).cost_>=0 && (*traj_it).cost_<=minimum_cost){
-      best_traj = (*traj_it);
-      minimum_cost = (*traj_it).cost_;
-    }
 
     if((*traj_it).cost_>=0){
       trajectory2posearray_cuboids((*traj_it), accepted_pose_arr, cuboids_pcl);
     }
 
     rejected_trajectories_[(*traj_it).rejected_by_].push_back(*traj_it);
-    
+
   }
-  
-  //for(auto report_it=rejected_trajectories_.begin(); report_it!=rejected_trajectories_.end(); report_it++){
-  //  RCLCPP_INFO(this->get_logger().get_child(name_), "Report: %s with rate: %.2f", (*report_it).first.c_str(), (float)(*report_it).second.size()/(float)trajectories_->size());
-  //}
+
+  // 2) Combine. The generator owns this step so it can either argmin
+  //    (default, used by DDSimple/RotateInplace/Omni) or do MPPI softmax
+  //    + nominal rollout. This keeps local_planner generator-agnostic and
+  //    lets the combine logic stay co-located with the kinematics it needs.
+  trajectory_generators_ros_->combineByScores(traj_gen_name, *trajectories_, best_traj);
 
   accepted_pose_arr.header.frame_id = perception_3d_ros_->getGlobalUtils()->getGblFrame();
   accepted_pose_arr.header.stamp = clock_->now();

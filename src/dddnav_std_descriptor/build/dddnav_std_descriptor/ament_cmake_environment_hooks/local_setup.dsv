@@ -1,0 +1,3 @@
+source;share/dddnav_std_descriptor/environment/ament_prefix_path.sh
+source;share/dddnav_std_descriptor/environment/library_path.sh
+source;share/dddnav_std_descriptor/environment/path.sh

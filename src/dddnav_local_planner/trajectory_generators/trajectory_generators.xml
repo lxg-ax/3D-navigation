@@ -13,6 +13,10 @@
       <description>TBW</description>
     </class>
 
+    <class type="trajectory_generators::MPPIDifferentialDriveTheory"  base_class_type="trajectory_generators::TrajectoryGeneratorTheory">
+      <description>Sampling-based MPPI for differential drive. Reuses the mpc_critics chain as cost; combines candidates with softmax-weighted control averaging instead of argmin.</description>
+    </class>
+
   </library>
 </class_libraries>
 

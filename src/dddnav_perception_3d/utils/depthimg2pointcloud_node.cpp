@@ -94,8 +94,7 @@ DepthImg2PointCloud::DepthImg2PointCloud(std::string name):Node(name){
 }
 
 void DepthImg2PointCloud::cbDepthImg(const sensor_msgs::msg::Image::SharedPtr msg){
-  
-  //RCLCPP_INFO_ONCE(this->get_logger(), "Got depth image.");
+
   if(!has_info_){
     return;
   }
@@ -122,8 +121,7 @@ void DepthImg2PointCloud::cbDepthImg(const sensor_msgs::msg::Image::SharedPtr ms
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
     return;
   }
-  
-  //RCLCPP_INFO(this->get_logger(), "%u",cv_image_->image.at<unsigned short>(0,0));
+
   for (unsigned int v = 0; v < msg->height; v+=sample_step_)
   {
     for (unsigned int u = 0; u < msg->width; u+=sample_step_)
@@ -157,8 +155,7 @@ void DepthImg2PointCloud::cbDepthImg(const sensor_msgs::msg::Image::SharedPtr ms
 }
 
 void DepthImg2PointCloud::cbCameraInfo(const sensor_msgs::msg::CameraInfo::SharedPtr msg){
-  
-  //RCLCPP_INFO_ONCE(this->get_logger(), "Got camera info.");
+
   if(!has_info_){
     has_info_ = true;
     camera_info_ = *msg;
@@ -166,12 +163,10 @@ void DepthImg2PointCloud::cbCameraInfo(const sensor_msgs::msg::CameraInfo::Share
 
 }
 
-// Node execution starts here
 int main(int argc, char * argv[])
 {
-  // Initialize ROS 2
   rclcpp::init(argc, argv);
-  
+
   DepthImg2PointCloud DI2PC = DepthImg2PointCloud("depthimg2pointcloud_right");
 
   rclcpp::executors::MultiThreadedExecutor::SharedPtr mulexecutor_;
@@ -179,10 +174,9 @@ int main(int argc, char * argv[])
   mulexecutor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
 
   mulexecutor_->add_node(DI2PC.get_node_base_interface());
-   
+
   mulexecutor_->spin();
 
-  // Shutdown the node when finished
   rclcpp::shutdown();
   return 0;
 

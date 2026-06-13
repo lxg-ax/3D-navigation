@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>dddnav_std_descriptor</name>
+  <version>0.1.0</version>
+  <description>
+    ROS 2 fork of hku-mars/STD (Stable Triangle Descriptor) for LiDAR place
+    recognition. Strips the ROS 1 NodeHandle / Publisher coupling from the
+    upstream API and adds Ceres 2.0 / 2.1+ compatibility. Used as a drop-in
+    replacement for Scan Context in the LIO-SAM back-end and sc_global_init.
+  </description>
+  <maintainer email="dev@dddmr.local">DDDMobileRobot</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>eigen</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>libceres-dev</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

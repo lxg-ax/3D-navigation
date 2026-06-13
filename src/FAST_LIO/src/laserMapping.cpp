@@ -97,6 +97,14 @@ string root_dir = ROOT_DIR;
 string map_file_path, lid_topic, imu_topic;
 
 double res_mean_last = 0.05, total_residual = 0.0;
+// Degeneracy indicators computed in h_share_model on the pose Jacobian
+// (first 6 cols of h_x). Smallest singular value of H_pose^T H_pose tells
+// us how much information the latest scan delivers in its weakest direction
+// (long corridor → tiny eigval); condition number captures observability
+// asymmetry. Both republished on /fast_lio/health for downstream watchdogs
+// and adaptive Q in pose_fusion.
+double hessian_min_eigval = 0.0;
+double hessian_cond_number = 1.0;
 double last_timestamp_lidar = 0, last_timestamp_imu = -1.0;
 double gyr_cov = 0.1, acc_cov = 0.1, b_gyr_cov = 0.0001, b_acc_cov = 0.0001;
 double filter_size_corner_min = 0, filter_size_surf_min = 0, filter_size_map_min = 0, fov_deg = 0;
@@ -806,6 +814,25 @@ void h_share_model(state_ikfom &s, esekfom::dyn_share_datastruct<double> &ekfom_
         /*** Measuremnt: distance to the closest surface/corner ***/
         ekfom_data.h(i) = -norm_p.intensity;
     }
+
+    // Pose-block degeneracy indicator. h_x layout per row is
+    //   [norm.x norm.y norm.z  A.x A.y A.z  (B/C if extrinsic_est) ]
+    // where the first 6 columns are the position (3) + rotation (3) Jacobian.
+    // H6^T H6 is the 6x6 information matrix; its smallest eigenvalue drops
+    // toward zero in degenerate geometry (long corridor, planar surface).
+    {
+        const Eigen::MatrixXd H6 = ekfom_data.h_x.leftCols(6);
+        Eigen::Matrix<double, 6, 6> HtH = H6.transpose() * H6;
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 6, 6>> es(HtH);
+        if (es.info() == Eigen::Success) {
+            const auto & ev = es.eigenvalues();   // ascending order
+            const double min_ev = std::max(ev(0), 0.0);
+            const double max_ev = std::max(ev(5), 1e-12);
+            hessian_min_eigval = min_ev;
+            hessian_cond_number = max_ev / std::max(min_ev, 1e-12);
+        }
+    }
+
     solve_time += omp_get_wtime() - solve_start_;
 }
 
@@ -953,8 +980,12 @@ public:
         pubPath_ = this->create_publisher<nav_msgs::msg::Path>("/path", 20);
         // FAST-LIO health metrics. Index 0: scan-to-map residual (m).
         // Index 1: effective correspondence count this frame.
+        // Index 2: pose-block Hessian min eigenvalue (degeneracy indicator,
+        // small in long corridors / planar surfaces).
+        // Index 3: pose-block Hessian condition number (observability spread).
         // Downstream (pose_fusion) inflates Q when residual rises above its
-        // baseline so MCL gets more weight in jolts / dynamic scenes.
+        // baseline so MCL gets more weight in jolts / dynamic scenes;
+        // slam_health_monitor flags WARN/ERROR on min_eigval drops.
         pubLioHealth_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
             "/fast_lio/health", 20);
 
@@ -1093,11 +1124,17 @@ private:
                     odom_pub_count, state_point.pos(0), state_point.pos(1), state_point.pos(2));
             publish_odometry(pubOdomAftMapped_, tf_broadcaster_, tf_buffer_, this->get_logger());
 
-            // FAST-LIO health: scan-to-map residual + effective correspondence count.
-            // 0 = res_mean_last (metres), 1 = effct_feat_num (count).
+            // FAST-LIO health: scan-to-map residual + effective correspondence count
+            // + pose-block Hessian min eigenvalue + condition number.
+            // 0 = res_mean_last (m), 1 = effct_feat_num,
+            // 2 = hessian_min_eigval, 3 = hessian_cond_number.
+            // Layout is append-only — old subscribers reading [0]/[1] keep working.
             {
                 std_msgs::msg::Float64MultiArray health;
-                health.data = {res_mean_last, static_cast<double>(effct_feat_num)};
+                health.data = {res_mean_last,
+                               static_cast<double>(effct_feat_num),
+                               hessian_min_eigval,
+                               hessian_cond_number};
                 pubLioHealth_->publish(health);
             }
             /*** add the feature points to map kdtree ***/

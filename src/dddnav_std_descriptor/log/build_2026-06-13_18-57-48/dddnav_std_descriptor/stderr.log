@@ -1,0 +1,61 @@
+** WARNING ** io features related to pcap will be disabled
+** WARNING ** io features related to png will be disabled
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In function ‘void down_sampling_voxel(pcl::PointCloud<pcl::PointXYZI>&, double)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:6:7: warning: unused variable ‘intensity’ [-Wunused-variable]
+    6 |   int intensity = rand() % 255;
+      |       ^~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::SearchLoop(const std::vector<STDesc>&, std::pair<int, double>&, std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&, std::vector<std::pair<STDesc, STDesc> >&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:173:8: warning: variable ‘t1’ set but not used [-Wunused-but-set-variable]
+  173 |   auto t1 = std::chrono::high_resolution_clock::now();
+      |        ^~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:177:8: warning: variable ‘t2’ set but not used [-Wunused-but-set-variable]
+  177 |   auto t2 = std::chrono::high_resolution_clock::now();
+      |        ^~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:181:16: warning: variable ‘triggle_candidate’ set but not used [-Wunused-but-set-variable]
+  181 |   unsigned int triggle_candidate = -1;
+      |                ^~~~~~~~~~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:198:8: warning: variable ‘t3’ set but not used [-Wunused-but-set-variable]
+  198 |   auto t3 = std::chrono::high_resolution_clock::now();
+      |        ^~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::init_voxel_map(const Ptr&, std::unordered_map<VOXEL_LOC, OctoTree*>&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:278:21: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long unsigned int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  278 |   for (int i = 0; i < index.size(); i++) {
+      |                   ~~^~~~~~~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::corner_extractor(std::unordered_map<VOXEL_LOC, OctoTree*>&, const Ptr&, pcl::PointCloud<pcl::PointXYZINormal>::Ptr&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:467:43: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  467 |   if (config_setting_.maximum_corner_num_ > prepare_corner_points->size()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:476:26: warning: comparison of integer expressions of different signedness: ‘size_t’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+  476 |     for (size_t i = 0; i < config_setting_.maximum_corner_num_; i++) {
+      |                        ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::non_maxi_suppression(pcl::PointCloud<pcl::PointXYZINormal>::Ptr&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:727:37: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<int>, int>::value_type’ {aka ‘int’} and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  727 |         if (pointIdxRadiusSearch[j] == i) {
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::candidate_selector(const std::vector<STDesc>&, std::vector<STDMatchList>&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:945:73: warning: comparison of integer expressions of different signedness: ‘unsigned int’ and ‘int’ [-Wsign-compare]
+  945 |             if ((src_std.frame_id_ - data_base_[position][j].frame_id_) >
+      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+  946 |                 config_setting_.skip_near_num_) {
+      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                           
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:930:9: warning: unused variable ‘best_index’ [-Wunused-variable]
+  930 |     int best_index = 0;
+      |         ^~~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::candidate_verify(const STDMatchList&, double&, std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&, std::vector<std::pair<STDesc, STDesc> >&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1053:24: warning: comparison of integer expressions of different signedness: ‘size_t’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+ 1053 |   for (size_t i = 0; i < use_size; i++) {
+      |                      ~~^~~~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1089:9: warning: unused variable ‘vote’ [-Wunused-variable]
+ 1089 |     int vote = 0;
+      |         ^~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘double STDescManager::plane_geometric_verify(const Ptr&, const Ptr&, const std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&)’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1183:28: warning: comparison of integer expressions of different signedness: ‘size_t’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+ 1183 |       for (size_t j = 0; j < K; j++) {
+      |                          ~~^~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void OctoTree::init_plane()’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1325:7: warning: unused variable ‘evalsMid’ [-Wunused-variable]
+ 1325 |   int evalsMid = 3 - evalsMin - evalsMax;
+      |       ^~~~~~~~
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void OctoTree::init_octo_tree()’:
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1348:28: warning: comparison of integer expressions of different signedness: ‘std::vector<Eigen::Matrix<double, 3, 1> >::size_type’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+ 1348 |   if (voxel_points_.size() > config_setting_.voxel_init_num_) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

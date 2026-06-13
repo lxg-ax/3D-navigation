@@ -34,6 +34,8 @@
 #include <nav_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
+#include <Eigen/Core>
+
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
@@ -118,7 +120,17 @@ namespace base_trajectory {
        * @brief  Return the string of the name who reject this trajectory
        */
        std::string rejected_by_;
-       
+
+      /**
+       * Per-step control sequence used to roll this trajectory out, indexed
+       * 0..(getPointsSize()-2). Filled only by generators that need it for
+       * downstream optimization (currently MPPI). DD/Omni/RotateInplace
+       * leave this empty — they expose only the constant (xv_, yv_, thetav_)
+       * via the existing fields. Each entry is (v, omega) with units m/s
+       * and rad/s; the second element is unused for differential drive.
+       */
+       std::vector<Eigen::Vector2f> controls_;
+
     private:
       nav_msgs::msg::Path trajectory_path_;
       // cuboid of trajectory pose

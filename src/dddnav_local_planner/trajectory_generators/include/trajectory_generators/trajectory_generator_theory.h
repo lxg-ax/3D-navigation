@@ -61,6 +61,29 @@ class TrajectoryGeneratorTheory{
     //@ initialise is used for stacked generators to call every time to initialize the genertator
     virtual void initialise() = 0;
 
+    /**
+     * Combine the per-trajectory scores into a single best trajectory.
+     *
+     * Default implementation is argmin: pick the lowest-cost survivor (cost
+     * < 0 means the critic chain rejected it, e.g. collision). Existing
+     * generators (DDSimple, RotateInplace, OmniSimple) inherit this and
+     * keep DWA-style behaviour with no change.
+     *
+     * MPPI overrides this to compute softmax weights w_i = exp(-(S_i -
+     * min S)/lambda) over the scored candidates, average their stored
+     * `controls_` sequences into a nominal U*, then roll U* out once with
+     * the same kinematic model used for sampling. Without that override
+     * the generator degenerates to denser DWA sampling and gives up the
+     * action-smoothness MPPI is selected for.
+     *
+     * Returns true iff `combined` ends up with a valid trajectory (cost_
+     * >= 0). `scored` may be reordered or read-only depending on the
+     * implementation.
+     */
+    virtual bool combineByScores(
+        std::vector<base_trajectory::Trajectory>& scored,
+        base_trajectory::Trajectory& combined);
+
   protected:
 
     rclcpp::Node::SharedPtr node_;

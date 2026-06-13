@@ -8,7 +8,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
-#include <cloud_msgs/msg/cloud_info.hpp>
+#include <dddnav_cloud_msgs/msg/cloud_info.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -73,7 +73,7 @@ struct ProjectionOut
   geometry_msgs::msg::TransformStamped trans_c2s;
   geometry_msgs::msg::TransformStamped trans_b2s;
   geometry_msgs::msg::TransformStamped trans_m2ci;
-  cloud_msgs::msg::CloudInfo seg_msg;
+  dddnav_cloud_msgs::msg::CloudInfo seg_msg;
   int vertical_scans;
   int horizontal_scans;
   double scan_period;

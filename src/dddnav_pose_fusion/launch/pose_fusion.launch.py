@@ -12,8 +12,8 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     cfg = os.path.join(
-        get_package_share_directory('dddnav_pose_fusion'),
-        'config', 'pose_fusion.yaml')
+        get_package_share_directory('dddnav_bringup'),
+        'config', 'reality', 'pose_fusion.yaml')
 
     return LaunchDescription([
         Node(

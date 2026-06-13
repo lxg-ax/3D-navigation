@@ -1,0 +1,195 @@
+[0.009s] Invoking command in '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor -DCMAKE_BUILD_TYPE=Release -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor
+[0.062s] -- The C compiler identification is GNU 11.4.0
+[0.117s] -- The CXX compiler identification is GNU 11.4.0
+[0.123s] -- Detecting C compiler ABI info
+[0.194s] -- Detecting C compiler ABI info - done
+[0.203s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.204s] -- Detecting C compile features
+[0.204s] -- Detecting C compile features - done
+[0.207s] -- Detecting CXX compiler ABI info
+[0.276s] -- Detecting CXX compiler ABI info - done
+[0.282s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.282s] -- Detecting CXX compile features
+[0.282s] -- Detecting CXX compile features - done
+[0.291s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.426s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.468s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.494s] -- Found rclcpp: 16.0.19 (/opt/ros/humble/share/rclcpp/cmake)
+[0.529s] -- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.533s] -- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.539s] -- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.548s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.561s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.594s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.596s] -- Found rmw_fastrtps_cpp: 6.2.10 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[0.679s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[0.711s] -- Found FastRTPS: /opt/ros/humble/include  
+[0.747s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.759s] -- Looking for pthread.h
+[0.836s] -- Looking for pthread.h - found
+[0.837s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[0.913s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[0.914s] -- Found Threads: TRUE  
+[0.976s] -- Checking for module 'eigen3'
+[0.987s] --   Found eigen3, version 3.4.0
+[1.025s] -- Found Eigen: /usr/include/eigen3 (Required is at least version "3.1") 
+[1.025s] -- Eigen found (include: /usr/include/eigen3, version: 3.4.0)
+[1.051s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found suitable version "1.74.0", minimum required is "1.65.0") found components: system filesystem date_time iostreams serialization 
+[1.111s] -- Checking for module 'libusb-1.0'
+[1.125s] --   Found libusb-1.0, version 1.0.25
+[1.165s] -- Found libusb: /usr/lib/x86_64-linux-gnu/libusb-1.0.so  
+[1.166s] -- Found OpenNI: /usr/lib/libOpenNI.so;libusb::libusb (found version "1.5.4.0") 
+[1.167s] -- OpenNI found (version: 1.5.4.0, include: /usr/include/ni, lib: /usr/lib/libOpenNI.so;libusb::libusb)
+[1.237s] -- Found OpenNI2: /usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb (found version "2.2.0.33") 
+[1.238s] -- OpenNI2 found (version: 2.2.0.33, include: /usr/include/openni2, lib: /usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb)
+[1.238s] ** WARNING ** io features related to pcap will be disabled
+[1.238s] ** WARNING ** io features related to png will be disabled
+[1.270s] -- Found GLEW: /usr/lib/x86_64-linux-gnu/libGLEW.so  
+[1.274s] -- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so  found components: OpenGL GLX 
+[1.391s] -- Found MPI_C: /usr/lib/x86_64-linux-gnu/libmpi.so (found version "3.1") 
+[1.391s] -- Found MPI: TRUE (found version "3.1") found components: C 
+[1.394s] -- Found JsonCpp: /usr/lib/x86_64-linux-gnu/libjsoncpp.so (found suitable version "1.9.5", minimum required is "0.7.0") 
+[1.405s] -- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.2.11") 
+[1.419s] -- Found PNG: /usr/lib/x86_64-linux-gnu/libpng.so (found version "1.6.37") 
+[1.427s] -- Found Eigen3: /usr/include/eigen3 (found version "3.4.0") 
+[1.509s] -- Found X11: /usr/include   
+[1.509s] -- Looking for XOpenDisplay in /usr/lib/x86_64-linux-gnu/libX11.so;/usr/lib/x86_64-linux-gnu/libXext.so
+[1.596s] -- Looking for XOpenDisplay in /usr/lib/x86_64-linux-gnu/libX11.so;/usr/lib/x86_64-linux-gnu/libXext.so - found
+[1.596s] -- Looking for gethostbyname
+[1.669s] -- Looking for gethostbyname - found
+[1.670s] -- Looking for connect
+[1.741s] -- Looking for connect - found
+[1.741s] -- Looking for remove
+[1.823s] -- Looking for remove - found
+[1.823s] -- Looking for shmat
+[1.896s] -- Looking for shmat - found
+[1.896s] -- Looking for IceConnectionNumber in ICE
+[1.976s] -- Looking for IceConnectionNumber in ICE - found
+[2.067s] -- Found EXPAT: /usr/lib/x86_64-linux-gnu/libexpat.so (found version "2.4.7") 
+[2.068s] -- Found double-conversion: /usr/lib/x86_64-linux-gnu/libdouble-conversion.so  
+[2.070s] -- Found LZ4: /usr/lib/x86_64-linux-gnu/liblz4.so (found version "1.9.3") 
+[2.071s] -- Found LZMA: /usr/lib/x86_64-linux-gnu/liblzma.so (found version "5.2.5") 
+[2.082s] -- Found JPEG: /usr/lib/x86_64-linux-gnu/libjpeg.so (found version "80") 
+[2.086s] -- Found TIFF: /usr/lib/x86_64-linux-gnu/libtiff.so (found version "4.3.0")  
+[2.089s] -- Found Freetype: /usr/lib/x86_64-linux-gnu/libfreetype.so (found version "2.11.1") 
+[2.092s] -- Found utf8cpp: /usr/include/utf8cpp  
+[2.116s] -- Eigen found (include: /usr/include/eigen3, version: 3.4.0)
+[2.129s] -- Checking for module 'flann'
+[2.142s] --   Found flann, version 1.9.1
+[2.194s] -- Found FLANN: /usr/lib/x86_64-linux-gnu/libflann_cpp.so  
+[2.195s] -- FLANN found (include: /usr/include, lib: /usr/lib/x86_64-linux-gnu/libflann_cpp.so)
+[2.195s] -- looking for PCL_COMMON
+[2.196s] -- Found PCL_COMMON: /usr/lib/x86_64-linux-gnu/libpcl_common.so  
+[2.196s] -- looking for PCL_OCTREE
+[2.197s] -- Found PCL_OCTREE: /usr/lib/x86_64-linux-gnu/libpcl_octree.so  
+[2.197s] -- looking for PCL_IO
+[2.198s] -- Found PCL_IO: /usr/lib/x86_64-linux-gnu/libpcl_io.so  
+[2.198s] -- looking for PCL_KDTREE
+[2.199s] -- Found PCL_KDTREE: /usr/lib/x86_64-linux-gnu/libpcl_kdtree.so  
+[2.199s] -- Found PCL: pcl_common;pcl_octree;pcl_io;pcl_kdtree;Boost::system;Boost::filesystem;Boost::date_time;Boost::iostreams;Boost::serialization;/usr/lib/libOpenNI.so;libusb::libusb;/usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb;VTK::ChartsCore;VTK::CommonColor;VTK::CommonComputationalGeometry;VTK::CommonCore;VTK::CommonDataModel;VTK::CommonExecutionModel;VTK::CommonMath;VTK::CommonMisc;VTK::CommonTransforms;VTK::FiltersCore;VTK::FiltersExtraction;VTK::FiltersGeneral;VTK::FiltersGeometry;VTK::FiltersModeling;VTK::FiltersSources;VTK::ImagingCore;VTK::ImagingSources;VTK::InteractionImage;VTK::InteractionStyle;VTK::InteractionWidgets;VTK::IOCore;VTK::IOGeometry;VTK::IOImage;VTK::IOLegacy;VTK::IOPLY;VTK::RenderingAnnotation;VTK::RenderingCore;VTK::RenderingContext2D;VTK::RenderingLOD;VTK::RenderingFreeType;VTK::ViewsCore;VTK::ViewsContext2D;VTK::RenderingOpenGL2;VTK::GUISupportQt;FLANN::FLANN  
+[2.207s] -- Found required Ceres dependency: Eigen version 3.4.0 in /usr/include/eigen3
+[2.212s] -- Found required Ceres dependency: glog
+[2.212s] -- Found required Ceres dependency: gflags
+[2.212s] -- Found Ceres version: 2.0.0 installed in: /usr with components: [EigenSparse, SparseLinearAlgebraLibrary, LAPACK, SuiteSparse, CXSparse, SchurSpecializations, Multithreading]
+[2.432s] -- Found OpenMP_C: -fopenmp (found version "4.5") 
+[2.515s] -- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+[2.515s] -- Found OpenMP: TRUE (found version "4.5")  
+[2.581s] -- Configuring done
+[2.591s] -- Generating done
+[2.598s] -- Build files have been written to: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor
+[2.610s] Invoked command in '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor -DCMAKE_BUILD_TYPE=Release -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor
+[2.611s] Invoking command in '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor -- -j20 -l20
+[2.651s] [ 50%] Building CXX object CMakeFiles/dddnav_std_descriptor.dir/src/STDesc.cpp.o
+[4.421s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In function ‘void down_sampling_voxel(pcl::PointCloud<pcl::PointXYZI>&, double)’:
+[4.421s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:6:7: warning: unused variable ‘intensity’ [-Wunused-variable]
+[4.421s]     6 |   int intensity = rand() % 255;
+[4.421s]       |       ^~~~~~~~~
+[4.454s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::SearchLoop(const std::vector<STDesc>&, std::pair<int, double>&, std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&, std::vector<std::pair<STDesc, STDesc> >&)’:
+[4.454s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:173:8: warning: variable ‘t1’ set but not used [-Wunused-but-set-variable]
+[4.454s]   173 |   auto t1 = std::chrono::high_resolution_clock::now();
+[4.454s]       |        ^~
+[4.454s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:177:8: warning: variable ‘t2’ set but not used [-Wunused-but-set-variable]
+[4.454s]   177 |   auto t2 = std::chrono::high_resolution_clock::now();
+[4.454s]       |        ^~
+[4.454s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:181:16: warning: variable ‘triggle_candidate’ set but not used [-Wunused-but-set-variable]
+[4.454s]   181 |   unsigned int triggle_candidate = -1;
+[4.454s]       |                ^~~~~~~~~~~~~~~~~
+[4.455s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:198:8: warning: variable ‘t3’ set but not used [-Wunused-but-set-variable]
+[4.455s]   198 |   auto t3 = std::chrono::high_resolution_clock::now();
+[4.455s]       |        ^~
+[4.460s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::init_voxel_map(const Ptr&, std::unordered_map<VOXEL_LOC, OctoTree*>&)’:
+[4.460s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:278:21: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<long unsigned int>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+[4.460s]   278 |   for (int i = 0; i < index.size(); i++) {
+[4.460s]       |                   ~~^~~~~~~~~~~~~~
+[4.476s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::corner_extractor(std::unordered_map<VOXEL_LOC, OctoTree*>&, const Ptr&, pcl::PointCloud<pcl::PointXYZINormal>::Ptr&)’:
+[4.476s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:467:43: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+[4.476s]   467 |   if (config_setting_.maximum_corner_num_ > prepare_corner_points->size()) {
+[4.476s]       |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[4.479s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:476:26: warning: comparison of integer expressions of different signedness: ‘size_t’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+[4.479s]   476 |     for (size_t i = 0; i < config_setting_.maximum_corner_num_; i++) {
+[4.479s]       |                        ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[4.536s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::non_maxi_suppression(pcl::PointCloud<pcl::PointXYZINormal>::Ptr&)’:
+[4.536s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:727:37: warning: comparison of integer expressions of different signedness: ‘__gnu_cxx::__alloc_traits<std::allocator<int>, int>::value_type’ {aka ‘int’} and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+[4.536s]   727 |         if (pointIdxRadiusSearch[j] == i) {
+[4.562s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::candidate_selector(const std::vector<STDesc>&, std::vector<STDMatchList>&)’:
+[4.562s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:945:73: warning: comparison of integer expressions of different signedness: ‘unsigned int’ and ‘int’ [-Wsign-compare]
+[4.562s]   945 |             if ((src_std.frame_id_ - data_base_[position][j].frame_id_) >
+[4.563s]       |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+[4.563s]   946 |                 config_setting_.skip_near_num_) {
+[4.563s]       |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                           
+[4.564s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:930:9: warning: unused variable ‘best_index’ [-Wunused-variable]
+[4.564s]   930 |     int best_index = 0;
+[4.564s]       |         ^~~~~~~~~~
+[4.568s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void STDescManager::candidate_verify(const STDMatchList&, double&, std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&, std::vector<std::pair<STDesc, STDesc> >&)’:
+[4.569s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1053:24: warning: comparison of integer expressions of different signedness: ‘size_t’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+[4.569s]  1053 |   for (size_t i = 0; i < use_size; i++) {
+[4.569s]       |                      ~~^~~~~~~~~~
+[4.581s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1089:9: warning: unused variable ‘vote’ [-Wunused-variable]
+[4.581s]  1089 |     int vote = 0;
+[4.581s]       |         ^~~~
+[4.829s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘double STDescManager::plane_geometric_verify(const Ptr&, const Ptr&, const std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&)’:
+[4.829s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1183:28: warning: comparison of integer expressions of different signedness: ‘size_t’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+[4.829s]  1183 |       for (size_t j = 0; j < K; j++) {
+[4.829s]       |                          ~~^~~
+[4.937s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void OctoTree::init_plane()’:
+[4.937s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1325:7: warning: unused variable ‘evalsMid’ [-Wunused-variable]
+[4.937s]  1325 |   int evalsMid = 3 - evalsMin - evalsMax;
+[4.937s]       |       ^~~~~~~~
+[4.937s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function ‘void OctoTree::init_octo_tree()’:
+[4.937s] /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1348:28: warning: comparison of integer expressions of different signedness: ‘std::vector<Eigen::Matrix<double, 3, 1> >::size_type’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+[4.937s]  1348 |   if (voxel_points_.size() > config_setting_.voxel_init_num_) {
+[4.937s]       |       ~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[16.958s] [100%] Linking CXX shared library libdddnav_std_descriptor.so
+[17.379s] [100%] Built target dddnav_std_descriptor
+[17.388s] Invoked command in '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor -- -j20 -l20
+[17.395s] Invoking command in '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor
+[17.399s] -- Install configuration: "Release"
+[17.399s] -- Execute custom install script
+[17.399s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/include/dddnav_std_descriptor/STDesc.h
+[17.405s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/include/dddnav_std_descriptor/std_config_loader.h
+[17.412s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/library_path.sh
+[17.418s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/library_path.dsv
+[17.423s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/ament_index/resource_index/package_run_dependencies/dddnav_std_descriptor
+[17.429s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/ament_index/resource_index/parent_prefix_path/dddnav_std_descriptor
+[17.434s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/ament_prefix_path.sh
+[17.442s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/ament_prefix_path.dsv
+[17.452s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/path.sh
+[17.460s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/path.dsv
+[17.471s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.bash
+[17.478s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.sh
+[17.483s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.zsh
+[17.489s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.dsv
+[17.494s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/package.dsv
+[17.501s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/ament_index/resource_index/packages/dddnav_std_descriptor
+[17.508s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_include_directories-extras.cmake
+[17.514s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_libraries-extras.cmake
+[17.520s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_targets-extras.cmake
+[17.525s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_dependencies-extras.cmake
+[17.532s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/dddnav_std_descriptorConfig.cmake
+[17.538s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/dddnav_std_descriptorConfig-version.cmake
+[17.543s] -- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/package.xml
+[17.550s] -- Installing: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/lib/libdddnav_std_descriptor.so
+[17.550s] -- Set runtime path of "/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/lib/libdddnav_std_descriptor.so" to ""
+[17.550s] -- Installing: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/export_dddnav_std_descriptorExport.cmake
+[17.550s] -- Installing: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/export_dddnav_std_descriptorExport-release.cmake
+[17.552s] Invoked command in '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor

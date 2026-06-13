@@ -17,7 +17,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(pcl_conversions REQUIRED)
-find_package(cloud_msgs REQUIRED)
+find_package(dddnav_cloud_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(PCL REQUIRED)
@@ -26,7 +26,7 @@ find_package(OpenCV REQUIRED)
 set(dependencies
   rclcpp std_msgs sensor_msgs nav_msgs geometry_msgs visualization_msgs
   tf2_ros tf2 tf2_geometry_msgs tf2_sensor_msgs tf2_eigen
-  pcl_conversions cloud_msgs cv_bridge image_geometry
+  pcl_conversions dddnav_cloud_msgs cv_bridge image_geometry
 )
 
 include_directories(include ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})

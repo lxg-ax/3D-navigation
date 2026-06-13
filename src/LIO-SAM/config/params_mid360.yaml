@@ -93,12 +93,23 @@
     historyKeyframeSearchNum: 25
     historyKeyframeFitnessScore: 0.3              # GICP 适合度阈值，0.3 严，0.5 宽。先严防误回环，遇到漏回环再放宽。
 
-    # Scan Context 描述子检索（mapOptimization::detectLoopClosureScanContext）
-    # scExcludeRecent: 跳过最近 N 个关键帧避免自匹配（建议 30~80）
-    # scDistThreshold: 列移位余弦距离上限，越小越严格（0.1 严, 0.4 宽）
-    scExcludeRecent: 50
-    scDistThreshold: 0.25
-    scMinDatabase: 51                             # 描述子数据库需 ≥ 此值才启用 SC 检索
+    # STD (Stable Triangle Descriptor) 检索（mapOptimization::detectLoopClosureScanContext）
+    # stdSkipNearNum:  跳过最近 N 个关键帧避免自匹配（建议 30~80，与原 scExcludeRecent 同义）
+    # stdIcpThreshold: plane-ICP 接受阈值，越大越严（0.5 严, 0.3 宽）
+    # stdMinDatabase:  数据库需 ≥ 此值才启用 STD 检索
+    stdSkipNearNum: 50
+    stdIcpThreshold: 0.5
+    stdMinDatabase: 51
+
+    # STDescManager 内部参数（默认值已能跑，按场景再调）
+    # 室内/墙体多 → corner_thre 调小（更多角点）；点云稀 → voxel_size 调大
+    std.voxel_size: 2.0
+    std.maximum_corner_num: 100
+    std.descriptor_near_num: 10
+    std.descriptor_min_len: 2.0
+    std.descriptor_max_len: 50.0
+    std.std_side_resolution: 0.2
+    std.candidate_num: 50
 
     # 可视化
     globalMapVisualizationSearchRadius: 1000.0

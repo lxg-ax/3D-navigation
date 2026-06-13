@@ -1,0 +1,378 @@
+[0.000000] (-) TimerEvent: {}
+[0.000201] (dddnav_std_descriptor) JobQueued: {'identifier': 'dddnav_std_descriptor', 'dependencies': OrderedDict()}
+[0.000235] (dddnav_std_descriptor) JobStarted: {'identifier': 'dddnav_std_descriptor'}
+[0.005048] (dddnav_std_descriptor) JobProgress: {'identifier': 'dddnav_std_descriptor', 'progress': 'cmake'}
+[0.005583] (dddnav_std_descriptor) Command: {'cmd': ['/usr/bin/cmake', '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor', '-DCMAKE_BUILD_TYPE=Release', '-DAMENT_CMAKE_SYMLINK_INSTALL=1', '-DCMAKE_INSTALL_PREFIX=/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor'], 'cwd': '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('ANTHROPIC_MODEL', 'claude-opus-4-7'), ('HTTPS_PROXY', 'http://127.0.0.1:7890/'), ('no_proxy', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('AI_AGENT', 'claude-code_2-1-177_agent'), ('LANGUAGE', 'zh_CN:en'), ('ANTHROPIC_DEFAULT_SONNET_MODEL_NAME', 'claude-sonnet-4-6'), ('USER', 'lxg'), ('CLAUDE_CODE_ENTRYPOINT', 'cli'), ('LC_TIME', 'zh_CN.UTF-8'), ('GIT_EDITOR', 'true'), ('all_proxy', 'socks://127.0.0.1:7890/'), ('XDG_SESSION_TYPE', 'x11'), ('ALLUSERSPROFILE', '/opt/MVS/MVFG'), ('BUN_INSTALL', '/home/lxg/.bun'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu:/usr/local/cuda-12.4/lib64:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/opt/MVS/lib/64:/opt/MVS/lib/32:/opt/MVS/lib/64:/opt/MVS/lib/32:'), ('HOME', '/home/lxg'), ('CONDA_SHLVL', '0'), ('DESKTOP_SESSION', 'ubuntu'), ('NO_PROXY', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'claude-sonnet-4-6'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('CLAUDE_CODE_CHILD_SESSION', '1'), ('LC_MONETARY', 'zh_CN.UTF-8'), ('DBUS_STARTER_BUS_TYPE', 'session'), ('SYSTEMD_EXEC_PID', '2438'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus,guid=6357afa4cf50423cde56da436a2d1698'), ('COLORTERM', 'truecolor'), ('_CE_M', ''), ('IM_CONFIG_PHASE', '1'), ('https_proxy', 'http://127.0.0.1:7890/'), ('ANTHROPIC_DEFAULT_OPUS_MODEL_NAME', 'claude-opus-4-7'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'fcitx'), ('LOGNAME', 'lxg'), ('ALL_PROXY', 'socks://127.0.0.1:7890/'), ('http_proxy', 'http://127.0.0.1:7890/'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('PKG_CONFIG_PATH', ':/usr/local/lib/pkgconfig'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'lxg'), ('ANTHROPIC_BASE_URL', 'https://bdbd.xyz'), ('ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME', 'claude-haiku-4-5'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('_CE_CONDA', ''), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('MVCAM_SDK_PATH', '/opt/MVS'), ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'claude-opus-4-7'), ('PATH', '/home/lxg/.bun/bin:/usr/bin:/opt/anaconda3/condabin:/usr/local/cuda-12.4/bin:/home/lxg/.npm-global/bin:/opt/ros/humble/bin:/home/lxg/.local/bin:/opt/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/lxg/.claude/plugins/cache/karpathy-skills/andrej-karpathy-skills/1.0.0/bin'), ('SESSION_MANAGER', 'local/lxg-Legion-Y7000-IRX10:@/tmp/.ICE-unix/2438,unix/lxg-Legion-Y7000-IRX10:/tmp/.ICE-unix/2438'), ('MVCAM_GENICAM_CLPROTOCOL', '/opt/MVS/lib/CLProtocol'), ('PAPERSIZE', 'a4'), ('COREPACK_ENABLE_AUTO_PIN', '0'), ('XDG_MENU_PREFIX', 'gnome-'), ('LC_ADDRESS', 'zh_CN.UTF-8'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/2b249ed7_1451_41c9_9866_f199ee3ca6ef'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('CLAUDE_EFFORT', 'high'), ('DISPLAY', ':1'), ('NoDefaultCurrentDirectoryInExePath', '1'), ('LANG', 'zh_CN.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('LC_TELEPHONE', 'zh_CN.UTF-8'), ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'claude-haiku-4-5'), ('XMODIFIERS', '@im=fcitx'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('GNOME_TERMINAL_SERVICE', ':1.141'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('CONDA_PYTHON_EXE', '/opt/anaconda3/bin/python'), ('SHELL', '/bin/bash'), ('LC_NAME', 'zh_CN.UTF-8'), ('ANTHROPIC_AUTH_TOKEN', 'sk-4a0ddee474089e348439090f06b0cd9016a923094bc9519650e437a1a5434809'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('CLAUDE_CODE_SESSION_ID', 'aa8127ac-6a2a-4252-bd81-633ab429e6a4'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('CLAUDECODE', '1'), ('LC_MEASUREMENT', 'zh_CN.UTF-8'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('LC_IDENTIFICATION', 'zh_CN.UTF-8'), ('QT_IM_MODULE', 'fcitx'), ('PWD', '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor'), ('CUDA_HOME', '/usr/local/cuda-12.4'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('CONDA_EXE', '/opt/anaconda3/bin/conda'), ('CLUTTER_IM_MODULE', 'fcitx'), ('DBUS_STARTER_ADDRESS', 'unix:path=/run/user/1000/bus,guid=6357afa4cf50423cde56da436a2d1698'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('CLAUDE_CODE_EXECPATH', '/home/lxg/.npm-global/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('HTTP_PROXY', 'http://127.0.0.1:7890/'), ('LC_NUMERIC', 'zh_CN.UTF-8'), ('MVCAM_SDK_VERSION', ''), ('LC_PAPER', 'zh_CN.UTF-8'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('MVCAM_COMMON_RUNENV', '/opt/MVS/lib'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[0.062124] (dddnav_std_descriptor) StdoutLine: {'line': b'-- The C compiler identification is GNU 11.4.0\n'}
+[0.099697] (-) TimerEvent: {}
+[0.117456] (dddnav_std_descriptor) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 11.4.0\n'}
+[0.123230] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[0.194044] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[0.199821] (-) TimerEvent: {}
+[0.203376] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc - skipped\n'}
+[0.203696] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[0.204164] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[0.206987] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[0.276353] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[0.281594] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ - skipped\n'}
+[0.281851] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[0.282136] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[0.290631] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)\n'}
+[0.299982] (-) TimerEvent: {}
+[0.400176] (-) TimerEvent: {}
+[0.425649] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter \n'}
+[0.468004] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Override CMake install command with custom implementation using symlinks instead of copying resources\n'}
+[0.494100] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found rclcpp: 16.0.19 (/opt/ros/humble/share/rclcpp/cmake)\n'}
+[0.500293] (-) TimerEvent: {}
+[0.529324] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found rosidl_generator_c: 3.1.8 (/opt/ros/humble/share/rosidl_generator_c/cmake)\n'}
+[0.533263] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found rosidl_adapter: 3.1.8 (/opt/ros/humble/share/rosidl_adapter/cmake)\n'}
+[0.539537] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found rosidl_generator_cpp: 3.1.8 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)\n'}
+[0.548358] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[0.560915] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[0.593974] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)\n'}
+[0.595987] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found rmw_fastrtps_cpp: 6.2.10 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)\n'}
+[0.600403] (-) TimerEvent: {}
+[0.679424] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  \n'}
+[0.700570] (-) TimerEvent: {}
+[0.710943] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found FastRTPS: /opt/ros/humble/include  \n'}
+[0.747395] (dddnav_std_descriptor) StdoutLine: {'line': b"-- Using RMW implementation 'rmw_fastrtps_cpp' as default\n"}
+[0.759102] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for pthread.h\n'}
+[0.800750] (-) TimerEvent: {}
+[0.836237] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for pthread.h - found\n'}
+[0.836713] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Performing Test CMAKE_HAVE_LIBC_PTHREAD\n'}
+[0.900924] (-) TimerEvent: {}
+[0.912763] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success\n'}
+[0.913948] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Threads: TRUE  \n'}
+[0.976242] (dddnav_std_descriptor) StdoutLine: {'line': b"-- Checking for module 'eigen3'\n"}
+[0.987070] (dddnav_std_descriptor) StdoutLine: {'line': b'--   Found eigen3, version 3.4.0\n'}
+[1.001061] (-) TimerEvent: {}
+[1.025447] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Eigen: /usr/include/eigen3 (Required is at least version "3.1") \n'}
+[1.025680] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Eigen found (include: /usr/include/eigen3, version: 3.4.0)\n'}
+[1.051494] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found suitable version "1.74.0", minimum required is "1.65.0") found components: system filesystem date_time iostreams serialization \n'}
+[1.101178] (-) TimerEvent: {}
+[1.110734] (dddnav_std_descriptor) StdoutLine: {'line': b"-- Checking for module 'libusb-1.0'\n"}
+[1.125281] (dddnav_std_descriptor) StdoutLine: {'line': b'--   Found libusb-1.0, version 1.0.25\n'}
+[1.165405] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found libusb: /usr/lib/x86_64-linux-gnu/libusb-1.0.so  \n'}
+[1.166520] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenNI: /usr/lib/libOpenNI.so;libusb::libusb (found version "1.5.4.0") \n'}
+[1.166743] (dddnav_std_descriptor) StdoutLine: {'line': b'-- OpenNI found (version: 1.5.4.0, include: /usr/include/ni, lib: /usr/lib/libOpenNI.so;libusb::libusb)\n'}
+[1.201288] (-) TimerEvent: {}
+[1.237440] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenNI2: /usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb (found version "2.2.0.33") \n'}
+[1.237714] (dddnav_std_descriptor) StdoutLine: {'line': b'-- OpenNI2 found (version: 2.2.0.33, include: /usr/include/openni2, lib: /usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb)\n'}
+[1.237830] (dddnav_std_descriptor) StderrLine: {'line': b'** WARNING ** io features related to pcap will be disabled\n'}
+[1.237984] (dddnav_std_descriptor) StderrLine: {'line': b'** WARNING ** io features related to png will be disabled\n'}
+[1.270103] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found GLEW: /usr/lib/x86_64-linux-gnu/libGLEW.so  \n'}
+[1.274302] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so  found components: OpenGL GLX \n'}
+[1.301439] (-) TimerEvent: {}
+[1.391219] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found MPI_C: /usr/lib/x86_64-linux-gnu/libmpi.so (found version "3.1") \n'}
+[1.391596] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found MPI: TRUE (found version "3.1") found components: C \n'}
+[1.394592] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found JsonCpp: /usr/lib/x86_64-linux-gnu/libjsoncpp.so (found suitable version "1.9.5", minimum required is "0.7.0") \n'}
+[1.401549] (-) TimerEvent: {}
+[1.405172] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.2.11") \n'}
+[1.418918] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found PNG: /usr/lib/x86_64-linux-gnu/libpng.so (found version "1.6.37") \n'}
+[1.426973] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Eigen3: /usr/include/eigen3 (found version "3.4.0") \n'}
+[1.501716] (-) TimerEvent: {}
+[1.509002] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found X11: /usr/include   \n'}
+[1.509437] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for XOpenDisplay in /usr/lib/x86_64-linux-gnu/libX11.so;/usr/lib/x86_64-linux-gnu/libXext.so\n'}
+[1.595651] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for XOpenDisplay in /usr/lib/x86_64-linux-gnu/libX11.so;/usr/lib/x86_64-linux-gnu/libXext.so - found\n'}
+[1.595898] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for gethostbyname\n'}
+[1.601814] (-) TimerEvent: {}
+[1.669508] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for gethostbyname - found\n'}
+[1.669760] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for connect\n'}
+[1.701971] (-) TimerEvent: {}
+[1.741425] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for connect - found\n'}
+[1.741651] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for remove\n'}
+[1.802097] (-) TimerEvent: {}
+[1.823096] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for remove - found\n'}
+[1.823318] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for shmat\n'}
+[1.895783] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for shmat - found\n'}
+[1.895949] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for IceConnectionNumber in ICE\n'}
+[1.902200] (-) TimerEvent: {}
+[1.976367] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Looking for IceConnectionNumber in ICE - found\n'}
+[2.002300] (-) TimerEvent: {}
+[2.066853] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found EXPAT: /usr/lib/x86_64-linux-gnu/libexpat.so (found version "2.4.7") \n'}
+[2.068087] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found double-conversion: /usr/lib/x86_64-linux-gnu/libdouble-conversion.so  \n'}
+[2.069754] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found LZ4: /usr/lib/x86_64-linux-gnu/liblz4.so (found version "1.9.3") \n'}
+[2.071070] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found LZMA: /usr/lib/x86_64-linux-gnu/liblzma.so (found version "5.2.5") \n'}
+[2.081869] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found JPEG: /usr/lib/x86_64-linux-gnu/libjpeg.so (found version "80") \n'}
+[2.085990] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found TIFF: /usr/lib/x86_64-linux-gnu/libtiff.so (found version "4.3.0")  \n'}
+[2.088921] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Freetype: /usr/lib/x86_64-linux-gnu/libfreetype.so (found version "2.11.1") \n'}
+[2.092620] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found utf8cpp: /usr/include/utf8cpp  \n'}
+[2.102432] (-) TimerEvent: {}
+[2.115812] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Eigen found (include: /usr/include/eigen3, version: 3.4.0)\n'}
+[2.129143] (dddnav_std_descriptor) StdoutLine: {'line': b"-- Checking for module 'flann'\n"}
+[2.142035] (dddnav_std_descriptor) StdoutLine: {'line': b'--   Found flann, version 1.9.1\n'}
+[2.194430] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found FLANN: /usr/lib/x86_64-linux-gnu/libflann_cpp.so  \n'}
+[2.194810] (dddnav_std_descriptor) StdoutLine: {'line': b'-- FLANN found (include: /usr/include, lib: /usr/lib/x86_64-linux-gnu/libflann_cpp.so)\n'}
+[2.194937] (dddnav_std_descriptor) StdoutLine: {'line': b'-- looking for PCL_COMMON\n'}
+[2.195937] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found PCL_COMMON: /usr/lib/x86_64-linux-gnu/libpcl_common.so  \n'}
+[2.196289] (dddnav_std_descriptor) StdoutLine: {'line': b'-- looking for PCL_OCTREE\n'}
+[2.197065] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found PCL_OCTREE: /usr/lib/x86_64-linux-gnu/libpcl_octree.so  \n'}
+[2.197350] (dddnav_std_descriptor) StdoutLine: {'line': b'-- looking for PCL_IO\n'}
+[2.198123] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found PCL_IO: /usr/lib/x86_64-linux-gnu/libpcl_io.so  \n'}
+[2.198263] (dddnav_std_descriptor) StdoutLine: {'line': b'-- looking for PCL_KDTREE\n'}
+[2.199093] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found PCL_KDTREE: /usr/lib/x86_64-linux-gnu/libpcl_kdtree.so  \n'}
+[2.199471] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found PCL: pcl_common;pcl_octree;pcl_io;pcl_kdtree;Boost::system;Boost::filesystem;Boost::date_time;Boost::iostreams;Boost::serialization;/usr/lib/libOpenNI.so;libusb::libusb;/usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb;VTK::ChartsCore;VTK::CommonColor;VTK::CommonComputationalGeometry;VTK::CommonCore;VTK::CommonDataModel;VTK::CommonExecutionModel;VTK::CommonMath;VTK::CommonMisc;VTK::CommonTransforms;VTK::FiltersCore;VTK::FiltersExtraction;VTK::FiltersGeneral;VTK::FiltersGeometry;VTK::FiltersModeling;VTK::FiltersSources;VTK::ImagingCore;VTK::ImagingSources;VTK::InteractionImage;VTK::InteractionStyle;VTK::InteractionWidgets;VTK::IOCore;VTK::IOGeometry;VTK::IOImage;VTK::IOLegacy;VTK::IOPLY;VTK::RenderingAnnotation;VTK::RenderingCore;VTK::RenderingContext2D;VTK::RenderingLOD;VTK::RenderingFreeType;VTK::ViewsCore;VTK::ViewsContext2D;VTK::RenderingOpenGL2;VTK::GUISupportQt;FLANN::FLANN  \n'}
+[2.202528] (-) TimerEvent: {}
+[2.207036] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found required Ceres dependency: Eigen version 3.4.0 in /usr/include/eigen3\n'}
+[2.211725] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found required Ceres dependency: glog\n'}
+[2.212051] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found required Ceres dependency: gflags\n'}
+[2.212364] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found Ceres version: 2.0.0 installed in: /usr with components: [EigenSparse, SparseLinearAlgebraLibrary, LAPACK, SuiteSparse, CXSparse, SchurSpecializations, Multithreading]\n'}
+[2.302636] (-) TimerEvent: {}
+[2.402882] (-) TimerEvent: {}
+[2.432188] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenMP_C: -fopenmp (found version "4.5") \n'}
+[2.502967] (-) TimerEvent: {}
+[2.515062] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenMP_CXX: -fopenmp (found version "4.5") \n'}
+[2.515349] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Found OpenMP: TRUE (found version "4.5")  \n'}
+[2.581160] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Configuring done\n'}
+[2.591398] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Generating done\n'}
+[2.598018] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Build files have been written to: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor\n'}
+[2.603052] (-) TimerEvent: {}
+[2.610454] (dddnav_std_descriptor) CommandEnded: {'returncode': 0}
+[2.610956] (dddnav_std_descriptor) JobProgress: {'identifier': 'dddnav_std_descriptor', 'progress': 'build'}
+[2.610986] (dddnav_std_descriptor) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor', '--', '-j20', '-l20'], 'cwd': '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('ANTHROPIC_MODEL', 'claude-opus-4-7'), ('HTTPS_PROXY', 'http://127.0.0.1:7890/'), ('no_proxy', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('AI_AGENT', 'claude-code_2-1-177_agent'), ('LANGUAGE', 'zh_CN:en'), ('ANTHROPIC_DEFAULT_SONNET_MODEL_NAME', 'claude-sonnet-4-6'), ('USER', 'lxg'), ('CLAUDE_CODE_ENTRYPOINT', 'cli'), ('LC_TIME', 'zh_CN.UTF-8'), ('GIT_EDITOR', 'true'), ('all_proxy', 'socks://127.0.0.1:7890/'), ('XDG_SESSION_TYPE', 'x11'), ('ALLUSERSPROFILE', '/opt/MVS/MVFG'), ('BUN_INSTALL', '/home/lxg/.bun'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu:/usr/local/cuda-12.4/lib64:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/opt/MVS/lib/64:/opt/MVS/lib/32:/opt/MVS/lib/64:/opt/MVS/lib/32:'), ('HOME', '/home/lxg'), ('CONDA_SHLVL', '0'), ('DESKTOP_SESSION', 'ubuntu'), ('NO_PROXY', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'claude-sonnet-4-6'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('CLAUDE_CODE_CHILD_SESSION', '1'), ('LC_MONETARY', 'zh_CN.UTF-8'), ('DBUS_STARTER_BUS_TYPE', 'session'), ('SYSTEMD_EXEC_PID', '2438'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus,guid=6357afa4cf50423cde56da436a2d1698'), ('COLORTERM', 'truecolor'), ('_CE_M', ''), ('IM_CONFIG_PHASE', '1'), ('https_proxy', 'http://127.0.0.1:7890/'), ('ANTHROPIC_DEFAULT_OPUS_MODEL_NAME', 'claude-opus-4-7'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'fcitx'), ('LOGNAME', 'lxg'), ('ALL_PROXY', 'socks://127.0.0.1:7890/'), ('http_proxy', 'http://127.0.0.1:7890/'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('PKG_CONFIG_PATH', ':/usr/local/lib/pkgconfig'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'lxg'), ('ANTHROPIC_BASE_URL', 'https://bdbd.xyz'), ('ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME', 'claude-haiku-4-5'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('_CE_CONDA', ''), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('MVCAM_SDK_PATH', '/opt/MVS'), ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'claude-opus-4-7'), ('PATH', '/home/lxg/.bun/bin:/usr/bin:/opt/anaconda3/condabin:/usr/local/cuda-12.4/bin:/home/lxg/.npm-global/bin:/opt/ros/humble/bin:/home/lxg/.local/bin:/opt/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/lxg/.claude/plugins/cache/karpathy-skills/andrej-karpathy-skills/1.0.0/bin'), ('SESSION_MANAGER', 'local/lxg-Legion-Y7000-IRX10:@/tmp/.ICE-unix/2438,unix/lxg-Legion-Y7000-IRX10:/tmp/.ICE-unix/2438'), ('MVCAM_GENICAM_CLPROTOCOL', '/opt/MVS/lib/CLProtocol'), ('PAPERSIZE', 'a4'), ('COREPACK_ENABLE_AUTO_PIN', '0'), ('XDG_MENU_PREFIX', 'gnome-'), ('LC_ADDRESS', 'zh_CN.UTF-8'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/2b249ed7_1451_41c9_9866_f199ee3ca6ef'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('CLAUDE_EFFORT', 'high'), ('DISPLAY', ':1'), ('NoDefaultCurrentDirectoryInExePath', '1'), ('LANG', 'zh_CN.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('LC_TELEPHONE', 'zh_CN.UTF-8'), ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'claude-haiku-4-5'), ('XMODIFIERS', '@im=fcitx'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('GNOME_TERMINAL_SERVICE', ':1.141'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('CONDA_PYTHON_EXE', '/opt/anaconda3/bin/python'), ('SHELL', '/bin/bash'), ('LC_NAME', 'zh_CN.UTF-8'), ('ANTHROPIC_AUTH_TOKEN', 'sk-4a0ddee474089e348439090f06b0cd9016a923094bc9519650e437a1a5434809'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('CLAUDE_CODE_SESSION_ID', 'aa8127ac-6a2a-4252-bd81-633ab429e6a4'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('CLAUDECODE', '1'), ('LC_MEASUREMENT', 'zh_CN.UTF-8'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('LC_IDENTIFICATION', 'zh_CN.UTF-8'), ('QT_IM_MODULE', 'fcitx'), ('PWD', '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor'), ('CUDA_HOME', '/usr/local/cuda-12.4'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('CONDA_EXE', '/opt/anaconda3/bin/conda'), ('CLUTTER_IM_MODULE', 'fcitx'), ('DBUS_STARTER_ADDRESS', 'unix:path=/run/user/1000/bus,guid=6357afa4cf50423cde56da436a2d1698'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('CLAUDE_CODE_EXECPATH', '/home/lxg/.npm-global/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('HTTP_PROXY', 'http://127.0.0.1:7890/'), ('LC_NUMERIC', 'zh_CN.UTF-8'), ('MVCAM_SDK_VERSION', ''), ('LC_PAPER', 'zh_CN.UTF-8'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('MVCAM_COMMON_RUNENV', '/opt/MVS/lib'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[2.650586] (dddnav_std_descriptor) StdoutLine: {'line': b'[ 50%] Building CXX object CMakeFiles/dddnav_std_descriptor.dir/src/STDesc.cpp.o\n'}
+[2.703165] (-) TimerEvent: {}
+[2.803394] (-) TimerEvent: {}
+[2.903598] (-) TimerEvent: {}
+[3.003785] (-) TimerEvent: {}
+[3.103999] (-) TimerEvent: {}
+[3.204183] (-) TimerEvent: {}
+[3.304364] (-) TimerEvent: {}
+[3.404499] (-) TimerEvent: {}
+[3.504654] (-) TimerEvent: {}
+[3.604862] (-) TimerEvent: {}
+[3.705083] (-) TimerEvent: {}
+[3.805312] (-) TimerEvent: {}
+[3.905540] (-) TimerEvent: {}
+[4.005759] (-) TimerEvent: {}
+[4.106044] (-) TimerEvent: {}
+[4.206262] (-) TimerEvent: {}
+[4.306485] (-) TimerEvent: {}
+[4.406704] (-) TimerEvent: {}
+[4.421285] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In function \xe2\x80\x98void down_sampling_voxel(pcl::PointCloud<pcl::PointXYZI>&, double)\xe2\x80\x99:\n'}
+[4.421472] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:6:7: warning: unused variable \xe2\x80\x98intensity\xe2\x80\x99 [-Wunused-variable]\n'}
+[4.421545] (dddnav_std_descriptor) StderrLine: {'line': b'    6 |   int intensity = rand() % 255;\n'}
+[4.421611] (dddnav_std_descriptor) StderrLine: {'line': b'      |       ^~~~~~~~~\n'}
+[4.454051] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void STDescManager::SearchLoop(const std::vector<STDesc>&, std::pair<int, double>&, std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&, std::vector<std::pair<STDesc, STDesc> >&)\xe2\x80\x99:\n'}
+[4.454225] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:173:8: warning: variable \xe2\x80\x98t1\xe2\x80\x99 set but not used [-Wunused-but-set-variable]\n'}
+[4.454292] (dddnav_std_descriptor) StderrLine: {'line': b'  173 |   auto t1 = std::chrono::high_resolution_clock::now();\n'}
+[4.454353] (dddnav_std_descriptor) StderrLine: {'line': b'      |        ^~\n'}
+[4.454411] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:177:8: warning: variable \xe2\x80\x98t2\xe2\x80\x99 set but not used [-Wunused-but-set-variable]\n'}
+[4.454468] (dddnav_std_descriptor) StderrLine: {'line': b'  177 |   auto t2 = std::chrono::high_resolution_clock::now();\n'}
+[4.454524] (dddnav_std_descriptor) StderrLine: {'line': b'      |        ^~\n'}
+[4.454579] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:181:16: warning: variable \xe2\x80\x98triggle_candidate\xe2\x80\x99 set but not used [-Wunused-but-set-variable]\n'}
+[4.454650] (dddnav_std_descriptor) StderrLine: {'line': b'  181 |   unsigned int triggle_candidate = -1;\n'}
+[4.454706] (dddnav_std_descriptor) StderrLine: {'line': b'      |                ^~~~~~~~~~~~~~~~~\n'}
+[4.454761] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:198:8: warning: variable \xe2\x80\x98t3\xe2\x80\x99 set but not used [-Wunused-but-set-variable]\n'}
+[4.454817] (dddnav_std_descriptor) StderrLine: {'line': b'  198 |   auto t3 = std::chrono::high_resolution_clock::now();\n'}
+[4.454879] (dddnav_std_descriptor) StderrLine: {'line': b'      |        ^~\n'}
+[4.459936] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void STDescManager::init_voxel_map(const Ptr&, std::unordered_map<VOXEL_LOC, OctoTree*>&)\xe2\x80\x99:\n'}
+[4.460098] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:278:21: warning: comparison of integer expressions of different signedness: \xe2\x80\x98int\xe2\x80\x99 and \xe2\x80\x98std::vector<long unsigned int>::size_type\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} [-Wsign-compare]\n'}
+[4.460164] (dddnav_std_descriptor) StderrLine: {'line': b'  278 |   for (int i = 0; i < index.size(); i++) {\n'}
+[4.460222] (dddnav_std_descriptor) StderrLine: {'line': b'      |                   ~~^~~~~~~~~~~~~~\n'}
+[4.476004] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void STDescManager::corner_extractor(std::unordered_map<VOXEL_LOC, OctoTree*>&, const Ptr&, pcl::PointCloud<pcl::PointXYZINormal>::Ptr&)\xe2\x80\x99:\n'}
+[4.476170] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:467:43: warning: comparison of integer expressions of different signedness: \xe2\x80\x98int\xe2\x80\x99 and \xe2\x80\x98std::size_t\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} [-Wsign-compare]\n'}
+[4.476236] (dddnav_std_descriptor) StderrLine: {'line': b'  467 |   if (config_setting_.maximum_corner_num_ > prepare_corner_points->size()) {\n'}
+[4.476295] (dddnav_std_descriptor) StderrLine: {'line': b'      |       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'}
+[4.479070] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:476:26: warning: comparison of integer expressions of different signedness: \xe2\x80\x98size_t\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} and \xe2\x80\x98int\xe2\x80\x99 [-Wsign-compare]\n'}
+[4.479240] (dddnav_std_descriptor) StderrLine: {'line': b'  476 |     for (size_t i = 0; i < config_setting_.maximum_corner_num_; i++) {\n'}
+[4.479304] (dddnav_std_descriptor) StderrLine: {'line': b'      |                        ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'}
+[4.506837] (-) TimerEvent: {}
+[4.536337] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void STDescManager::non_maxi_suppression(pcl::PointCloud<pcl::PointXYZINormal>::Ptr&)\xe2\x80\x99:\n'}
+[4.536546] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:727:37: warning: comparison of integer expressions of different signedness: \xe2\x80\x98__gnu_cxx::__alloc_traits<std::allocator<int>, int>::value_type\xe2\x80\x99 {aka \xe2\x80\x98int\xe2\x80\x99} and \xe2\x80\x98size_t\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} [-Wsign-compare]\n'}
+[4.536640] (dddnav_std_descriptor) StderrLine: {'line': b'  727 |         if (pointIdxRadiusSearch[j] == i) {\n'}
+[4.562400] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void STDescManager::candidate_selector(const std::vector<STDesc>&, std::vector<STDMatchList>&)\xe2\x80\x99:\n'}
+[4.562592] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:945:73: warning: comparison of integer expressions of different signedness: \xe2\x80\x98unsigned int\xe2\x80\x99 and \xe2\x80\x98int\xe2\x80\x99 [-Wsign-compare]\n'}
+[4.562663] (dddnav_std_descriptor) StderrLine: {'line': b'  945 |             if ((src_std.frame_id_ - data_base_[position][j].frame_id_) >\n'}
+[4.562726] (dddnav_std_descriptor) StderrLine: {'line': b'      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n'}
+[4.562787] (dddnav_std_descriptor) StderrLine: {'line': b'  946 |                 config_setting_.skip_near_num_) {\n'}
+[4.562847] (dddnav_std_descriptor) StderrLine: {'line': b'      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                           \n'}
+[4.563754] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:930:9: warning: unused variable \xe2\x80\x98best_index\xe2\x80\x99 [-Wunused-variable]\n'}
+[4.563925] (dddnav_std_descriptor) StderrLine: {'line': b'  930 |     int best_index = 0;\n'}
+[4.563997] (dddnav_std_descriptor) StderrLine: {'line': b'      |         ^~~~~~~~~~\n'}
+[4.568581] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void STDescManager::candidate_verify(const STDMatchList&, double&, std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&, std::vector<std::pair<STDesc, STDesc> >&)\xe2\x80\x99:\n'}
+[4.568754] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1053:24: warning: comparison of integer expressions of different signedness: \xe2\x80\x98size_t\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} and \xe2\x80\x98int\xe2\x80\x99 [-Wsign-compare]\n'}
+[4.568821] (dddnav_std_descriptor) StderrLine: {'line': b' 1053 |   for (size_t i = 0; i < use_size; i++) {\n'}
+[4.568895] (dddnav_std_descriptor) StderrLine: {'line': b'      |                      ~~^~~~~~~~~~\n'}
+[4.581256] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1089:9: warning: unused variable \xe2\x80\x98vote\xe2\x80\x99 [-Wunused-variable]\n'}
+[4.581416] (dddnav_std_descriptor) StderrLine: {'line': b' 1089 |     int vote = 0;\n'}
+[4.581479] (dddnav_std_descriptor) StderrLine: {'line': b'      |         ^~~~\n'}
+[4.607029] (-) TimerEvent: {}
+[4.707224] (-) TimerEvent: {}
+[4.807455] (-) TimerEvent: {}
+[4.828992] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98double STDescManager::plane_geometric_verify(const Ptr&, const Ptr&, const std::pair<Eigen::Matrix<double, 3, 1>, Eigen::Matrix<double, 3, 3> >&)\xe2\x80\x99:\n'}
+[4.829164] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1183:28: warning: comparison of integer expressions of different signedness: \xe2\x80\x98size_t\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} and \xe2\x80\x98int\xe2\x80\x99 [-Wsign-compare]\n'}
+[4.829229] (dddnav_std_descriptor) StderrLine: {'line': b' 1183 |       for (size_t j = 0; j < K; j++) {\n'}
+[4.829287] (dddnav_std_descriptor) StderrLine: {'line': b'      |                          ~~^~~\n'}
+[4.907588] (-) TimerEvent: {}
+[4.936835] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void OctoTree::init_plane()\xe2\x80\x99:\n'}
+[4.937042] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1325:7: warning: unused variable \xe2\x80\x98evalsMid\xe2\x80\x99 [-Wunused-variable]\n'}
+[4.937084] (dddnav_std_descriptor) StderrLine: {'line': b' 1325 |   int evalsMid = 3 - evalsMin - evalsMax;\n'}
+[4.937112] (dddnav_std_descriptor) StderrLine: {'line': b'      |       ^~~~~~~~\n'}
+[4.937138] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp: In member function \xe2\x80\x98void OctoTree::init_octo_tree()\xe2\x80\x99:\n'}
+[4.937166] (dddnav_std_descriptor) StderrLine: {'line': b'/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/src/STDesc.cpp:1348:28: warning: comparison of integer expressions of different signedness: \xe2\x80\x98std::vector<Eigen::Matrix<double, 3, 1> >::size_type\xe2\x80\x99 {aka \xe2\x80\x98long unsigned int\xe2\x80\x99} and \xe2\x80\x98int\xe2\x80\x99 [-Wsign-compare]\n'}
+[4.937206] (dddnav_std_descriptor) StderrLine: {'line': b' 1348 |   if (voxel_points_.size() > config_setting_.voxel_init_num_) {\n'}
+[4.937232] (dddnav_std_descriptor) StderrLine: {'line': b'      |       ~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'}
+[5.007702] (-) TimerEvent: {}
+[5.107911] (-) TimerEvent: {}
+[5.208077] (-) TimerEvent: {}
+[5.308238] (-) TimerEvent: {}
+[5.408401] (-) TimerEvent: {}
+[5.508579] (-) TimerEvent: {}
+[5.608777] (-) TimerEvent: {}
+[5.708949] (-) TimerEvent: {}
+[5.809103] (-) TimerEvent: {}
+[5.909271] (-) TimerEvent: {}
+[6.009480] (-) TimerEvent: {}
+[6.109640] (-) TimerEvent: {}
+[6.209837] (-) TimerEvent: {}
+[6.309990] (-) TimerEvent: {}
+[6.410143] (-) TimerEvent: {}
+[6.510328] (-) TimerEvent: {}
+[6.610499] (-) TimerEvent: {}
+[6.710674] (-) TimerEvent: {}
+[6.810880] (-) TimerEvent: {}
+[6.911053] (-) TimerEvent: {}
+[7.011221] (-) TimerEvent: {}
+[7.111410] (-) TimerEvent: {}
+[7.211610] (-) TimerEvent: {}
+[7.311812] (-) TimerEvent: {}
+[7.411957] (-) TimerEvent: {}
+[7.512128] (-) TimerEvent: {}
+[7.612346] (-) TimerEvent: {}
+[7.712534] (-) TimerEvent: {}
+[7.812702] (-) TimerEvent: {}
+[7.912889] (-) TimerEvent: {}
+[8.013029] (-) TimerEvent: {}
+[8.113169] (-) TimerEvent: {}
+[8.213295] (-) TimerEvent: {}
+[8.313446] (-) TimerEvent: {}
+[8.413668] (-) TimerEvent: {}
+[8.513886] (-) TimerEvent: {}
+[8.614178] (-) TimerEvent: {}
+[8.714373] (-) TimerEvent: {}
+[8.814528] (-) TimerEvent: {}
+[8.914747] (-) TimerEvent: {}
+[9.015000] (-) TimerEvent: {}
+[9.115178] (-) TimerEvent: {}
+[9.215377] (-) TimerEvent: {}
+[9.315614] (-) TimerEvent: {}
+[9.415804] (-) TimerEvent: {}
+[9.515950] (-) TimerEvent: {}
+[9.616103] (-) TimerEvent: {}
+[9.716254] (-) TimerEvent: {}
+[9.816460] (-) TimerEvent: {}
+[9.916640] (-) TimerEvent: {}
+[10.016833] (-) TimerEvent: {}
+[10.117002] (-) TimerEvent: {}
+[10.217192] (-) TimerEvent: {}
+[10.317378] (-) TimerEvent: {}
+[10.417570] (-) TimerEvent: {}
+[10.517750] (-) TimerEvent: {}
+[10.617966] (-) TimerEvent: {}
+[10.718119] (-) TimerEvent: {}
+[10.818291] (-) TimerEvent: {}
+[10.918467] (-) TimerEvent: {}
+[11.018655] (-) TimerEvent: {}
+[11.118837] (-) TimerEvent: {}
+[11.219087] (-) TimerEvent: {}
+[11.319231] (-) TimerEvent: {}
+[11.419420] (-) TimerEvent: {}
+[11.519617] (-) TimerEvent: {}
+[11.619813] (-) TimerEvent: {}
+[11.720015] (-) TimerEvent: {}
+[11.820180] (-) TimerEvent: {}
+[11.920342] (-) TimerEvent: {}
+[12.020532] (-) TimerEvent: {}
+[12.120707] (-) TimerEvent: {}
+[12.220880] (-) TimerEvent: {}
+[12.321035] (-) TimerEvent: {}
+[12.421184] (-) TimerEvent: {}
+[12.521354] (-) TimerEvent: {}
+[12.621555] (-) TimerEvent: {}
+[12.721739] (-) TimerEvent: {}
+[12.822052] (-) TimerEvent: {}
+[12.922220] (-) TimerEvent: {}
+[13.022374] (-) TimerEvent: {}
+[13.122612] (-) TimerEvent: {}
+[13.222807] (-) TimerEvent: {}
+[13.322985] (-) TimerEvent: {}
+[13.423146] (-) TimerEvent: {}
+[13.523333] (-) TimerEvent: {}
+[13.623484] (-) TimerEvent: {}
+[13.723668] (-) TimerEvent: {}
+[13.823837] (-) TimerEvent: {}
+[13.924013] (-) TimerEvent: {}
+[14.024184] (-) TimerEvent: {}
+[14.124432] (-) TimerEvent: {}
+[14.224624] (-) TimerEvent: {}
+[14.324808] (-) TimerEvent: {}
+[14.424970] (-) TimerEvent: {}
+[14.525163] (-) TimerEvent: {}
+[14.625350] (-) TimerEvent: {}
+[14.725516] (-) TimerEvent: {}
+[14.825691] (-) TimerEvent: {}
+[14.925879] (-) TimerEvent: {}
+[15.026046] (-) TimerEvent: {}
+[15.126212] (-) TimerEvent: {}
+[15.226384] (-) TimerEvent: {}
+[15.326553] (-) TimerEvent: {}
+[15.426717] (-) TimerEvent: {}
+[15.526939] (-) TimerEvent: {}
+[15.627178] (-) TimerEvent: {}
+[15.727377] (-) TimerEvent: {}
+[15.827624] (-) TimerEvent: {}
+[15.927806] (-) TimerEvent: {}
+[16.027985] (-) TimerEvent: {}
+[16.128174] (-) TimerEvent: {}
+[16.228421] (-) TimerEvent: {}
+[16.328634] (-) TimerEvent: {}
+[16.428919] (-) TimerEvent: {}
+[16.529147] (-) TimerEvent: {}
+[16.629346] (-) TimerEvent: {}
+[16.729567] (-) TimerEvent: {}
+[16.829804] (-) TimerEvent: {}
+[16.930062] (-) TimerEvent: {}
+[16.957838] (dddnav_std_descriptor) StdoutLine: {'line': b'[100%] Linking CXX shared library libdddnav_std_descriptor.so\n'}
+[17.030154] (-) TimerEvent: {}
+[17.130318] (-) TimerEvent: {}
+[17.230551] (-) TimerEvent: {}
+[17.330730] (-) TimerEvent: {}
+[17.379008] (dddnav_std_descriptor) StdoutLine: {'line': b'[100%] Built target dddnav_std_descriptor\n'}
+[17.388114] (dddnav_std_descriptor) CommandEnded: {'returncode': 0}
+[17.388746] (dddnav_std_descriptor) JobProgress: {'identifier': 'dddnav_std_descriptor', 'progress': 'install'}
+[17.394920] (dddnav_std_descriptor) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor'], 'cwd': '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('ANTHROPIC_MODEL', 'claude-opus-4-7'), ('HTTPS_PROXY', 'http://127.0.0.1:7890/'), ('no_proxy', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('AI_AGENT', 'claude-code_2-1-177_agent'), ('LANGUAGE', 'zh_CN:en'), ('ANTHROPIC_DEFAULT_SONNET_MODEL_NAME', 'claude-sonnet-4-6'), ('USER', 'lxg'), ('CLAUDE_CODE_ENTRYPOINT', 'cli'), ('LC_TIME', 'zh_CN.UTF-8'), ('GIT_EDITOR', 'true'), ('all_proxy', 'socks://127.0.0.1:7890/'), ('XDG_SESSION_TYPE', 'x11'), ('ALLUSERSPROFILE', '/opt/MVS/MVFG'), ('BUN_INSTALL', '/home/lxg/.bun'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/usr/lib/x86_64-linux-gnu:/usr/local/cuda-12.4/lib64:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/opt/MVS/lib/64:/opt/MVS/lib/32:/opt/MVS/lib/64:/opt/MVS/lib/32:'), ('HOME', '/home/lxg'), ('CONDA_SHLVL', '0'), ('DESKTOP_SESSION', 'ubuntu'), ('NO_PROXY', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('ANTHROPIC_DEFAULT_SONNET_MODEL', 'claude-sonnet-4-6'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('CLAUDE_CODE_CHILD_SESSION', '1'), ('LC_MONETARY', 'zh_CN.UTF-8'), ('DBUS_STARTER_BUS_TYPE', 'session'), ('SYSTEMD_EXEC_PID', '2438'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus,guid=6357afa4cf50423cde56da436a2d1698'), ('COLORTERM', 'truecolor'), ('_CE_M', ''), ('IM_CONFIG_PHASE', '1'), ('https_proxy', 'http://127.0.0.1:7890/'), ('ANTHROPIC_DEFAULT_OPUS_MODEL_NAME', 'claude-opus-4-7'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'fcitx'), ('LOGNAME', 'lxg'), ('ALL_PROXY', 'socks://127.0.0.1:7890/'), ('http_proxy', 'http://127.0.0.1:7890/'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('PKG_CONFIG_PATH', ':/usr/local/lib/pkgconfig'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'lxg'), ('ANTHROPIC_BASE_URL', 'https://bdbd.xyz'), ('ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME', 'claude-haiku-4-5'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('_CE_CONDA', ''), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('MVCAM_SDK_PATH', '/opt/MVS'), ('ANTHROPIC_DEFAULT_OPUS_MODEL', 'claude-opus-4-7'), ('PATH', '/home/lxg/.bun/bin:/usr/bin:/opt/anaconda3/condabin:/usr/local/cuda-12.4/bin:/home/lxg/.npm-global/bin:/opt/ros/humble/bin:/home/lxg/.local/bin:/opt/anaconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/lxg/.claude/plugins/cache/karpathy-skills/andrej-karpathy-skills/1.0.0/bin'), ('SESSION_MANAGER', 'local/lxg-Legion-Y7000-IRX10:@/tmp/.ICE-unix/2438,unix/lxg-Legion-Y7000-IRX10:/tmp/.ICE-unix/2438'), ('MVCAM_GENICAM_CLPROTOCOL', '/opt/MVS/lib/CLProtocol'), ('PAPERSIZE', 'a4'), ('COREPACK_ENABLE_AUTO_PIN', '0'), ('XDG_MENU_PREFIX', 'gnome-'), ('LC_ADDRESS', 'zh_CN.UTF-8'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/2b249ed7_1451_41c9_9866_f199ee3ca6ef'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('CLAUDE_EFFORT', 'high'), ('DISPLAY', ':1'), ('NoDefaultCurrentDirectoryInExePath', '1'), ('LANG', 'zh_CN.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('LC_TELEPHONE', 'zh_CN.UTF-8'), ('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'claude-haiku-4-5'), ('XMODIFIERS', '@im=fcitx'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('GNOME_TERMINAL_SERVICE', ':1.141'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('CONDA_PYTHON_EXE', '/opt/anaconda3/bin/python'), ('SHELL', '/bin/bash'), ('LC_NAME', 'zh_CN.UTF-8'), ('ANTHROPIC_AUTH_TOKEN', 'sk-4a0ddee474089e348439090f06b0cd9016a923094bc9519650e437a1a5434809'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('CLAUDE_CODE_SESSION_ID', 'aa8127ac-6a2a-4252-bd81-633ab429e6a4'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('CLAUDECODE', '1'), ('LC_MEASUREMENT', 'zh_CN.UTF-8'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('LC_IDENTIFICATION', 'zh_CN.UTF-8'), ('QT_IM_MODULE', 'fcitx'), ('PWD', '/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/build/dddnav_std_descriptor'), ('CUDA_HOME', '/usr/local/cuda-12.4'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('CONDA_EXE', '/opt/anaconda3/bin/conda'), ('CLUTTER_IM_MODULE', 'fcitx'), ('DBUS_STARTER_ADDRESS', 'unix:path=/run/user/1000/bus,guid=6357afa4cf50423cde56da436a2d1698'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('CLAUDE_CODE_EXECPATH', '/home/lxg/.npm-global/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('HTTP_PROXY', 'http://127.0.0.1:7890/'), ('LC_NUMERIC', 'zh_CN.UTF-8'), ('MVCAM_SDK_VERSION', ''), ('LC_PAPER', 'zh_CN.UTF-8'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('MVCAM_COMMON_RUNENV', '/opt/MVS/lib'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[17.398965] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Install configuration: "Release"\n'}
+[17.399331] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Execute custom install script\n'}
+[17.399539] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/include/dddnav_std_descriptor/STDesc.h\n'}
+[17.405513] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/include/dddnav_std_descriptor/std_config_loader.h\n'}
+[17.412378] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/library_path.sh\n'}
+[17.418184] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/library_path.dsv\n'}
+[17.423208] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/ament_index/resource_index/package_run_dependencies/dddnav_std_descriptor\n'}
+[17.429054] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/ament_index/resource_index/parent_prefix_path/dddnav_std_descriptor\n'}
+[17.430806] (-) TimerEvent: {}
+[17.434023] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/ament_prefix_path.sh\n'}
+[17.441736] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/ament_prefix_path.dsv\n'}
+[17.451951] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/path.sh\n'}
+[17.459998] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/environment/path.dsv\n'}
+[17.471135] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.bash\n'}
+[17.477972] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.sh\n'}
+[17.483317] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.zsh\n'}
+[17.489354] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/local_setup.dsv\n'}
+[17.494445] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/package.dsv\n'}
+[17.501206] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/ament_index/resource_index/packages/dddnav_std_descriptor\n'}
+[17.508267] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_include_directories-extras.cmake\n'}
+[17.513923] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_libraries-extras.cmake\n'}
+[17.520687] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_targets-extras.cmake\n'}
+[17.525623] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/ament_cmake_export_dependencies-extras.cmake\n'}
+[17.530914] (-) TimerEvent: {}
+[17.532493] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/dddnav_std_descriptorConfig.cmake\n'}
+[17.538058] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/dddnav_std_descriptorConfig-version.cmake\n'}
+[17.543247] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Symlinking: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/package.xml\n'}
+[17.550014] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Installing: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/lib/libdddnav_std_descriptor.so\n'}
+[17.550322] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Set runtime path of "/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/lib/libdddnav_std_descriptor.so" to ""\n'}
+[17.550390] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Installing: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/export_dddnav_std_descriptorExport.cmake\n'}
+[17.550424] (dddnav_std_descriptor) StdoutLine: {'line': b'-- Installing: /home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/export_dddnav_std_descriptorExport-release.cmake\n'}
+[17.551726] (dddnav_std_descriptor) CommandEnded: {'returncode': 0}
+[17.563698] (dddnav_std_descriptor) JobEnded: {'identifier': 'dddnav_std_descriptor', 'rc': 0}
+[17.564000] (-) EventReactorShutdown: {}

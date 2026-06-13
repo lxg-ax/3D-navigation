@@ -239,9 +239,6 @@ PGMImage_t Occupancy2Ground::readPGM(const std::string& filename) {
 
     if (!image.pixelData.empty()) {
       RCLCPP_INFO(this->get_logger(), "Width: %d, Height: %d", image.width, image.height);
-      //for (int i = 0; i < std::min(10, (int)myImage.pixelData.size()); ++i) {
-      //  std::cout << "Pixel " << i << ": " << (int)myImage.pixelData[i] << std::endl;
-      //}
     }
 
     return image;

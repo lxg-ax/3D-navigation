@@ -12,6 +12,7 @@
 |------|------|
 | `example_pose_fusion_overlay.yaml` | 室内慢速：ESKF 更信 LIO + 拒收门收紧 + 降级阈值收紧 |
 | `example_mcl_overlay.yaml` | 长走廊 / 对称环境：粒子数门、上限、回落速率激进化 |
+| `example_mppi_overlay.yaml` | 在 dd_simple 之外并行注册 MPPI generator + 一组对应 critic，调参看 dddnav_local_planner/README.md |
 
 ## 使用方式
 

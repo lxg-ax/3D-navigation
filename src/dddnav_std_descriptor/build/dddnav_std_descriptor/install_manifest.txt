@@ -1,0 +1,3 @@
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/lib/libdddnav_std_descriptor.so
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/export_dddnav_std_descriptorExport.cmake
+/home/lxg/A_workspace/Nav2/ddd_navigation/src/dddnav_std_descriptor/install/dddnav_std_descriptor/share/dddnav_std_descriptor/cmake/export_dddnav_std_descriptorExport-release.cmake

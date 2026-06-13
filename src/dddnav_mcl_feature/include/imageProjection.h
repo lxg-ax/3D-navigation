@@ -98,11 +98,11 @@ class ImageProjection : public rclcpp::Node
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pub_ground_cloud;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pub_segmented_cloud;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pub_segmented_cloud_pure;
-    rclcpp::Publisher<cloud_msgs::msg::CloudInfo>::SharedPtr _pub_segmented_cloud_info;
+    rclcpp::Publisher<dddnav_cloud_msgs::msg::CloudInfo>::SharedPtr _pub_segmented_cloud_info;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pub_outlier_cloud;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr _pub_projected_image;
     
-    cloud_msgs::msg::CloudInfo _seg_msg;
+    dddnav_cloud_msgs::msg::CloudInfo _seg_msg;
 
     int _label_count;
     

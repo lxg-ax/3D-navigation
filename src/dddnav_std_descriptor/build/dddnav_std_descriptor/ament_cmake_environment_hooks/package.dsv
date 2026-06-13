@@ -1,0 +1,4 @@
+source;share/dddnav_std_descriptor/local_setup.bash
+source;share/dddnav_std_descriptor/local_setup.dsv
+source;share/dddnav_std_descriptor/local_setup.sh
+source;share/dddnav_std_descriptor/local_setup.zsh

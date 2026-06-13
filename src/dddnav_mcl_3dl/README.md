@@ -24,7 +24,7 @@ LiDAR ─► mcl_feature ─► mcl_3dl ─► /mcl_pose ─► pose_fusion (ESK
                               FAST-LIO /Odometry (100Hz 预测)
 ```
 
-启动初始位姿现在由 `sc_global_init` 自动给（Scan Context 全局重定位），`runtime.yaml.initial_pose` 仍是兜底。
+启动初始位姿现在由 `std_global_init` 自动给（STD 三角描述子全局重定位），`runtime.yaml.initial_pose` 仍是兜底。
 
 ## 主要参数
 

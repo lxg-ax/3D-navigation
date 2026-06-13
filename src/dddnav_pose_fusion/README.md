@@ -26,7 +26,7 @@ MCL 必须 `publish_tf=false` + `publish_odom_tf=false`，TF 单一所有者由�
 
 ## 主要参数
 
-`config/pose_fusion.yaml`，分四组：
+`dddnav_bringup/config/reality/pose_fusion.yaml`，分四组：
 
 **Q / R / 门**
 
@@ -63,7 +63,7 @@ q_scale = 1 + adaptive_q_gain * max(0, residual - baseline) / baseline   （capp
 定位单点失效是工程化最常见的"看起来好好的但是错了"。pose_fusion 内置一个有限状态机来兜底，状态在 `HEALTHY → DEGRADED_LIO_LOST → DEGRADED_MCL_STUCK` 之间切换：
 
 * **HEALTHY → DEGRADED_LIO_LOST**：FAST-LIO odom 沉默超过 `lio_blackout_sec`（默认 1 s）。此时 ESKF 不再 predict，但 MCL 一来就把当前 ESKF 状态直接当 `/odom_filtered` 推出去，下游消费者维持 5–10 Hz 输出而不是 0 Hz 冻结。
-* **HEALTHY → DEGRADED_MCL_STUCK**：MCL 自报位置 cov trace 持续超过 `mcl_stuck_cov`（默认 2 m²）超过 `mcl_stuck_sec`（默认 8 s）。每 `recovery_holdoff_sec`（默认 15 s）把当前融合 pose 作为 `/initial_3d_pose` 重发一次，触发 `sc_global_init` 重新跑 SC 候选 + MCL 大粒子云重启。
+* **HEALTHY → DEGRADED_MCL_STUCK**：MCL 自报位置 cov trace 持续超过 `mcl_stuck_cov`（默认 2 m²）超过 `mcl_stuck_sec`（默认 8 s）。每 `recovery_holdoff_sec`（默认 15 s）把当前融合 pose 作为 `/initial_3d_pose` 重发一次，触发 `std_global_init` 重新跑 STD 候选 + MCL 大粒子云重启。
 
 每次模式切换会 `RCLCPP_WARN`，并把状态写到 `/localization_status`（`std_msgs/Float64MultiArray`），数据布局：
 
@@ -98,7 +98,7 @@ q_scale = 1 + adaptive_q_gain * max(0, residual - baseline) / baseline   （capp
 | `include/dddnav_pose_fusion/eskf_se3.h` | ESKF 数学（右扰动、Joseph form） |
 | `src/eskf_se3.cpp` | Rodrigues / log-SO(3) / predict / update |
 | `src/pose_fusion_node.cpp` | ROS 接线 + 退化状态机 + 质量信号 |
-| `config/pose_fusion.yaml` | 全部调参 |
+| [`dddnav_bringup/config/reality/pose_fusion.yaml`](../dddnav_bringup/config/reality/pose_fusion.yaml) | 全部调参（与定位主线 yaml 同目录，便于一处覆盖） |
 | `test/test_eskf_se3.cpp` | gtest：exp/log 往返、predict/update 协方差对称 + PSD、零创新 R 减小、Mahalanobis 门 |
 
 ## 测试

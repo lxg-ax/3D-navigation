@@ -29,7 +29,13 @@ src/dddnav_odom_3d/bag_files/**/*.db3
 src/dddnav_odom_3d/bag_files/**/metadata.yaml
 src/dddnav_odom_3d/bag_files/**/*.mcap
 
-# --- IDE / OS ---
+# --- IDE / OS / agent caches ---
 .vscode/
 .idea/
+.claude/
+.cache/
+*.swp
+*.swo
+*~
 .DS_Store
+Thumbs.db

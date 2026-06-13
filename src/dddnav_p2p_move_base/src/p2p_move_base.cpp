@@ -248,7 +248,6 @@ void P2PMoveBase::executeCb(const std::shared_ptr<rclcpp_action::ServerGoalHandl
     feedback->current_decision = FSM_->getCurrentDecision();
     goal_handle->publish_feedback(feedback);
 
-    //if we're done, then we'll return from execute
     if(done){
       GPM_->stop();
       return;
@@ -290,7 +289,6 @@ bool P2PMoveBase::executeCycle(const std::shared_ptr<rclcpp_action::ServerGoalHa
       std::vector<geometry_msgs::msg::PoseStamped> plan;
       if(GPM_->hasPlan()){
         GPM_->copyPlan(plan);
-        //if the planner fails or returns a zero length plan, planning failed
         if(plan.empty()){
           RCLCPP_DEBUG(this->get_logger(), "Failed to find a plan to point (%.2f, %.2f, %.2f)", 
               FSM_->current_goal_.pose.position.x, FSM_->current_goal_.pose.position.y, FSM_->current_goal_.pose.position.z);

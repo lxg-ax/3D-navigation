@@ -22,11 +22,8 @@ from common_camera_nodes import vision_nodes
 def generate_launch_description():
     bringup_dir       = get_package_share_directory('dddnav_bringup')
     fast_lio_dir      = get_package_share_directory('fast_lio')
-    pose_fusion_yaml_default  = os.path.join(
-        get_package_share_directory('dddnav_pose_fusion'),
-        'config', 'pose_fusion.yaml')
 
-    rt = bringup_paths.load_runtime('reality')
+    rt = bringup_paths.load_runtime()
     cam_mount = bringup_paths.camera_mount(rt)
 
     fastlio_config = LaunchConfiguration('fastlio_config')
@@ -45,12 +42,12 @@ def generate_launch_description():
     )
     declare_pose_fusion_yaml_cmd = DeclareLaunchArgument(
         'pose_fusion_yaml',
-        default_value=pose_fusion_yaml_default,
-        description='pose_fusion yaml — use config/tuning/*.yaml for overlays',
+        default_value=bringup_paths.pose_fusion_yaml(),
+        description='pose_fusion yaml — use config/reality/tuning/*.yaml for overlays',
     )
 
     nav_profile_decl, nav_profile_resolve = bringup_paths.nav_profile_argument(
-        default_profile='mid360_localization_with_camera', variant='reality')
+        default_profile='mid360_localization_with_camera')
     nav_config_param_files = [
         bringup_paths.nav_base_yaml(),
         LaunchConfiguration('nav_config'),

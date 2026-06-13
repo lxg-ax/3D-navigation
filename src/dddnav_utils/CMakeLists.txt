@@ -14,23 +14,25 @@ find_package(std_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io kdtree)
 find_package(Eigen3 REQUIRED)
-find_package(lio_sam REQUIRED)
+find_package(dddnav_std_descriptor REQUIRED)
 
 add_executable(livox_pc2_to_liosam src/livox_pc2_to_liosam.cpp)
 ament_target_dependencies(livox_pc2_to_liosam rclcpp sensor_msgs)
 
-# SC-based global localization bootstrap (replaces the operator-supplied
-# /initial_3d_pose seed). Uses ScanContext.hpp from lio_sam (header-only).
-add_executable(sc_global_init src/sc_global_init.cpp)
-target_include_directories(sc_global_init PRIVATE
+# STD-based global localization bootstrap + watchdog (replaces the
+# operator-supplied /initial_3d_pose seed). Reads <map>/lio_sam/std_db.bin
+# dumped by mapOptimization::saveMap.
+add_executable(std_global_init src/std_global_init.cpp)
+target_include_directories(std_global_init PRIVATE
   ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
-ament_target_dependencies(sc_global_init
-  rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs pcl_conversions lio_sam)
-target_link_libraries(sc_global_init ${PCL_LIBRARIES})
+ament_target_dependencies(std_global_init
+  rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs pcl_conversions
+  dddnav_std_descriptor)
+target_link_libraries(std_global_init ${PCL_LIBRARIES})
 
 install(TARGETS
   livox_pc2_to_liosam
-  sc_global_init
+  std_global_init
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 

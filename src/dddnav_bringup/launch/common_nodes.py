@@ -172,10 +172,10 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
 
     ``sc_init_enabled`` toggles the Scan Context global localiser. It runs
     before the operator-supplied bootstrap so the first /initial_3d_pose
-    publication wins; if SC fails to find a confident match the bootstrap
+    publication wins; if STD fails to find a confident match the bootstrap
     keeps the legacy behaviour (use runtime.yaml.initial_pose).
     ``sc_init_yaml`` is an optional dict / yaml file with overrides. The
-    helper auto-injects the canonical sc_db / poses paths.
+    helper auto-injects the canonical std_db / poses paths.
 
     ``preflight_enabled`` runs the dddnav_preflight node ~5s after launch
     so QoS / TF / cross-node parameter mismatches surface as ERROR-level
@@ -220,26 +220,29 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
     ]
 
     if sc_init_enabled:
-        # Auto-derive sc_db / poses paths from the same map dir the rest of
+        # Auto-derive std_db / poses paths from the same map dir the rest of
         # the stack uses. Caller can fully override via sc_init_yaml.
         map_dir = bringup_map_dir()
         sc_params = [{
-            'sc_db_path':     os.path.join(map_dir, 'lio_sam', 'sc_db.bin'),
+            'std_db_path':    os.path.join(map_dir, 'lio_sam', 'std_db.bin'),
             'poses_pcd_path': os.path.join(map_dir, 'poses.pcd'),
             'cloud_topic':    sc_cloud_topic,
             'odom_topic':     '/odom_filtered',
             'init_pose_topic': '/initial_3d_pose',
+            # STD plane-ICP score threshold (higher = stricter; ~0.3..0.7
+            # is a sane range for Mid360 indoor/structured environments).
+            'std_score_threshold': 0.50,
             # Watchdog defaults: 2 Hz check, 8 s warm-up, ±6 m / ±60deg gate
             # against the fused pose. Override via sc_init_yaml when needed.
-            'enable_watchdog':           True,
-            'watchdog_check_hz':         2.0,
-            'watchdog_warmup_sec':       8.0,
-            'relocate_max_jump_m':       6.0,
-            'relocate_max_jump_yaw':     1.05,
-            'relocate_min_delta':        0.05,
-            'relocate_max_candidate_dist': 0.25,
-            'relocate_consensus':        4,
-            'relocate_holdoff_sec':      10.0,
+            'enable_watchdog':              True,
+            'watchdog_check_hz':            2.0,
+            'watchdog_warmup_sec':          8.0,
+            'relocate_max_jump_m':          6.0,
+            'relocate_max_jump_yaw':        1.05,
+            'relocate_min_score':           0.55,
+            'relocate_min_dist_from_live_m': 4.0,
+            'relocate_consensus':           4,
+            'relocate_holdoff_sec':         10.0,
         }]
         if sc_init_yaml:
             sc_params.append(sc_init_yaml)
@@ -248,13 +251,13 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
         # Run a hair before mcl_3dl finishes spinning up so its first
         # particle distribution can already be re-centred.
         actions.append(TimerAction(period=max(d['mcl_3dl'] - 0.5, 1.0), actions=[
-            Node(package='dddnav_utils', executable='sc_global_init',
-                 name='sc_global_init', output='screen',
+            Node(package='dddnav_utils', executable='std_global_init',
+                 name='std_global_init', output='screen',
                  parameters=sc_params),
         ]))
 
-    # Operator-supplied seed (legacy) — still useful when SC misses or when
-    # there is no map yet (no sc_db.bin → SC node returns early). Stamp
+    # Operator-supplied seed (legacy) — still useful when STD misses or when
+    # there is no map yet (no std_db.bin → STD node returns early). Stamp
     # source doesn't matter here (consumer reads xyz only) so use_sim_time
     # has no effect on the one-shot seed.
     actions.append(TimerAction(period=d['initial_pose'], actions=[

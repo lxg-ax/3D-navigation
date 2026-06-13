@@ -20,7 +20,7 @@ MCL 3DL 的特征提取器：原始点云 → 4 类特征（边 / 强边 / 面 /
 |------|------|------|
 | `laser_cloud_sharp` / `laser_cloud_less_sharp` | `sensor_msgs/PointCloud2` | 边特征（强 / 弱） |
 | `laser_cloud_flat`  / `laser_cloud_less_flat`  | `sensor_msgs/PointCloud2` | 面特征（强 / 弱） |
-| `cloud_info` | `cloud_msgs/cloud_info` | range image 元数据（`startRingIndex` / 地面 flag 等） |
+| `cloud_info` | `dddnav_cloud_msgs/cloud_info` | range image 元数据（`startRingIndex` / 地面 flag 等） |
 
 不发 TF，让 FAST-LIO（`odom→base`）和 `pose_fusion`（`map→odom`）各管各的。
 

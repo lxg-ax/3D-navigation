@@ -148,10 +148,12 @@ public:
     int   historyKeyframeSearchNum;
     float historyKeyframeFitnessScore;
 
-    // Scan Context loop-closure tuning (read by mapOptimization)
-    int   scExcludeRecent;
-    float scDistThreshold;
-    int   scMinDatabase;
+    // STD (Stable Triangle Descriptor) loop-closure tuning. Replaces the
+    // earlier Scan Context parameters; values are read in mapOptimization
+    // and forwarded to STDescManager::config_setting_.
+    int   stdSkipNearNum;       // # of recent keyframes excluded as candidates
+    float stdIcpThreshold;      // plane-ICP score required to accept a loop
+    int   stdMinDatabase;       // skip detection until this many frames stored
 
     // global map visualization radius
     float globalMapVisualizationSearchRadius;
@@ -307,12 +309,12 @@ public:
         declare_parameter("historyKeyframeFitnessScore", 0.3);
         get_parameter("historyKeyframeFitnessScore", historyKeyframeFitnessScore);
 
-        declare_parameter("scExcludeRecent", 50);
-        get_parameter("scExcludeRecent", scExcludeRecent);
-        declare_parameter("scDistThreshold", 0.25);
-        get_parameter("scDistThreshold", scDistThreshold);
-        declare_parameter("scMinDatabase", 51);
-        get_parameter("scMinDatabase", scMinDatabase);
+        declare_parameter("stdSkipNearNum", 50);
+        get_parameter("stdSkipNearNum", stdSkipNearNum);
+        declare_parameter("stdIcpThreshold", 0.5);
+        get_parameter("stdIcpThreshold", stdIcpThreshold);
+        declare_parameter("stdMinDatabase", 51);
+        get_parameter("stdMinDatabase", stdMinDatabase);
 
         declare_parameter("globalMapVisualizationSearchRadius", 1000.0);
         get_parameter("globalMapVisualizationSearchRadius", globalMapVisualizationSearchRadius);
