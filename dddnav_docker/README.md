@@ -2,14 +2,19 @@
 
 Ubuntu 22.04 + ROS 2 Humble images for this workspace. Stack overview: [../README.md](../README.md).
 
+> The main stack is reality-only — the `dddnav:x64` / `:cuda` / `:l4t_r36` images are what
+> you want for FAST-LIO + LIO-SAM + pose_fusion + STD-based localization + MPPI etc.
+> The `dddnav_gz:x64` image is upstream Gazebo simulation tooling, kept for reference;
+> nothing in `dddnav_bringup/launch/` requires it.
+
 ## Images
 
 | Tag | Dockerfile | Notes |
 |-----|------------|--------|
-| `dddnav:x64` | `docker_file/Dockerfile_x64` | Humble, PCL 1.15, GTSAM 4.2a9, colcon, [serial](https://github.com/wjwwood/serial) |
-| `dddnav:cuda` | `docker_file/Dockerfile_x64_cuda` | On `dddnav:x64`: CUDA 12.6, cuDNN 9.6, TensorRT 10.7, PyTorch 2.8, OpenCV 4.11 (CUDA) |
-| `dddnav:l4t_r36` | `docker_file/Dockerfile_x64_l4t_r36` | Base `nvcr.io/nvidia/l4t-jetpack:r36.4.0` |
-| `dddnav_gz:x64` | `docker_file/Dockerfile_x64_gazebo` | Gazebo on `dddnav:x64`; clones [gz_quadbot](https://github.com/dfl-rlab/gz_quadbot) to `/ws_gz`. Repo also has `src/gz_quadbot/` — use one approach unless you need both. |
+| `dddnav:x64` | `docker_file/Dockerfile_x64` | Humble, PCL 1.15, GTSAM 4.2a9, Ceres ≥ 2.0 (for `dddnav_std_descriptor`), colcon, [serial](https://github.com/wjwwood/serial) |
+| `dddnav:cuda` | `docker_file/Dockerfile_x64_cuda` | On `dddnav:x64`: CUDA 12.6, cuDNN 9.6, TensorRT 10.7, PyTorch 2.8, OpenCV 4.11 (CUDA). Required for `dddnav_semantic_segmentation` / `dddnav_yolo_trt` |
+| `dddnav:l4t_r36` | `docker_file/Dockerfile_x64_l4t_r36` | Base `nvcr.io/nvidia/l4t-jetpack:r36.4.0`, Jetson target |
+| `dddnav_gz:x64` | `docker_file/Dockerfile_x64_gazebo` | Gazebo on `dddnav:x64`; clones [gz_quadbot](https://github.com/dfl-rlab/gz_quadbot) to `/ws_gz`. **Upstream legacy** — the main bringup stack no longer ships simulation launches. |
 
 ## Build
 

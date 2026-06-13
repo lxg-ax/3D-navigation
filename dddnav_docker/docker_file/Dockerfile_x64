@@ -47,7 +47,12 @@ RUN cd /tmp/gtsam && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release
 # --- end of gtsam
 
 
-# --- PCL --- 
+# --- Ceres (≥ 2.0; required by dddnav_std_descriptor for STD descriptor matching) ---
+RUN apt install -y libceres-dev
+# --- end of Ceres
+
+
+# --- PCL ---
 RUN apt install -y libpcap-dev
 RUN apt install -y libusb-1.0-0-dev
 RUN cd /tmp && git clone https://github.com/PointCloudLibrary/pcl.git && cd pcl && git checkout pcl-1.15.0

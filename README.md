@@ -25,7 +25,7 @@ sudo apt install -y \
   ros-humble-image-geometry ros-humble-cv-bridge \
   ros-humble-tf2-eigen ros-humble-tf2-geometry-msgs \
   ros-humble-message-filters ros-humble-diagnostic-msgs ros-humble-diagnostic-updater \
-  libpcl-dev libceres-dev libeigen3-dev libgeographic-dev \
+  libpcl-dev libceres-dev libeigen3-dev \
   python3-colcon-common-extensions python3-rosdep
 ```
 
