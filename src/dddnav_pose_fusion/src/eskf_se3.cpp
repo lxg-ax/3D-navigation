@@ -46,8 +46,6 @@ Eigen::Vector3d logSO3(const Eigen::Quaterniond & q_in)
   return v * (theta / n);
 }
 
-// ---------------------------------------------------------------------------
-
 EskfSE3::EskfSE3()
 : p_(Eigen::Vector3d::Zero()),
   q_(Eigen::Quaterniond::Identity()),
@@ -110,7 +108,6 @@ bool EskfSE3::update(
   // S = H P H^T + R = P + R
   Eigen::Matrix<double, 6, 6> S = P_ + R_cov;
 
-  // Mahalanobis gating against chi^2_6 to reject obvious outliers.
   if (gate_chi2 > 0.0) {
     const double m = y.transpose() * S.ldlt().solve(y);
     if (m > gate_chi2) {
@@ -126,7 +123,6 @@ bool EskfSE3::update(
   Eigen::Matrix<double, 6, 6> I_KH = Eigen::Matrix<double, 6, 6>::Identity() - K;  // H = I
   P_ = I_KH * P_ * I_KH.transpose() + K * R_cov * K.transpose();
 
-  // Inject and reset error.
   inject(dx);
   return true;
 }

@@ -25,9 +25,7 @@ from launch_ros.actions import Node
 from bringup_paths import bringup_map_dir
 
 
-# ---------------------------------------------------------------------------
 # Sensor + TF + LiDAR front-end (Livox + livox_pc2_to_liosam + FAST-LIO).
-# ---------------------------------------------------------------------------
 
 def lidar_driver_and_tf(rt):
     """Livox driver + base_link→livox_frame static TF.
@@ -60,13 +58,11 @@ def lidar_driver_and_tf(rt):
     ]
 
 
-# ---------------------------------------------------------------------------
 # Sim front-end (Gazebo VLP-16): no Livox driver, no Livox bridge. Robot URDF
 # already publishes base_link→velodyne and base_link→imu_link statically, so
 # we only run FAST-LIO. /cloud_registered_body is the LIO-SAM input + the
 # perception layer input, replacing the Livox xyzi cloud the real bringup
 # emits via livox_pc2_to_liosam.
-# ---------------------------------------------------------------------------
 
 def lidar_front_end_sim(rt, fastlio_config, use_sim_time=True):
     """FAST-LIO only, for the Gazebo Velodyne sim."""
@@ -100,10 +96,8 @@ def lidar_front_end(rt, fastlio_config):
     ]
 
 
-# ---------------------------------------------------------------------------
 # LIO-SAM back-end (4 nodes share one yaml + savePCD overlay) + pose-graph
 # extractor + slam health monitor. Used by mapping and mapping_nav modes.
-# ---------------------------------------------------------------------------
 
 def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
                     keyframes_yaml, keyframes_save_dir_overlay,
@@ -154,10 +148,8 @@ def liosam_back_end(rt, lio_sam_config, save_pcd_overlay,
     return actions
 
 
-# ---------------------------------------------------------------------------
 # Localization stack: MCL 3DL + ESKF pose fusion + MCL feature + bootstrap
 # initial pose.
-# ---------------------------------------------------------------------------
 
 def localization_stack(rt, nav_config_params, pose_fusion_yaml,
                        sc_init_enabled=True, sc_init_yaml=None,
@@ -286,9 +278,7 @@ def localization_stack(rt, nav_config_params, pose_fusion_yaml,
     return actions
 
 
-# ---------------------------------------------------------------------------
 # Navigation stack (global planner + p2p_move_base + clicked2goal).
-# ---------------------------------------------------------------------------
 
 def nav_stack(rt, nav_config_params, use_sim_time=False):
     d = rt['delays']
@@ -316,9 +306,7 @@ def nav_stack(rt, nav_config_params, use_sim_time=False):
     ]
 
 
-# ---------------------------------------------------------------------------
 # RViz (delayed so there is something to render when it pops up).
-# ---------------------------------------------------------------------------
 
 def rviz_action(rt, rviz_config, use_sim_time=False):
     extra = [{'use_sim_time': use_sim_time}] if use_sim_time else []
@@ -329,11 +317,9 @@ def rviz_action(rt, rviz_config, use_sim_time=False):
     ])
 
 
-# ---------------------------------------------------------------------------
 # Auto-save: clear stale pcds at startup, fire /save_full_map on shutdown.
 # Replaces the old ``ros2 service call`` shell pipeline that was sensitive to
 # launch tear-down ordering.
-# ---------------------------------------------------------------------------
 
 _AUTO_SAVE_PRECLEAN_FILES = (
     'poses.pcd', 'edges.pcd', 'map.pcd', 'ground.pcd',

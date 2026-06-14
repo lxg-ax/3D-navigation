@@ -112,7 +112,8 @@ Tuning rule of thumb: **edit yaml, not launch.py**.
 | [`dddnav_bringup/config/reality/keyframes_mid360.yaml`](src/dddnav_bringup/config/reality/keyframes_mid360.yaml) | Keyframe extraction thresholds |
 | [`dddnav_bringup/config/nav_base.yaml`](src/dddnav_bringup/config/nav_base.yaml) | Shared nav defaults (robot footprint, controller frequency, planner graph) |
 | [`dddnav_bringup/config/reality/nav/mid360_*.yaml`](src/dddnav_bringup/config/reality/nav/) | Mode overlays: `mid360_mapping[_with_camera]` / `mid360_localization[_with_camera/_with_depth_camera]` |
-| [`LIO-SAM/config/params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml) | LIO-SAM tuning (IMU, loop closure, STD database) |
+| [`dddnav_bringup/config/reality/slam/fastlio_mid360.yaml`](src/dddnav_bringup/config/reality/slam/fastlio_mid360.yaml) | FAST-LIO front-end tuning (IMU noise, extrinsics, voxel) |
+| [`dddnav_bringup/config/reality/slam/liosam_mid360.yaml`](src/dddnav_bringup/config/reality/slam/liosam_mid360.yaml) | LIO-SAM back-end tuning (IMU, loop closure, STD database) |
 | [`dddnav_bringup/config/reality/pose_fusion.yaml`](src/dddnav_bringup/config/reality/pose_fusion.yaml) | ESKF Q/R, ZUPT, adaptive Q, auto-init |
 
 Profile switch:

@@ -1,23 +1,10 @@
-# tuning overlay: MCL 在长走廊 / 对称环境里更激进
-#
-# 用法：把这一份直接当 nav_profile.yaml 的最后一段：
-#
-#   ros2 launch dddnav_bringup localization.launch.py \
-#     nav_profile:=$(pwd)/src/dddnav_bringup/config/tuning/example_mcl_overlay.yaml
-#
-# 默认值 / 含义见 `dddnav_bringup/config/nav/base.yaml` 与
-# `dddnav_mcl_3dl/README.md` 的"自适应粒子数"段。
-#
-# 注意：覆盖必须保留命名空间 `mcl_3dl:` 才能命中节点。
+# Overlay 模板：MCL 在长走廊/对称环境更激进
+# 用法：nav_profile:=$(pwd)/src/dddnav_bringup/config/reality/tuning/example_mcl_overlay.yaml
+# 默认值见 dddnav_bringup/config/nav_base.yaml + dddnav_mcl_3dl/README.md。
 
 mcl_3dl:
   ros__parameters:
-    # 对称环境 / 长走廊：粒子数翻倍门更高 + 上限更大。
-    match_ratio_grow_thresh: 0.65
-    num_particles_max:       800
-
-    # 重定位时给到的搜索预算更大，配合 sc_global_init 的 watchdog。
-    num_particles_grow_on_init: 800
-
-    # 粒子回落更慢，避免在低 match 时反复扩-缩抖动。
-    particle_decay: 0.95
+    match_ratio_grow_thresh: 0.65   # 翻倍门提高
+    num_particles_max:       800    # 上限抬高
+    num_particles_grow_on_init: 800 # 重定位预算更大
+    particle_decay: 0.95            # 回落更慢，避免抖动

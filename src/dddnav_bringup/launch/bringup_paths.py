@@ -7,6 +7,11 @@ Config layout::
       reality/
         runtime.yaml               # delays / mounts / driver freq
         keyframes_mid360.yaml      # liosam_to_posegraph thresholds
+        pose_fusion.yaml           # ESKF Q/R, ZUPT, adaptive Q
+        slam/
+          fastlio_mid360.yaml      # FAST-LIO front-end (mirrors upstream config)
+          liosam_mid360.yaml       # LIO-SAM back-end (mirrors upstream config)
+          IMU_NOTES.md             # cross-algo IMU param mapping
         nav/<profile>.yaml         # mid360_*.yaml overlays
         tuning/                    # in-field overlays (pose_fusion / mcl / mppi)
 
@@ -64,6 +69,20 @@ def keyframes_yaml():
 
 def pose_fusion_yaml():
     return os.path.join(_reality(), 'pose_fusion.yaml')
+
+
+def _slam():
+    return os.path.join(_reality(), 'slam')
+
+
+def fastlio_yaml(name='fastlio_mid360.yaml'):
+    """FAST-LIO front-end yaml under reality/slam/."""
+    return os.path.join(_slam(), name)
+
+
+def liosam_yaml(name='liosam_mid360.yaml'):
+    """LIO-SAM back-end yaml under reality/slam/."""
+    return os.path.join(_slam(), name)
 
 
 def nav_base_yaml():

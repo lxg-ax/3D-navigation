@@ -27,7 +27,7 @@ and again every ``recheck_sec`` so transient races (TF still being declared)
 don't poison the report.
 """
 
-import math  # noqa: F401  (reserved for future numeric checks)
+import math  # noqa: F401
 
 import rclpy
 from rclpy.node import Node
@@ -47,8 +47,6 @@ _WARN = DiagnosticStatus.WARN
 _ERROR = DiagnosticStatus.ERROR
 
 
-# --- helpers ---------------------------------------------------------------
-
 def _qos_str(p):
     rel = {ReliabilityPolicy.RELIABLE: 'RELIABLE',
            ReliabilityPolicy.BEST_EFFORT: 'BEST_EFFORT'}.get(
@@ -60,8 +58,6 @@ def _qos_str(p):
 
 
 def _qos_compatible(pub, sub):
-    """Standard DDS compatibility table: RELIABLE→BE is OK, BE→RELIABLE is
-    not; TRANSIENT_LOCAL→VOLATILE is OK, the reverse is not."""
     pr = pub.qos_profile.reliability
     sr = sub.qos_profile.reliability
     pd = pub.qos_profile.durability
@@ -77,7 +73,6 @@ class Preflight(Node):
     def __init__(self):
         super().__init__('dddnav_preflight')
 
-        # --- params ------------------------------------------------------
         self.declare_parameter('warmup_sec', 5.0)
         self.declare_parameter('recheck_sec', 30.0)
         # Topics where a QoS mismatch silently drops everything. Each entry

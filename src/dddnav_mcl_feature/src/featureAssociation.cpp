@@ -1,38 +1,5 @@
-// Copyright 2013, Ji Zhang, Carnegie Mellon University
-// Further contributions copyright (c) 2016, Southwest Research Institute
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-// 1. Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-// 3. Neither the name of the copyright holder nor the names of its
-//    contributors may be used to endorse or promote products derived from this
-//    software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-// This is an implementation of the algorithm described in the following papers:
-//   J. Zhang and S. Singh. LOAM: Lidar Odometry and Mapping in Real-time.
-//     Robotics: Science and Systems Conference (RSS). Berkeley, CA, July 2014.
-//   T. Shan and B. Englot. LeGO-LOAM: Lightweight and Ground-Optimized Lidar
-//   Odometry and Mapping on Variable Terrain
-//      IEEE/RSJ International Conference on Intelligent Robots and Systems
-//      (IROS). October 2018.
+// copyright (c) 2016, Southwest Research Institute
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include "featureAssociation.h"
 
@@ -525,21 +492,6 @@ void FeatureAssociation::extractFeatures() {
       }
     }
 
-    //
-    // double ground_height = 0.0;
-    // for(auto it=surfPointsFlat->points.begin(); it!=surfPointsFlat->points.end();it++){
-    //   ground_height+=(*it).y;
-    // }
-    // //RCLCPP_INFO(this->get_logger(), "Averaged height: %.2f", ground_height/surfPointsFlat->points.size());
-    // surfPointsFlatFiltered.reset(new pcl::PointCloud<PointType>());
-    // double averaged_height = ground_height/surfPointsFlat->points.size();
-    // for(auto it=segmentedCloud->points.begin();it!=segmentedCloud->points.end();it++){
-    //   float range = hypot((*it).x, (*it).z);
-    //   if(range > 5.0 && fabs((*it).y-averaged_height)<0.05){
-    //     surfPointsFlatFiltered->push_back((*it));
-    //   }
-    // }
-    
     // surfPointsFlat = surfPointsFlatFiltered;
 
     surfPointsLessFlatScanDS->clear();
@@ -1355,7 +1307,6 @@ void FeatureAssociation::adjustOutlierCloud() {
 void FeatureAssociation::assignMappingOdometry(float (&ts)[6]){
     tf2::Quaternion quat_tf;
     geometry_msgs::msg::Quaternion geoQuat;
-    //-------------------------------------------
     quat_tf.setRPY(ts[2], -ts[0], -ts[1]);
     tf2::convert(quat_tf, geoQuat);
     mappingOdometry.header.stamp = cloudHeader.stamp;
@@ -1374,7 +1325,6 @@ void FeatureAssociation::publishOdometryPath() {
   tf2::Quaternion quat_tf;
   geometry_msgs::msg::Quaternion geoQuat;
 
-  //-------------------------------------------
   quat_tf.setRPY(transformLaserOdometrySum[2], -transformLaserOdometrySum[0], -transformLaserOdometrySum[1]);
   tf2::convert(quat_tf, geoQuat);
   
@@ -1390,7 +1340,6 @@ void FeatureAssociation::publishOdometryPath() {
   laser_odom_path_.poses.push_back(tmp_pose);
   pubOriginizedLaserOdometryPath->publish(laser_odom_path_);
 
-  //-------------------------------------------
   quat_tf.setRPY(transformExternalOdometrySum[2], -transformExternalOdometrySum[0], -transformExternalOdometrySum[1]);
   tf2::convert(quat_tf, geoQuat);  
 
@@ -1491,7 +1440,6 @@ void FeatureAssociation::runFeatureAssociation() {
   ProjectionOut projection;
   _input_channel.receive(projection);
 
-  //--------------
   std::lock_guard<std::mutex> lock(_odom_mutex);
 
   outlierCloud = projection.outlier_cloud;

@@ -60,7 +60,7 @@ q_scale = 1 + adaptive_q_gain * max(0, residual - baseline) / baseline   （capp
 
 ## 退化与质量信号
 
-定位单点失效是工程化最常见的"看起来好好的但是错了"。pose_fusion 内置一个有限状态机来兜底，状态在 `HEALTHY → DEGRADED_LIO_LOST → DEGRADED_MCL_STUCK` 之间切换：
+pose_fusion 内置有限状态机兜底定位单点失效，状态在 `HEALTHY → DEGRADED_LIO_LOST → DEGRADED_MCL_STUCK` 之间切换：
 
 * **HEALTHY → DEGRADED_LIO_LOST**：FAST-LIO odom 沉默超过 `lio_blackout_sec`（默认 1 s）。此时 ESKF 不再 predict，但 MCL 一来就把当前 ESKF 状态直接当 `/odom_filtered` 推出去，下游消费者维持 5–10 Hz 输出而不是 0 Hz 冻结。
 * **HEALTHY → DEGRADED_MCL_STUCK**：MCL 自报位置 cov trace 持续超过 `mcl_stuck_cov`（默认 2 m²）超过 `mcl_stuck_sec`（默认 8 s）。每 `recovery_holdoff_sec`（默认 15 s）把当前融合 pose 作为 `/initial_3d_pose` 重发一次，触发 `std_global_init` 重新跑 STD 候选 + MCL 大粒子云重启。

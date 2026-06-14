@@ -21,7 +21,7 @@ from sensor_msgs.msg import PointCloud2, PointField
 from std_srvs.srv import Empty
 
 
-# ── 几何工具 ──────────────────────────────────────────────────────────────────
+# 几何工具
 
 def quat_to_rpy(x, y, z, w):
     roll  = math.atan2(2*(w*x + y*z), 1 - 2*(x*x + y*y))
@@ -48,7 +48,7 @@ def transform_pts(pts, tx, ty, tz, roll, pitch, yaw):
     return (R.T @ (pts - np.array([tx, ty, tz])).T).T
 
 
-# ── PCD 写入 (binary little-endian) ──────────────────────────────────────────
+# PCD 写入 (binary little-endian)
 #
 # 关键帧建图一次写几百个文件，每帧 2 个 pcd（feature + ground）。原本 ASCII 实现
 # 在 N=2000+ 关键帧时落盘会变成 IO 瓶颈：fprintf 拼字符串 + 文件大约比二进制大 3~4
@@ -104,7 +104,7 @@ def write_edges_pcd(path, n):
             f.write("0.0 0.0 0.0\n")
 
 
-# ── 主节点 ────────────────────────────────────────────────────────────────────
+# 主节点
 
 class LioSamToPoseGraph(Node):
 
@@ -160,7 +160,7 @@ class LioSamToPoseGraph(Node):
             f'kf_dist={self.kf_dist}m  kf_angle={math.degrees(self.kf_angle):.1f}°')
         self.get_logger().info('Save: ros2 service call /save_liosam_posegraph std_srvs/srv/Empty {}')
 
-    # ── 回调 ──────────────────────────────────────────────────────────────────
+    # 回调
 
     def _odom_cb(self, msg: Odometry):
         self._odom   = msg
@@ -243,7 +243,7 @@ class LioSamToPoseGraph(Node):
         self.get_logger().info(
             f'KF {idx}: ({tx:.2f},{ty:.2f},{tz:.2f})  feat={len(feat_pts)}  gnd={len(gnd_pts)}')
 
-    # ── 实时地图发布（供 perception_3d mapping_mode 使用）────────────────────
+    # 实时地图发布（供 perception_3d mapping_mode 使用）
 
     def _publish_map(self):
         if not self.acc_feat:
@@ -275,7 +275,7 @@ class LioSamToPoseGraph(Node):
         self.pub_map.publish(_make(self.acc_feat))
         self.pub_ground.publish(_make(self.acc_gnd))
 
-    # ── 保存 ──────────────────────────────────────────────────────────────────
+    # 保存
 
     def _save_cb(self, req, res):
         n = len(self.keyframes)

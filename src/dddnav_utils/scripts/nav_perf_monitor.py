@@ -23,7 +23,7 @@ The node is read-only; it never restarts upstream. Pair it with
 ``slam_health_monitor.py`` (TF / odom liveness) for a complete picture.
 """
 
-import math  # noqa: F401  (reserved for future per-axis trace stats)
+import math  # noqa: F401
 from collections import deque
 
 import rclpy

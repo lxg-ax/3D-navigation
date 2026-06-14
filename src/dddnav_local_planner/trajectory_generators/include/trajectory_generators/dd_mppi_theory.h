@@ -1,7 +1,6 @@
-/*
- * BSD 3-Clause License
- * Copyright (c) 2024, DDDMobileRobot
- */
+// Copyright (c) 2024, DDDMobileRobot
+// SPDX-License-Identifier: BSD-3-Clause
+
 #ifndef _DD_MPPI_THEORY_H__
 #define _DD_MPPI_THEORY_H__
 

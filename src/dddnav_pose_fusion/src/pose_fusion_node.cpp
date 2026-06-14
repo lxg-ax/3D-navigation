@@ -54,7 +54,7 @@ public:
   PoseFusionNode()
   : Node("pose_fusion")
   {
-    // ---- Topic / frame parameters ---------------------------------------
+    // Topic / frame parameters
     declare_parameter<std::string>("odom_topic", "/Odometry");
     declare_parameter<std::string>("pose_topic", "mcl_pose");
     declare_parameter<std::string>("initial_pose_topic", "/initial_3d_pose");
@@ -64,7 +64,7 @@ public:
     declare_parameter<std::string>("base_frame", "base_link");
     declare_parameter<bool>("publish_tf", true);
 
-    // ---- Filter tuning ---------------------------------------------------
+    // Filter tuning
     // Process noise per second. Kept conservative because FAST-LIO odometry
     // is already quite clean; the tangent components are independent so a
     // diagonal works well in practice. Tune up if you see updates that are
@@ -130,7 +130,7 @@ public:
     declare_parameter<double>("auto_init_y",         0.0);
     declare_parameter<double>("auto_init_z",         0.0);
 
-    // ---- Degradation state machine -------------------------------------
+    // Degradation state machine
     // Mode HEALTHY -> DEGRADED_LIO_LOST when no FAST-LIO odom for
     // lio_blackout_sec; in that mode we keep publishing /odom_filtered at
     // pass-through rate from each MCL update so downstream consumers don't
@@ -191,7 +191,7 @@ public:
     status_rate_hz_   = get_parameter("status_rate_hz").as_double();
     enable_recovery_pub_ = get_parameter("enable_recovery_publish").as_bool();
 
-    // ---- IO --------------------------------------------------------------
+    // IO
     rclcpp::QoS sensor_qos(rclcpp::KeepLast(50));
     sensor_qos.best_effort();
 
@@ -490,7 +490,7 @@ private:
     const Eigen::Vector3d & p_m_b = eskf_.position();
     const Eigen::Quaterniond & q_m_b = eskf_.orientation();
 
-    // ---- /odom_filtered (map -> base) -----------------------------------
+    // /odom_filtered (map -> base)
     nav_msgs::msg::Odometry out;
     out.header.stamp = stamp;
     out.header.frame_id = map_frame_;
@@ -510,7 +510,7 @@ private:
     }
     pub_odom_->publish(out);
 
-    // ---- TF map -> odom -------------------------------------------------
+    // TF map -> odom
     if (publish_tf_ && tfb_) {
       // T_m_o = T_m_b * T_b_o = T_m_b * T_o_b^-1
       const Eigen::Quaterniond q_o_b_inv = q_o_b.conjugate();
@@ -551,7 +551,7 @@ private:
     const double mcl_age = age_or_inf(wall_last_mcl_accept_);
     const double cov_trace = eskf_.initialized() ? covarianceTrace() : 1e6;
 
-    // ---- Mode arbitration ------------------------------------------------
+    // Mode arbitration
     Mode new_mode = Mode::HEALTHY;
     if (lio_age > lio_blackout_sec_) {
       new_mode = Mode::DEGRADED_LIO_LOST;
@@ -583,7 +583,7 @@ private:
       mode_ = new_mode;
     }
 
-    // ---- Recovery action: bump SC re-localisation ----------------------
+    // Recovery action: bump SC re-localisation
     if (mode_ == Mode::DEGRADED_MCL_STUCK
         && enable_recovery_pub_
         && pub_recovery_
@@ -615,7 +615,7 @@ private:
         mcl_stuck_sec_, mcl_pos_trace_last_, recovery_pub_topic_.c_str());
     }
 
-    // ---- Quality scalar + status publication ---------------------------
+    // Quality scalar + status publication
     if (pub_status_) {
       std_msgs::msg::Float64MultiArray msg;
       msg.data.resize(6);
@@ -689,7 +689,7 @@ private:
     adaptive_q_scale_ = scale;
   }
 
-  // ---- helpers ---------------------------------------------------------
+  // helpers
   // Local copy of the SO(3) log so we don't have to expose it from the
   // EskfSE3 header. Returns axis-angle vector (rad).
   static Eigen::Vector3d logSO3Local(const Eigen::Quaterniond & q_in)
@@ -743,7 +743,7 @@ private:
       auto_init_to_, p.x(), p.y(), p.z());
   }
 
-  // ---- State -----------------------------------------------------------
+  // State
   std::mutex mtx_;
   EskfSE3 eskf_;
 
@@ -769,7 +769,7 @@ private:
   Mode mode_{Mode::HEALTHY};
   std::string base_frame_default_{"base_link"};
 
-  // ---- IO --------------------------------------------------------------
+  // IO
   std::string odom_topic_, pose_topic_, init_topic_, out_topic_;
   std::string map_frame_, odom_frame_, base_frame_;
   bool publish_tf_;

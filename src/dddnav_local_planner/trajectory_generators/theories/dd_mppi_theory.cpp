@@ -1,7 +1,6 @@
-/*
- * BSD 3-Clause License
- * Copyright (c) 2024, DDDMobileRobot
- */
+// Copyright (c) 2024, DDDMobileRobot
+// SPDX-License-Identifier: BSD-3-Clause
+
 #include <trajectory_generators/dd_mppi_theory.h>
 
 #include <algorithm>

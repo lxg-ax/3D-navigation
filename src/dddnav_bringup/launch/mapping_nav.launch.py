@@ -24,8 +24,6 @@ import common_nodes
 
 def generate_launch_description():
     bringup_dir  = get_package_share_directory('dddnav_bringup')
-    fast_lio_dir = get_package_share_directory('fast_lio')
-    lio_sam_dir  = get_package_share_directory('lio_sam')
 
     rt = bringup_paths.load_runtime()
     map_dir = bringup_paths.bringup_map_dir()
@@ -37,13 +35,15 @@ def generate_launch_description():
 
     declare_fastlio_config_cmd = DeclareLaunchArgument(
         'fastlio_config',
-        default_value=os.path.join(fast_lio_dir, 'config', 'mid360_pc2.yaml'),
-        description='Full path to the FAST-LIO yaml',
+        default_value=bringup_paths.fastlio_yaml(),
+        description='Full path to the FAST-LIO yaml '
+                    '(default: dddnav_bringup/config/reality/slam/fastlio_mid360.yaml)',
     )
     declare_lio_sam_config_cmd = DeclareLaunchArgument(
         'lio_sam_config',
-        default_value=os.path.join(lio_sam_dir, 'config', 'params_mid360.yaml'),
-        description='Full path to the LIO-SAM yaml',
+        default_value=bringup_paths.liosam_yaml(),
+        description='Full path to the LIO-SAM yaml '
+                    '(default: dddnav_bringup/config/reality/slam/liosam_mid360.yaml)',
     )
     declare_rviz_config_cmd = DeclareLaunchArgument(
         'rviz_config',

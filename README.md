@@ -110,7 +110,8 @@ ros2 launch dddnav_bringup localization_with_camera.launch.py      # + 语义点
 | [`dddnav_bringup/config/reality/keyframes_mid360.yaml`](src/dddnav_bringup/config/reality/keyframes_mid360.yaml) | 关键帧抽取阈值（`keyframe_dist` / `keyframe_angle`） |
 | [`dddnav_bringup/config/nav_base.yaml`](src/dddnav_bringup/config/nav_base.yaml) | 公共导航参数（机器人外形、控制频率、规划器） |
 | [`dddnav_bringup/config/reality/nav/mid360_*.yaml`](src/dddnav_bringup/config/reality/nav/) | 模式 overlay：`mid360_mapping[_with_camera]` / `mid360_localization[_with_camera/_with_depth_camera]` |
-| [`LIO-SAM/config/params_mid360.yaml`](src/LIO-SAM/config/params_mid360.yaml) | LIO-SAM 全部调参（IMU、回环、Scan Context） |
+| [`dddnav_bringup/config/reality/slam/fastlio_mid360.yaml`](src/dddnav_bringup/config/reality/slam/fastlio_mid360.yaml) | FAST-LIO 前端调参（IMU 噪声、外参、体素） |
+| [`dddnav_bringup/config/reality/slam/liosam_mid360.yaml`](src/dddnav_bringup/config/reality/slam/liosam_mid360.yaml) | LIO-SAM 后端调参（IMU、回环、STD） |
 | [`dddnav_bringup/config/reality/pose_fusion.yaml`](src/dddnav_bringup/config/reality/pose_fusion.yaml) | ESKF Q/R、ZUPT、自适应 Q、auto-init |
 
 `nav_profile` 用法：

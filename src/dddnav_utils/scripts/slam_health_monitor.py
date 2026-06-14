@@ -43,7 +43,6 @@ class SlamHealth(Node):
     def __init__(self):
         super().__init__('slam_health_monitor')
 
-        # ---------- params ------------------------------------------------
         self.declare_parameter('ok_timeout',   0.5)
         self.declare_parameter('fail_timeout', 2.0)
         self.declare_parameter('check_period', 1.0)
@@ -310,7 +309,6 @@ class SlamHealth(Node):
                  'min_eigval':   '' if min_eig is None else f'{min_eig:.4f}',
                  'cond_number':  '' if cond is None else f'{cond:.2f}'}))
 
-        # --- publish diagnostics ---
         if self._diag_pub is not None:
             arr = DiagnosticArray()
             arr.header.stamp = self.get_clock().now().to_msg()

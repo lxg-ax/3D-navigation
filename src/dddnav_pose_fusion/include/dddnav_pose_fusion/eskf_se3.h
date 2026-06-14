@@ -44,8 +44,8 @@
 namespace dddnav_pose_fusion
 {
 
-// Right-perturbation Jacobian helpers ---------------------------------------
-// Hat operator: R^3 -> so(3). Standard cross-product matrix.
+// Right-perturbation Jacobian helpers.
+// Hat operator: R^3 -> so(3).
 Eigen::Matrix3d hat(const Eigen::Vector3d & v);
 
 // SO(3) exponential, Rodrigues formula. Maps R^3 axis-angle -> rotation.
@@ -70,7 +70,6 @@ public:
     const Eigen::Quaterniond & q,
     const Cov & P);
 
-  // Whether initialize() has been called.
   bool initialized() const { return initialized_; }
 
   // Predict step using a body-frame relative transform (T_b_prev_b_now).

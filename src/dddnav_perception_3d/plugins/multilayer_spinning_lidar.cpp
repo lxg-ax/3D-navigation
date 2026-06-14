@@ -1,33 +1,6 @@
-/*
-* BSD 3-Clause License
+// Copyright (c) 2024, DDDMobileRobot
+// SPDX-License-Identifier: BSD-3-Clause
 
-* Copyright (c) 2024, DDDMobileRobot
-
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-
-* 1. Redistributions of source code must retain the above copyright notice, this
-*    list of conditions and the following disclaimer.
-
-* 2. Redistributions in binary form must reproduce the above copyright notice,
-*    this list of conditions and the following disclaimer in the documentation
-*    and/or other materials provided with the distribution.
-
-* 3. Neither the name of the copyright holder nor the names of its
-*    contributors may be used to endorse or promote products derived from
-*    this software without specific prior written permission.
-
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 #include <perception_3d/multilayer_spinning_lidar.h>
 
 PLUGINLIB_EXPORT_CLASS(perception_3d::MultiLayerSpinningLidar, perception_3d::Sensor)
@@ -219,15 +192,6 @@ void MultiLayerSpinningLidar::cbSensor(const sensor_msgs::msg::PointCloud2::Shar
   
   RCLCPP_INFO_THROTTLE(node_->get_logger().get_child(name_), *clock_, 60000, "Receiving Lidar topic: %s", topic_.c_str());
 
-  //@Justify affine 3d
-  //Eigen::Affine3d a = tf2::transformToEigen(trans_gbl2b_);
-  //Eigen::Affine3d b = tf2::transformToEigen(trans_b2s_);
-  //Eigen::Affine3d c = tf2::transformToEigen(trans_gbl2s_);
-  //Eigen::Affine3d d = a*b;
-
-  //RCLCPP_INFO(node_->get_logger().get_child(name_), "trans: %f,%f,%f ---> %f,%f,%f", c.translation().x(),c.translation().y(),c.translation().z(), d.translation().x(),d.translation().y(),d.translation().z());
-  //RCLCPP_INFO_STREAM(node_->get_logger().get_child(name_), "Rotation c: " << c.rotation());
-  //RCLCPP_INFO_STREAM(node_->get_logger().get_child(name_), "Rotation d: " << d.rotation());
   
   Eigen::Affine3d trans_b2s_af3 = tf2::transformToEigen(trans_b2s_);
   pcl::transformPointCloud(*pcl_msg, *pcl_msg, trans_b2s_af3);
@@ -425,13 +389,6 @@ void MultiLayerSpinningLidar::selfMark(){
       coefficients->values[3] = d;
       // Create the filtering object
       
-      //pcl::PointCloud<pcl::PointXYZI>::Ptr projected_cloud_cluster (new pcl::PointCloud<pcl::PointXYZI>);
-      //pcl::ProjectInliers<pcl::PointXYZI> proj;
-      //proj.setModelType (pcl::SACMODEL_PLANE);
-      //proj.setInputCloud (cloud_cluster);
-      //proj.setModelCoefficients (coefficients);
-      //proj.filter (*projected_cloud_cluster);
-      //*projected_cloud_clusters += (*projected_cloud_cluster);
       
 
       //@ store the cluster in marking

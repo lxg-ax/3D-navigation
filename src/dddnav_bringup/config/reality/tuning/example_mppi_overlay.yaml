@@ -1,25 +1,9 @@
-# tuning overlay: 把 dd_simple 替换/并行成 mppi 的最小示例
+# Overlay 模板：在 dd_simple 之外并行注册 MPPI generator + 一组对应 critic
+# 用法：p2p_move_base_yaml:=$(pwd)/src/dddnav_bringup/config/reality/tuning/example_mppi_overlay.yaml
 #
-# 用法：把这一份覆盖在 p2p_move_base 的默认 yaml 之上：
-#
-#   ros2 launch dddnav_bringup navigation.launch.py \
-#     p2p_move_base_yaml:=$(pwd)/src/dddnav_bringup/config/reality/tuning/example_mppi_overlay.yaml
-#
-# 注意点
-# ------
-# * 这个 overlay 只追加 differential_drive_mppi 这一个 generator，并把
-#   一份 critic 复制绑到它身上。dd_simple / 旋转 generator 都保留，
-#   p2p_move_base.cpp 默认仍调 "differential_drive_simple"。要让 mppi
-#   生效，还需要在 p2p_move_base 那边把直行段的 traj_gen_name 切到
-#   "differential_drive_mppi"（一行的事，但属于业务调度，故没塞进
-#   overlay）。
-# * 关键参数怎么调（见 dddnav_local_planner/README.md MPPI 一节）：
-#     mppi.lambda  小 → 行为更激进，接近 argmin
-#     mppi.lambda  大 → 行为更平滑，多样本平均
-#     mppi.sigma_v / sigma_w 大 → 探索更大，但更可能撞 critic 的
-#                                   "stick_path" 罚分
-#     mppi.num_samples 越大越稳，cost ≈ N × dd_simple 单次代价。
-#                      默认 64 已经能跑 10Hz；嵌入式可以降到 32。
+# 注意：overlay 只追加 plugin，不替换。要让 MPPI 生效还得在 p2p_move_base
+# 把直行段 traj_gen_name 切到 "differential_drive_mppi"（业务调度，不归 overlay 管）。
+# 调参细节见 dddnav_local_planner/README.md MPPI 一节。
 
 trajectory_generators:
   ros__parameters:

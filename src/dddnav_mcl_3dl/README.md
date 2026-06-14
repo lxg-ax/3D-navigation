@@ -44,13 +44,11 @@ LiDAR ─► mcl_feature ─► mcl_3dl ─► /mcl_pose ─► pose_fusion (ESK
 
 ### 自适应粒子数
 
-老逻辑只把 `num_particles` 当固定值，重定位时拿放宽 likelihood 凑数，搜索空间不够。现在：
+1. 收 `/initial_3d_pose` → `resizeParticle(num_particles_grow_on_init)`，给重定位足够预算
+2. `match_ratio_max < match_ratio_grow_thresh` → 粒子数翻倍（capped at `num_particles_max`），重置 fix_cnt 让滤波器再静默几拍
+3. 收敛后按 `particle_decay` 指数回落，下界 `max(num_particles, num_particles_min)`
 
-1. 收到 `/initial_3d_pose` → 直接 `resizeParticle(num_particles_grow_on_init)`，给重定位足够的搜索预算
-2. `measure()` 里 `match_ratio_max < match_ratio_grow_thresh` → 粒子数翻倍（capped at `num_particles_max`），同时重置 fix_cnt 让滤波器再静默几拍
-3. 收敛后（fix_cnt 到 0、match_ratio 健康）每次 measure 按 `particle_decay` 指数回落，下界为 `max(num_particles, num_particles_min)`
-
-`min >= max` 时整套机制关掉，行为退化到旧版。
+`min ≥ max` 时整套机制关掉，退化到旧版（固定 `num_particles`）。
 
 ## Bag 演示
 

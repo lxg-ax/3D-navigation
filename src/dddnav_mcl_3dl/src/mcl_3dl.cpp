@@ -1,31 +1,5 @@
-/*
- * Copyright (c) 2016-2020, the mcl_3dl authors
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the copyright holder nor the names of its
- *       contributors may be used to endorse or promote products derived from
- *       this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright (c) 2016-2020, the mcl_3dl authors
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include <mcl_3dl.h>
 
@@ -315,10 +289,6 @@ void MCL3dlNode::cbLeGoFeatureCloud(const sensor_msgs::msg::PointCloud2::SharedP
   sor.filter (*pc_flat);
   
   //@Looks like downsample less sharp only 600->550 points, not very effective
-  //pcl::VoxelGrid<mcl_3dl::pcl_t> sor2;
-  //sor2.setInputCloud (pc_less_sharp);
-  //sor2.setLeafSize (0.1f, 0.1f, 0.1f);
-  //sor2.filter (*pc_less_sharp);
 
   pcl::PointCloud<mcl_3dl::pcl_t>::Ptr pc_less_sharp_intensity(new pcl::PointCloud<mcl_3dl::pcl_t>);
 
@@ -331,16 +301,8 @@ void MCL3dlNode::cbLeGoFeatureCloud(const sensor_msgs::msg::PointCloud2::SharedP
   n2.setInputCloud (pc_less_sharp);
   n2.setSearchMethod (tree2);
   n2.setKSearch (5);
-  //n2.setRadiusSearch (0.1);
   n2.compute (*observation_normals);
   
-  //@ Uncomment for visualization purpose
-  //pcl::PointCloud<pcl::PointXYZ> observation_xyz;
-  //pcl::copyPointCloud(*pc_less_sharp, observation_xyz);
-  //pcl::PointCloud<pcl::PointNormal>::Ptr observation_points_normal;
-  //observation_points_normal.reset(new pcl::PointCloud<pcl::PointNormal>);
-  //pcl::concatenateFields (observation_xyz, *observation_normals, *observation_points_normal);
-  //normal2quaternion(observation_points_normal);
   
 
   double sum_normal_y = 0;
@@ -622,7 +584,7 @@ void MCL3dlNode::measure(std::map<std::string, pcl::PointCloud<mcl_3dl::pcl_t>::
   }
   pub_pose_->publish(pose);
   
-  //--------------------------update pose to submap
+  // update pose to submap
   std::unique_lock<mcl_3dl::SubMaps::sub_maps_mutex_t> lock(*(sub_maps_->getMutex()));
   sub_maps_->setPose(pose);
 
@@ -665,7 +627,6 @@ void MCL3dlNode::measure(std::map<std::string, pcl::PointCloud<mcl_3dl::pcl_t>::
               params_->expansion_var_yaw_)));
   }
 
-  // ------------------------------------------------------------------
   // Adaptive particle count.
   //
   //   Low match_ratio  -> grow (cap at num_particles_max_)
@@ -676,7 +637,6 @@ void MCL3dlNode::measure(std::map<std::string, pcl::PointCloud<mcl_3dl::pcl_t>::
   // The post-init `global_localization_fix_cnt_` countdown also keeps the
   // current size for that many measurements so the filter can settle
   // without thrashing.
-  // ------------------------------------------------------------------
   const int cur_size = static_cast<int>(pf_->getParticleSize());
   const int steady = std::max(params_->num_particles_, params_->num_particles_min_);
   if (match_ratio_max < params_->match_ratio_grow_thresh_ &&

@@ -1,0 +1,116 @@
+/**:
+  ros__parameters:
+
+    # Topics
+    pointCloudTopic: "/livox/lidar_liosam"       # 经 livox_pc2_to_liosam 适配后的点云
+    imuTopic: "/livox/imu"
+    odomTopic: "odometry/imu"                    # LIO-SAM imuPreintegration 内部 topic
+    gpsTopic: "odometry/gpsz"
+
+    # Frames
+    lidarFrame: "livox_frame"
+    baselinkFrame: "base_link"
+    odometryFrame: "odom"
+    mapFrame: "map"
+
+    # GPS
+    useImuHeadingInitialization: false
+    useGpsElevation: false
+    gpsCovThreshold: 2.0
+    poseCovThreshold: 25.0
+
+    # Export
+    savePCD: false
+    # Overridden by dddnav_bringup mapping*.launch.py; safe fallback if launched without bringup:
+    savePCDDirectory: "/tmp/lio_sam_save_pcd/"
+
+    # Sensor: MID360 固态雷达，用 livox 模式
+    sensor: livox
+    N_SCAN: 4                                    # MID360 有 4 条扫描线（line 字段 0-3）
+    Horizon_SCAN: 6000                           # 每条线最多点数，MID360 每帧约 20000 点/4线=5000
+    downsampleRate: 1
+    lidarMinRange: 0.3
+    lidarMaxRange: 100.0
+
+    # IMU（MID360 内置 IMU，驱动输出单位为 g，imuConverter 已转换为 m/s²）
+    # IMU 噪声（标准差）。改时同步看 fastlio_mid360.yaml 的 mapping.{acc_cov,gyr_cov,b_acc_cov,b_gyr_cov}（语义不同）。对照：IMU_NOTES.md
+    imuAccNoise: 0.1
+    imuGyrNoise: 0.01
+    imuAccBiasN: 0.001
+    imuGyrBiasN: 0.0001
+    imuGravity: 9.80511
+    # imuRPYWeight: 重力对齐项在 mapOptimization 里给当前 roll/pitch 估计的权重。
+    # 0.01 几乎放弃重力约束，纯靠 IMU 预积分撑姿态，长时间会累积俯仰漂移。
+    # 0.1~0.3 是 LIO-SAM 论文级配置，重力锚定 + 预积分各占一半。
+    imuRPYWeight: 0.1
+
+    # TF 控制：FastLIO 负责发布 odom→base_link，LIO-SAM 只发布 map→odom
+    publishTF: false
+
+    # 外参：MID360 IMU 与 lidar 同体，外参为单位矩阵
+    extrinsicTrans: [ 0.0, 0.0, 0.0 ]
+    extrinsicRot:   [ 1.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0,
+                      0.0, 0.0, 1.0 ]
+    extrinsicRPY:   [ 1.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0,
+                      0.0, 0.0, 1.0 ]
+
+    # LOAM 特征阈值
+    edgeThreshold: 1.0
+    surfThreshold: 0.1
+    edgeFeatureMinValidNum: 10
+    surfFeatureMinValidNum: 100
+
+    # Voxel filter
+    odometrySurfLeafSize: 0.4
+    mappingCornerLeafSize: 0.2
+    mappingSurfLeafSize: 0.4
+
+    # 运动约束（地面机器人推荐打开，长距离防 z/姿态漂）
+    # 1000.0 = 等效禁用约束；改成有限值后单帧位姿超过 |z| 或 RPY 阈值会被忽略。
+    # 室内/室外可调；楼梯/电梯场景需要把 z_tollerance 调大或关。
+    z_tollerance: 5.0
+    rotation_tollerance: 0.5
+
+    # CPU：利用更多核心加速建图
+    numberOfCores: 6
+    mappingProcessInterval: 0.1
+
+    # 关键帧：加密关键帧间距，提高地图密度和回环检测机会
+    surroundingkeyframeAddingDistThreshold: 0.5
+    surroundingkeyframeAddingAngleThreshold: 0.15
+    surroundingKeyframeDensity: 1.0
+    surroundingKeyframeSearchRadius: 50.0
+
+    # 回环检测：GICP + Scan Context，提高频率和搜索范围
+    loopClosureEnableFlag: true
+    loopClosureFrequency: 2.0
+    surroundingKeyframeSize: 50
+    historyKeyframeSearchRadius: 20.0
+    historyKeyframeSearchTimeDiff: 30.0
+    historyKeyframeSearchNum: 25
+    historyKeyframeFitnessScore: 0.3              # GICP 适合度阈值，0.3 严，0.5 宽。先严防误回环，遇到漏回环再放宽。
+
+    # STD (Stable Triangle Descriptor) 检索（mapOptimization::detectLoopClosureScanContext）
+    # stdSkipNearNum:  跳过最近 N 个关键帧避免自匹配（建议 30~80，与原 scExcludeRecent 同义）
+    # stdIcpThreshold: plane-ICP 接受阈值，越大越严（0.5 严, 0.3 宽）
+    # stdMinDatabase:  数据库需 ≥ 此值才启用 STD 检索
+    stdSkipNearNum: 50
+    stdIcpThreshold: 0.5
+    stdMinDatabase: 51
+
+    # STDescManager 内部参数（默认值已能跑，按场景再调）
+    # 室内/墙体多 → corner_thre 调小（更多角点）；点云稀 → voxel_size 调大
+    std.voxel_size: 2.0
+    std.maximum_corner_num: 100
+    std.descriptor_near_num: 10
+    std.descriptor_min_len: 2.0
+    std.descriptor_max_len: 50.0
+    std.std_side_resolution: 0.2
+    std.candidate_num: 50
+
+    # 可视化
+    globalMapVisualizationSearchRadius: 1000.0
+    globalMapVisualizationPoseDensity: 10.0
+    globalMapVisualizationLeafSize: 0.1
